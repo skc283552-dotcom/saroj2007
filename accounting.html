@@ -1,557 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Advanced Accounting System</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<!-- jsPDF for PDF export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- Chart.js for reports charts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-  :root{
-    --bg:#f4f6fb; --panel:#ffffff; --ink:#2c3e50; --muted:#6b7b8c; --brand:#1f7aec;
-    --accent:#17b26a; --danger:#e74c3c; --shadow:0 8px 24px rgba(0,0,0,.08);
-    --ring:0 0 0 3px rgba(31,122,236,.15);
-  }
-  *{box-sizing:border-box}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
-  header{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
-  header h1{font-size:20px;margin:0}
-  #clock{position:absolute;right:16px;font-size:14px;opacity:.9}
-  .container{padding:20px;max-width:1200px;margin:0 auto}
-  .hidden{display:none}
-  .icon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px;margin-top:28px}
-  .icon{background:var(--panel);border-radius:16px;padding:22px;text-align:center;box-shadow:var(--shadow);cursor:pointer;transition:.15s transform,.15s box-shadow}
-  .icon:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.1)}
-  .icon .big{font-size:34px;display:block;margin-bottom:8px}
-  button{appearance:none;border:0;border-radius:10px;padding:10px 14px;background:var(--brand);color:#fff;cursor:pointer;box-shadow:var(--shadow);transition:.15s transform,.1s filter}
-  button:hover{filter:brightness(1.05)}
-  button:focus{outline:none;box-shadow:var(--ring),var(--shadow)}
-  .btn-muted{background:#8b9bb0}
-  .btn-danger{background:var(--danger)}
-  .btn-outline{background:#eef3ff;color:var(--brand)}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
-  .back-btn{background:#6b7b8c}
-  input,select{width:100%;padding:10px 12px;border:1px solid #d6dbe3;border-radius:10px;background:#fff}
-  input:focus,select:focus{outline:none;box-shadow:var(--ring)}
-  form .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-  form .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .card{background:var(--panel);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
-  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;background:var(--panel);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-  thead th{background:#eaf0f9;color:#34495e;font-weight:600}
-  th,td{padding:10px;border-bottom:1px solid #eef2f7;text-align:center;font-size:14px}
-  tbody tr:hover{background:#fafcff}
-  tfoot th{background:#f1f5fb}
-  .status-pending{color:var(--danger);font-weight:700}
-  .status-done{color:var(--accent);font-weight:700}
-  .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;background:#eef3ff;color:var(--brand)}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:10px}
-  .kpis .k{background:var(--panel);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
-  .k .t{font-size:12px;color:var(--muted)}
-  .k .v{font-size:18px;font-weight:700;margin-top:4px}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media (max-width:900px){.row{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <title>Accounting System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
+    header { background: #2c3e50; color: #fff; padding: 15px; text-align: center; font-size: 22px; }
+    .dashboard { display: flex; justify-content: center; gap: 20px; margin: 30px; flex-wrap: wrap; }
+    .icon { width: 150px; height: 150px; background: #3498db; color: white; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 15px;
+            transition: 0.3s; }
+    .icon:hover { background: #2980b9; }
+    .page { display: none; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 10px; text-align: center; }
+    button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-radius: 6px; }
+    .back-btn { background: #e74c3c; color: white; }
+    .save-btn { background: #27ae60; color: white; }
+    .edit-btn { background: #f39c12; color: white; }
+    .delete-btn { background: #c0392b; color: white; }
+    .download-btn { background: #8e44ad; color: white; }
+  </style>
 </head>
 <body>
-<header>
-  <h1>📊 Advanced Accounting System</h1>
-  <div id="clock"></div>
-</header>
+  <header>📊 Accounting System</header>
 
-<div class="container">
-
-  <!-- DASHBOARD -->
-  <div id="dashboard">
-    <div class="icon-grid">
-      <div class="icon" onclick="showPage('newTransaction')"><span class="big">➕</span>New Transaction</div>
-      <div class="icon" onclick="showPage('allTransactions')"><span class="big">📑</span>All Transactions</div>
-      <div class="icon" onclick="showPage('ledger')"><span class="big">📘</span>Ledger / Journal</div>
-      <div class="icon" onclick="showPage('searchPage')"><span class="big">🔍</span>Search</div>
-      <div class="icon" onclick="showPage('reports')"><span class="big">📈</span>Reports</div>
-      <div class="icon" onclick="clearAll()"><span class="big">🗑</span>Clear Data</div>
-    </div>
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <div class="icon" onclick="openPage('journal')">📘 Journal</div>
+    <div class="icon" onclick="openPage('ledger')">📗 Ledger</div>
+    <div class="icon" onclick="openPage('transactions')">📒 Transactions</div>
+    <div class="icon" onclick="downloadPDF()">📑 Download PDF</div>
   </div>
 
-  <!-- NEW TRANSACTION -->
-  <div id="newTransaction" class="hidden">
-    <div class="toolbar"><button class="back-btn" onclick="goBack()">⬅ Back</button></div>
-    <div class="card">
-      <h2>New Transaction</h2>
-      <form id="transactionForm">
-        <div class="grid">
-          <div><label>Person / Organization</label><input id="name" required placeholder="e.g., Ram Pvt. Ltd." /></div>
-          <div><label>Amount (NPR)</label><input id="amount" type="number" step="0.01" min="0" required placeholder="0.00" /></div>
-        </div>
-        <div class="grid">
-          <div>
-            <label>Type</label>
-            <select id="type">
-              <option value="Income">Income</option>
-              <option value="Expense">Expense</option>
-              <option value="Received">Received (Borrowed)</option>
-              <option value="Given">Given (Lent)</option>
-            </select>
-          </div>
-          <div>
-            <label>Payment Mode</label>
-            <select id="payment">
-              <option>Cash</option>
-              <option>Bank</option>
-              <option>eSewa</option>
-              <option>Mobile Banking</option>
-              <option>Card</option>
-              <option>Investment</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid">
-          <div>
-            <label>Status</label>
-            <select id="status">
-              <option>Pending</option>
-              <option>Done</option>
-            </select>
-          </div>
-          <div>
-            <label>Date (optional)</label>
-            <input id="dateManual" type="date" />
-          </div>
-        </div>
-        <div class="grid">
-          <div><span class="pill" id="adPreview">AD: —</span></div>
-          <div><span class="pill" id="bsPreview">BS: —</span></div>
-        </div>
-        <div style="margin-top:10px"><button type="submit">Save Transaction</button></div>
-      </form>
-    </div>
+  <!-- Journal Page -->
+  <div class="page" id="journal">
+    <h2>Journal Entry</h2>
+    <form id="journalForm">
+      <label>Particular:</label><input type="text" id="particular" required><br><br>
+      <label>Debit (Dr):</label><input type="number" id="debit" value="0"><br><br>
+      <label>Credit (Cr):</label><input type="number" id="credit" value="0"><br><br>
+      <label>Status:</label>
+      <select id="status">
+        <option value="Paid">Paid</option>
+        <option value="Unpaid">Unpaid</option>
+      </select><br><br>
+      <label>Payment Type:</label>
+      <select id="paymentType">
+        <option>Cash</option>
+        <option>Bank</option>
+        <option>eSewa</option>
+        <option>Fonepay</option>
+      </select><br><br>
+      <button type="submit" class="save-btn">Save Entry</button>
+    </form>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
-  <!-- ALL TRANSACTIONS -->
-  <div id="allTransactions" class="hidden">
-    <div class="toolbar">
-      <button class="back-btn" onclick="goBack()">⬅ Back</button>
-      <button onclick="downloadPDF(currentSorted(transactions))">⬇ Download PDF</button>
-      <button class="btn-outline" onclick="exportCSV(currentSorted(transactions),'all-transactions.csv')">⭳ Export CSV</button>
-    </div>
-    <div class="card">
-      <h2>All Transactions</h2>
-      <div class="kpis" id="allKpis"></div>
-      <table>
-        <thead>
-          <tr>
-            <th>Date (AD)</th><th>Date (BS)</th><th>Name</th>
-            <th>Debit</th><th>Credit</th><th>Payment</th><th>Status</th><th>Balance</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="transactionTable"></tbody>
-        <tfoot>
-          <tr><th colspan="3">Totals</th><th id="totalDebit">0</th><th id="totalCredit">0</th><th colspan="2"></th><th id="totalBalance">0</th><th></th></tr>
-        </tfoot>
-      </table>
-    </div>
+  <!-- Ledger Page -->
+  <div class="page" id="ledger">
+    <h2>Ledger</h2>
+    <label>Search by Name:</label> <input type="text" id="searchName">
+    <label>Search by Date:</label> <input type="date" id="searchDate">
+    <button onclick="filterLedger()">Search</button>
+    <table id="ledgerTable">
+      <thead>
+        <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Balance</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <h3>Total Balance: <span id="ledgerTotal">0</span></h3>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
 
-  <!-- LEDGER -->
-  <div id="ledger" class="hidden">
-    <div class="toolbar">
-      <button class="back-btn" onclick="goBack()">⬅ Back</button>
-      <input id="ledgerName" placeholder="Filter by name…" />
-      <input id="ledgerDate" type="date" />
-      <button onclick="filterLedger()">Search</button>
-      <button onclick="downloadPDF(filteredLedger)">⬇ PDF</button>
-      <button class="btn-outline" onclick="exportCSV(filteredLedger,'ledger.csv')">⭳ CSV</button>
-    </div>
-    <div class="card">
-      <h2>Ledger / Journal</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Date (AD)</th><th>Date (BS)</th><th>Name</th>
-            <th>Debit</th><th>Credit</th><th>Payment</th><th>Status</th><th>Balance</th>
-          </tr>
-        </thead>
-        <tbody id="ledgerTable"></tbody>
-        <tfoot>
-          <tr><th colspan="3">Totals</th><th id="ledgerTotalDebit">0</th><th id="ledgerTotalCredit">0</th><th colspan="2"></th><th id="ledgerTotalBalance">0</th></tr>
-        </tfoot>
-      </table>
-    </div>
+  <!-- Transactions Page -->
+  <div class="page" id="transactions">
+    <h2>All Transactions</h2>
+    <table id="transactionTable">
+      <thead>
+        <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <h3>Total Income: <span id="totalIncome">0</span> | Total Expense: <span id="totalExpense">0</span></h3>
+    <button class="back-btn" onclick="goBack()">⬅ Back</button>
   </div>
-
-  <!-- SEARCH -->
-  <div id="searchPage" class="hidden">
-    <div class="toolbar">
-      <button class="back-btn" onclick="goBack()">⬅ Back</button>
-      <input id="searchName" placeholder="Enter name…" />
-      <button onclick="searchPerson()">Search</button>
-      <button onclick="downloadPDF(searchResults)">⬇ PDF</button>
-      <button class="btn-outline" onclick="exportCSV(searchResults,'search.csv')">⭳ CSV</button>
-    </div>
-    <div class="card">
-      <h2>Search Results</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Date (AD)</th><th>Date (BS)</th><th>Name</th>
-            <th>Debit</th><th>Credit</th><th>Payment</th><th>Status</th><th>Balance</th>
-          </tr>
-        </thead>
-        <tbody id="searchTable"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- REPORTS -->
-  <div id="reports" class="hidden">
-    <div class="toolbar">
-      <button class="back-btn" onclick="goBack()">⬅ Back</button>
-      <button onclick="downloadPDF(currentSorted(transactions))">⬇ PDF</button>
-      <button class="btn-outline" onclick="exportCSV(currentSorted(transactions),'reports-base.csv')">⭳ CSV</button>
-    </div>
-    <div class="card">
-      <h2>Reports & Analytics</h2>
-      <div class="kpis" id="reportKpis"></div>
-      <div class="row" style="margin-top:10px">
-        <div class="card">
-          <h3>Income vs Expense</h3>
-          <canvas id="barIE" height="200"></canvas>
-        </div>
-        <div class="card">
-          <h3>Receivable vs Payable (Pending)</h3>
-          <canvas id="pieRP" height="200"></canvas>
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div class="card">
-          <h3>Balances by Payment Mode</h3>
-          <canvas id="barModes" height="200"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div>
 
 <script>
-/* -------------------- DATA -------------------- */
-let transactions = JSON.parse(localStorage.getItem("transactions")||"[]");
-let searchResults = [];
-let filteredLedger = [];
+  let entries = JSON.parse(localStorage.getItem("entries")) || [];
 
-/* -------------------- CLOCK -------------------- */
-function updateClock(){
-  const d = new Date();
-  document.getElementById('clock').textContent = d.toLocaleTimeString();
-}
-setInterval(updateClock,1000); updateClock();
-
-/* -------------------- NAV -------------------- */
-function showPage(id){
-  document.querySelectorAll('.container > div').forEach(d=>d.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  if(id==='allTransactions') renderTransactions();
-  if(id==='reports') renderReports();
-}
-function goBack(){ showPage('dashboard'); }
-
-/* -------------------- DATE HELPERS -------------------- */
-function toISO(d){ // yyyy-mm-dd
-  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-}
-function toADDisplay(d){ // dd/mm/yyyy
-  return d.toLocaleDateString('en-GB');
-}
-// Approximate BS conversion (simple offline approximation)
-function ADtoBS(date){
-  let y=date.getFullYear()+57, m=date.getMonth()+1+8, day=date.getDate()+15;
-  if(m>12){m-=12;y++}
-  if(day>30){day-=30;m++; if(m>12){m=1;y++;}}
-  return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-}
-
-/* -------------------- ACCOUNTING HELPERS -------------------- */
-function debitOf(t){ return (t.type==='Expense'||t.type==='Given')?Number(t.amount):0; }
-function creditOf(t){ return (t.type==='Income'||t.type==='Received')?Number(t.amount):0; }
-function runningRows(list){
-  let bal=0;
-  return list.map(t=>{
-    const dr=debitOf(t), cr=creditOf(t);
-    bal += (cr - dr);
-    return {...t, _dr:dr, _cr:cr, _bal:bal};
-  });
-}
-function currentSorted(list){
-  return [...list].sort((a,b)=> a.dateISO.localeCompare(b.dateISO) || (a.createdAt-b.createdAt));
-}
-
-/* -------------------- NEW TRANSACTION -------------------- */
-const form = document.getElementById('transactionForm');
-const dateManual = document.getElementById('dateManual');
-const adPrev = document.getElementById('adPreview');
-const bsPrev = document.getElementById('bsPreview');
-
-function updatePreview(){
-  const d = dateManual.value ? new Date(dateManual.value) : new Date();
-  adPrev.textContent = `AD: ${toADDisplay(d)}`;
-  bsPrev.textContent = `BS: ${ADtoBS(d)}`;
-}
-dateManual.addEventListener('input', updatePreview);
-updatePreview();
-
-form.addEventListener('submit', (e)=>{
-  e.preventDefault();
-  const rawDate = dateManual.value ? new Date(dateManual.value) : new Date();
-  const record = {
-    id: crypto.randomUUID(),
-    createdAt: Date.now(),
-    dateISO: toISO(rawDate),
-    dateAD: toADDisplay(rawDate),
-    dateBS: ADtoBS(rawDate),
-    name: document.getElementById('name').value.trim(),
-    amount: Number(document.getElementById('amount').value),
-    type: document.getElementById('type').value,
-    payment: document.getElementById('payment').value,
-    status: document.getElementById('status').value
-  };
-  transactions.push(record);
-  localStorage.setItem('transactions', JSON.stringify(transactions));
-  form.reset(); dateManual.value=''; updatePreview();
-  alert('Transaction saved!');
-  renderTransactions();
-});
-
-/* -------------------- ALL TRANSACTIONS -------------------- */
-function renderTransactions(){
-  const tbody = document.getElementById('transactionTable');
-  const list = runningRows(currentSorted(transactions));
-  let rowsHTML = '';
-  let totalDr = 0, totalCr = 0, balance = 0;
-
-  list.forEach((t,i)=>{
-    totalDr += t._dr; totalCr += t._cr; balance = t._bal;
-    rowsHTML += `<tr>
-      <td>${t.dateAD}</td>
-      <td>${t.dateBS}</td>
-      <td>${t.name}</td>
-      <td>${t._dr.toFixed(2)}</td>
-      <td>${t._cr.toFixed(2)}</td>
-      <td>${t.payment}</td>
-      <td class="${t.status==='Pending'?'status-pending':'status-done'}">${t.status}</td>
-      <td>${t._bal.toFixed(2)}</td>
-      <td>
-        <button onclick="markDone('${t.id}')">Done</button>
-        <button class="btn-danger" onclick="deleteTxn('${t.id}')">Delete</button>
-      </td>
-    </tr>`;
-  });
-  tbody.innerHTML = rowsHTML;
-  document.getElementById('totalDebit').textContent = totalDr.toFixed(2);
-  document.getElementById('totalCredit').textContent = totalCr.toFixed(2);
-  document.getElementById('totalBalance').textContent = balance.toFixed(2);
-
-  // KPIs
-  const k = computeSummary(transactions);
-  document.getElementById('allKpis').innerHTML = kpiHTML(k);
-}
-function markDone(id){
-  const t = transactions.find(x=>x.id===id);
-  if(!t) return;
-  t.status = 'Done';
-  localStorage.setItem('transactions', JSON.stringify(transactions));
-  renderTransactions();
-}
-function deleteTxn(id){
-  if(!confirm('Delete this transaction?')) return;
-  transactions = transactions.filter(x=>x.id!==id);
-  localStorage.setItem('transactions', JSON.stringify(transactions));
-  renderTransactions();
-}
-
-/* -------------------- LEDGER -------------------- */
-function filterLedger(){
-  const name = document.getElementById('ledgerName').value.trim().toLowerCase();
-  const date = document.getElementById('ledgerDate').value; // ISO yyyy-mm-dd
-  filteredLedger = currentSorted(transactions).filter(t=>{
-    const okName = name ? t.name.toLowerCase().includes(name) : true;
-    const okDate = date ? t.dateISO === date : true;
-    return okName && okDate;
-  });
-  renderLedger();
-}
-function renderLedger(){
-  const tbody = document.getElementById('ledgerTable');
-  const list = runningRows(filteredLedger);
-  let rowsHTML = '';
-  let totalDr = 0, totalCr = 0, bal = 0;
-  list.forEach(t=>{
-    totalDr += t._dr; totalCr += t._cr; bal = t._bal;
-    rowsHTML += `<tr>
-      <td>${t.dateAD}</td>
-      <td>${t.dateBS}</td>
-      <td>${t.name}</td>
-      <td>${t._dr.toFixed(2)}</td>
-      <td>${t._cr.toFixed(2)}</td>
-      <td>${t.payment}</td>
-      <td class="${t.status==='Pending'?'status-pending':'status-done'}">${t.status}</td>
-      <td>${t._bal.toFixed(2)}</td>
-    </tr>`;
-  });
-  tbody.innerHTML = rowsHTML;
-  document.getElementById('ledgerTotalDebit').textContent = totalDr.toFixed(2);
-  document.getElementById('ledgerTotalCredit').textContent = totalCr.toFixed(2);
-  document.getElementById('ledgerTotalBalance').textContent = bal.toFixed(2);
-}
-
-/* -------------------- SEARCH -------------------- */
-function searchPerson(){
-  const name = document.getElementById('searchName').value.trim().toLowerCase();
-  searchResults = currentSorted(transactions).filter(t=>t.name.toLowerCase().includes(name));
-  const list = runningRows(searchResults);
-  const tbody = document.getElementById('searchTable');
-  tbody.innerHTML = list.map(t=>`
-    <tr>
-      <td>${t.dateAD}</td>
-      <td>${t.dateBS}</td>
-      <td>${t.name}</td>
-      <td>${t._dr.toFixed(2)}</td>
-      <td>${t._cr.toFixed(2)}</td>
-      <td>${t.payment}</td>
-      <td class="${t.status==='Pending'?'status-pending':'status-done'}">${t.status}</td>
-      <td>${t._bal.toFixed(2)}</td>
-    </tr>`).join('');
-}
-
-/* -------------------- REPORTS -------------------- */
-let chartBarIE, chartPieRP, chartBarModes;
-
-function computeSummary(list){
-  const s = {income:0, expense:0, received:0, given:0, profit:0,
-             receivablePending:0, payablePending:0,
-             byMode:{}, cash:0, bank:0, esewa:0, others:0};
-  list.forEach(t=>{
-    const amt = Number(t.amount)||0;
-    if(t.type==='Income') s.income += amt;
-    if(t.type==='Expense') s.expense += amt;
-    if(t.type==='Received') s.received += amt;
-    if(t.type==='Given') s.given += amt;
-
-    if(t.status==='Pending' && t.type==='Given') s.receivablePending += amt;
-    if(t.status==='Pending' && t.type==='Received') s.payablePending += amt;
-
-    // payment mode balances (net impact: credit increases, debit decreases)
-    const delta = creditOf(t) - debitOf(t);
-    s.byMode[t.payment] = (s.byMode[t.payment]||0) + delta;
-  });
-  s.profit = s.income - s.expense; // core P/L (ignores loans)
-  s.cash = s.byMode['Cash']||0;
-  s.bank = s.byMode['Bank']||0;
-  s.esewa = s.byMode['eSewa']||0 + (s.byMode['Mobile Banking']||0);
-  s.others = Object.entries(s.byMode)
-                   .filter(([k])=>!['Cash','Bank','eSewa','Mobile Banking'].includes(k))
-                   .reduce((a,[_k,v])=>a+v,0);
-  return s;
-}
-
-function kpiHTML(k){
-  const cells = [
-    ['Total Income', k.income],
-    ['Total Expense', k.expense],
-    ['Net Profit/Loss', k.profit],
-    ['Given (Lent)', k.given],
-    ['Received (Borrowed)', k.received],
-    ['Receivable (Pending Given)', k.receivablePending],
-    ['Payable (Pending Received)', k.payablePending],
-    ['Cash Balance', k.cash],
-    ['Bank Balance', k.bank],
-    ['eSewa + Mobile', k.esewa],
-  ];
-  return cells.map(([t,v])=>`<div class="k"><div class="t">${t}</div><div class="v">NPR ${Number(v).toFixed(2)}</div></div>`).join('');
-}
-
-function renderReports(){
-  const k = computeSummary(transactions);
-  document.getElementById('reportKpis').innerHTML = kpiHTML(k);
-
-  // Income vs Expense bar
-  const ctx1 = document.getElementById('barIE');
-  if(chartBarIE) chartBarIE.destroy();
-  chartBarIE = new Chart(ctx1, {
-    type:'bar',
-    data:{labels:['Income','Expense','Net Profit'],
-      datasets:[{label:'Amount', data:[k.income, k.expense, k.profit]}]},
-    options:{responsive:true, plugins:{legend:{display:false}}}
-  });
-
-  // Receivable vs Payable pie (pending)
-  const ctx2 = document.getElementById('pieRP');
-  if(chartPieRP) chartPieRP.destroy();
-  chartPieRP = new Chart(ctx2, {
-    type:'pie',
-    data:{labels:['Receivable (Given-Pending)','Payable (Received-Pending)'],
-      datasets:[{data:[k.receivablePending,k.payablePending]}]},
-    options:{responsive:true}
-  });
-
-  // Balances by payment mode
-  const ctx3 = document.getElementById('barModes');
-  if(chartBarModes) chartBarModes.destroy();
-  const modes = Object.keys(computeSummary(transactions).byMode);
-  const modeVals = modes.map(m=>computeSummary(transactions).byMode[m]);
-  chartBarModes = new Chart(ctx3, {
-    type:'bar',
-    data:{labels:modes, datasets:[{label:'Net Balance', data:modeVals}]} ,
-    options:{responsive:true, plugins:{legend:{display:false}}}
-  });
-}
-
-/* -------------------- EXPORTS -------------------- */
-function downloadPDF(data){
-  if(!data || data.length===0){ alert("No data!"); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt', format:'a4'});
-  doc.setFontSize(12);
-  doc.text("Transactions Report", 40, 40);
-  let y = 64;
-  const lineH = 16, margin=40, pageH = doc.internal.pageSize.height-40;
-  data.forEach(t=>{
-    const row = `${t.dateAD} | ${t.dateBS} | ${t.name} | DR ${debitOf(t).toFixed(2)} | CR ${creditOf(t).toFixed(2)} | ${t.payment} | ${t.status}`;
-    doc.text(row, margin, y);
-    y += lineH;
-    if(y > pageH){ doc.addPage(); y = 40; }
-  });
-  doc.save("transactions.pdf");
-}
-
-function exportCSV(data, filename){
-  if(!data || !data.length){ alert("No data!"); return; }
-  const headers = ['Date (AD)','Date (BS)','Name','Debit','Credit','Payment','Status'];
-  const rows = data.map(t=>[
-    t.dateAD, t.dateBS, t.name, debitOf(t).toFixed(2), creditOf(t).toFixed(2), t.payment, t.status
-  ]);
-  const csv = [headers.join(','), ...rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))].join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-/* -------------------- CLEAR -------------------- */
-function clearAll(){
-  if(confirm("This will remove ALL transactions. Continue?")){
-    localStorage.removeItem('transactions'); transactions = [];
-    renderTransactions(); filteredLedger=[]; searchResults=[];
-    alert('All data cleared.');
+  function openPage(pageId) {
+    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById(pageId).style.display = "block";
+    if (pageId === "ledger") loadLedger();
+    if (pageId === "transactions") loadTransactions();
   }
-}
 
-/* -------------------- INIT -------------------- */
-showPage('dashboard');
-renderTransactions();
+  function goBack() {
+    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+    document.getElementById("dashboard").style.display = "flex";
+  }
+
+  document.getElementById("journalForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let date = new Date().toISOString().split("T")[0];
+    let particular = document.getElementById("particular").value;
+    let debit = parseFloat(document.getElementById("debit").value) || 0;
+    let credit = parseFloat(document.getElementById("credit").value) || 0;
+    let status = document.getElementById("status").value;
+    let paymentType = document.getElementById("paymentType").value;
+
+    entries.push({ date, particular, debit, credit, status, paymentType });
+    localStorage.setItem("entries", JSON.stringify(entries));
+    alert("Entry Saved!");
+    this.reset();
+  });
+
+  function loadTransactions() {
+    let tbody = document.querySelector("#transactionTable tbody");
+    tbody.innerHTML = "";
+    let totalIncome = 0, totalExpense = 0;
+    entries.forEach((e, i) => {
+      totalIncome += e.credit;
+      totalExpense += e.debit;
+      let row = `<tr>
+        <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
+        <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
+        <td>
+          <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
+          <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
+        </td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+    document.getElementById("totalIncome").innerText = totalIncome;
+    document.getElementById("totalExpense").innerText = totalExpense;
+  }
+
+  function loadLedger() {
+    let tbody = document.querySelector("#ledgerTable tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+    entries.forEach(e => {
+      total += e.credit - e.debit;
+      tbody.innerHTML += `<tr>
+        <td>${e.date}</td><td>${e.particular}</td>
+        <td>${e.debit}</td><td>${e.credit}</td>
+        <td>${e.status}</td><td>${e.paymentType}</td>
+        <td>${total}</td>
+      </tr>`;
+    });
+    document.getElementById("ledgerTotal").innerText = total;
+  }
+
+  function filterLedger() {
+    let name = document.getElementById("searchName").value.toLowerCase();
+    let date = document.getElementById("searchDate").value;
+    let tbody = document.querySelector("#ledgerTable tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+    entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
+                        (!date || e.date === date))
+           .forEach(e => {
+      total += e.credit - e.debit;
+      tbody.innerHTML += `<tr>
+        <td>${e.date}</td><td>${e.particular}</td>
+        <td>${e.debit}</td><td>${e.credit}</td>
+        <td>${e.status}</td><td>${e.paymentType}</td>
+        <td>${total}</td>
+      </tr>`;
+    });
+    document.getElementById("ledgerTotal").innerText = total;
+  }
+
+  function deleteEntry(index) {
+    if (confirm("Delete this entry?")) {
+      entries.splice(index, 1);
+      localStorage.setItem("entries", JSON.stringify(entries));
+      loadTransactions();
+    }
+  }
+
+  function editEntry(index) {
+    let e = entries[index];
+    document.getElementById("particular").value = e.particular;
+    document.getElementById("debit").value = e.debit;
+    document.getElementById("credit").value = e.credit;
+    document.getElementById("status").value = e.status;
+    document.getElementById("paymentType").value = e.paymentType;
+    deleteEntry(index);
+    openPage("journal");
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF();
+    doc.text("Accounting Transactions Report", 14, 15);
+    doc.autoTable({
+      startY: 20,
+      head: [["Date", "Particular", "Debit", "Credit", "Status", "Payment", "Balance"]],
+      body: entries.map((e, i) => [
+        e.date, e.particular, e.debit, e.credit, e.status, e.paymentType,
+        entries.slice(0, i+1).reduce((t, x) => t + (x.credit - x.debit), 0)
+      ])
+    });
+    doc.save("transactions.pdf");
+  }
 </script>
 </body>
 </html>
