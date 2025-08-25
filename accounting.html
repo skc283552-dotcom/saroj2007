@@ -1,216 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Accounting System</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
-    header { background: #2c3e50; color: #fff; padding: 15px; text-align: center; font-size: 22px; }
-    .dashboard { display: flex; justify-content: center; gap: 20px; margin: 30px; flex-wrap: wrap; }
-    .icon { width: 150px; height: 150px; background: #3498db; color: white; 
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 15px;
-            transition: 0.3s; }
-    .icon:hover { background: #2980b9; }
-    .page { display: none; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    table, th, td { border: 1px solid #ddd; }
-    th, td { padding: 10px; text-align: center; }
-    button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-radius: 6px; }
-    .back-btn { background: #e74c3c; color: white; }
-    .save-btn { background: #27ae60; color: white; }
-    .edit-btn { background: #f39c12; color: white; }
-    .delete-btn { background: #c0392b; color: white; }
-    .download-btn { background: #8e44ad; color: white; }
-  </style>
+<meta charset="UTF-8">
+<title>Accounting System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
+header { background: #2c3e50; color: #fff; padding: 15px; text-align: center; font-size: 22px; }
+.dashboard { display: flex; justify-content: center; gap: 20px; margin: 30px; flex-wrap: wrap; }
+.icon { width: 150px; height: 150px; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 15px; transition: 0.3s; }
+.icon:hover { background: #2980b9; }
+.page { display: none; padding: 20px; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+table, th, td { border: 1px solid #ddd; }
+th, td { padding: 10px; text-align: center; }
+button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-radius: 6px; }
+.back-btn { background: #e74c3c; color: white; }
+.save-btn { background: #27ae60; color: white; }
+.edit-btn { background: #f39c12; color: white; }
+.delete-btn { background: #c0392b; color: white; }
+.download-btn { background: #8e44ad; color: white; }
+.balance-div { margin-top: 15px; font-weight: bold; }
+</style>
 </head>
 <body>
-  <header>📊 Accounting System</header>
+<header>📊 Accounting System</header>
 
-  <!-- Dashboard -->
-  <div class="dashboard" id="dashboard">
-    <div class="icon" onclick="openPage('journal')">📘 Journal</div>
-    <div class="icon" onclick="openPage('ledger')">📗 Ledger</div>
-    <div class="icon" onclick="openPage('transactions')">📒 Transactions</div>
-    <div class="icon" onclick="downloadPDF()">📑 Download PDF</div>
-  </div>
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <div class="icon" onclick="openPage('journal')">📘 Journal</div>
+  <div class="icon" onclick="openPage('ledger')">📗 Ledger</div>
+  <div class="icon" onclick="openPage('transactions')">📒 Transactions</div>
+  <div class="icon" onclick="downloadPDF()">📑 Download PDF</div>
+</div>
 
-  <!-- Journal Page -->
-  <div class="page" id="journal">
-    <h2>Journal Entry</h2>
-    <form id="journalForm">
-      <label>Particular:</label><input type="text" id="particular" required><br><br>
-      <label>Debit (Dr):</label><input type="number" id="debit" value="0"><br><br>
-      <label>Credit (Cr):</label><input type="number" id="credit" value="0"><br><br>
-      <label>Status:</label>
-      <select id="status">
-        <option value="Paid">Paid</option>
-        <option value="Unpaid">Unpaid</option>
-      </select><br><br>
-      <label>Payment Type:</label>
-      <select id="paymentType">
-        <option>Cash</option>
-        <option>Bank</option>
-        <option>eSewa</option>
-        <option>Fonepay</option>
-      </select><br><br>
-      <button type="submit" class="save-btn">Save Entry</button>
-    </form>
-    <button class="back-btn" onclick="goBack()">⬅ Back</button>
-  </div>
+<!-- Journal Page -->
+<div class="page" id="journal">
+  <h2>Journal Entry</h2>
+  <form id="journalForm">
+    <label>Particular:</label><input type="text" id="particular" required><br><br>
+    <label>Debit (Dr):</label><input type="number" id="debit" value="0"><br><br>
+    <label>Credit (Cr):</label><input type="number" id="credit" value="0"><br><br>
+    <label>Status:</label>
+    <select id="status">
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+    </select><br><br>
+    <label>Payment Type:</label>
+    <select id="paymentType">
+      <option>Cash</option>
+      <option>Bank</option>
+      <option>eSewa</option>
+      <option>Fonepay</option>
+    </select><br><br>
+    <button type="submit" class="save-btn">Save Entry</button>
+  </form>
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
+</div>
 
-  <!-- Ledger Page -->
-  <div class="page" id="ledger">
-    <h2>Ledger</h2>
-    <label>Search by Name:</label> <input type="text" id="searchName">
-    <label>Search by Date:</label> <input type="date" id="searchDate">
-    <button onclick="filterLedger()">Search</button>
-    <table id="ledgerTable">
-      <thead>
-        <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Balance</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <h3>Total Balance: <span id="ledgerTotal">0</span></h3>
-    <button class="back-btn" onclick="goBack()">⬅ Back</button>
-  </div>
+<!-- Ledger Page -->
+<div class="page" id="ledger">
+  <h2>Ledger</h2>
+  <label>Search by Name:</label> <input type="text" id="searchName">
+  <label>Search by Date:</label> <input type="date" id="searchDate">
+  <button onclick="filterLedger()">Search</button>
+  <table id="ledgerTable">
+    <thead>
+      <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Balance</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h3>Total Balance: <span id="ledgerTotal">0</span></h3>
+  <div id="ledgerPaymentBalances" class="balance-div"></div>
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
+</div>
 
-  <!-- Transactions Page -->
-  <div class="page" id="transactions">
-    <h2>All Transactions</h2>
-    <table id="transactionTable">
-      <thead>
-        <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <h3>Total Income: <span id="totalIncome">0</span> | Total Expense: <span id="totalExpense">0</span></h3>
-    <button class="back-btn" onclick="goBack()">⬅ Back</button>
-  </div>
+<!-- Transactions Page -->
+<div class="page" id="transactions">
+  <h2>All Transactions</h2>
+  <table id="transactionTable">
+    <thead>
+      <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h3>Total Income: <span id="totalIncome">0</span> | Total Expense: <span id="totalExpense">0</span></h3>
+  <div id="paymentBalances" class="balance-div"></div>
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
+</div>
 
 <script>
-  let entries = JSON.parse(localStorage.getItem("entries")) || [];
+let entries = JSON.parse(localStorage.getItem("entries")) || [];
 
-  function openPage(pageId) {
-    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-    document.getElementById("dashboard").style.display = "none";
-    document.getElementById(pageId).style.display = "block";
-    if (pageId === "ledger") loadLedger();
-    if (pageId === "transactions") loadTransactions();
-  }
+function openPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById(pageId).style.display = "block";
+  if (pageId === "ledger") loadLedger();
+  if (pageId === "transactions") loadTransactions();
+}
 
-  function goBack() {
-    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-    document.getElementById("dashboard").style.display = "flex";
-  }
+function goBack() {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  document.getElementById("dashboard").style.display = "flex";
+}
 
-  document.getElementById("journalForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-    let date = new Date().toISOString().split("T")[0];
-    let particular = document.getElementById("particular").value;
-    let debit = parseFloat(document.getElementById("debit").value) || 0;
-    let credit = parseFloat(document.getElementById("credit").value) || 0;
-    let status = document.getElementById("status").value;
-    let paymentType = document.getElementById("paymentType").value;
+document.getElementById("journalForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  let date = new Date().toISOString().split("T")[0];
+  let particular = document.getElementById("particular").value;
+  let debit = parseFloat(document.getElementById("debit").value) || 0;
+  let credit = parseFloat(document.getElementById("credit").value) || 0;
+  let status = document.getElementById("status").value;
+  let paymentType = document.getElementById("paymentType").value;
 
-    entries.push({ date, particular, debit, credit, status, paymentType });
+  entries.push({ date, particular, debit, credit, status, paymentType });
+  localStorage.setItem("entries", JSON.stringify(entries));
+  alert("Entry Saved!");
+  this.reset();
+});
+
+function calculateBalances() {
+  let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
+  entries.forEach(e => {
+    let net = (e.credit || 0) - (e.debit || 0);
+    balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
+  });
+  return balances;
+}
+
+function loadTransactions() {
+  let tbody = document.querySelector("#transactionTable tbody");
+  tbody.innerHTML = "";
+  let totalIncome = 0, totalExpense = 0;
+  entries.forEach((e, i) => {
+    totalIncome += e.credit;
+    totalExpense += e.debit;
+    let row = `<tr>
+      <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
+      <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
+      <td>
+        <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
+        <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
+      </td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+  document.getElementById("totalIncome").innerText = totalIncome;
+  document.getElementById("totalExpense").innerText = totalExpense;
+
+  let balances = calculateBalances();
+  let balanceDiv = document.getElementById("paymentBalances");
+  balanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
+
+function loadLedger() {
+  let tbody = document.querySelector("#ledgerTable tbody");
+  tbody.innerHTML = "";
+  let total = 0;
+  entries.forEach(e => {
+    total += e.credit - e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td>
+      <td>${e.debit}</td><td>${e.credit}</td>
+      <td>${e.status}</td><td>${e.paymentType}</td>
+      <td>${total}</td>
+    </tr>`;
+  });
+  document.getElementById("ledgerTotal").innerText = total;
+
+  let balances = calculateBalances();
+  let ledgerBalanceDiv = document.getElementById("ledgerPaymentBalances");
+  ledgerBalanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
+
+function filterLedger() {
+  let name = document.getElementById("searchName").value.toLowerCase();
+  let date = document.getElementById("searchDate").value;
+  let tbody = document.querySelector("#ledgerTable tbody");
+  tbody.innerHTML = "";
+  let total = 0;
+  entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
+                      (!date || e.date === date))
+         .forEach(e => {
+    total += e.credit - e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td>
+      <td>${e.debit}</td><td>${e.credit}</td>
+      <td>${e.status}</td><td>${e.paymentType}</td>
+      <td>${total}</td>
+    </tr>`;
+  });
+  document.getElementById("ledgerTotal").innerText = total;
+
+  let balances = calculateBalances();
+  document.getElementById("ledgerPaymentBalances").innerHTML =
+    `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
+
+function deleteEntry(index) {
+  if (confirm("Delete this entry?")) {
+    entries.splice(index, 1);
     localStorage.setItem("entries", JSON.stringify(entries));
-    alert("Entry Saved!");
-    this.reset();
+    loadTransactions();
+    loadLedger();
+  }
+}
+
+function editEntry(index) {
+  let e = entries[index];
+  document.getElementById("particular").value = e.particular;
+  document.getElementById("debit").value = e.debit;
+  document.getElementById("credit").value = e.credit;
+  document.getElementById("status").value = e.status;
+  document.getElementById("paymentType").value = e.paymentType;
+  deleteEntry(index);
+  openPage("journal");
+}
+
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+  doc.text("Accounting Transactions Report", 14, 15);
+  doc.autoTable({
+    startY: 20,
+    head: [["Date", "Particular", "Debit", "Credit", "Status", "Payment", "Balance"]],
+    body: entries.map((e, i) => [
+      e.date, e.particular, e.debit, e.credit, e.status, e.paymentType,
+      entries.slice(0, i+1).reduce((t, x) => t + (x.credit - x.debit), 0)
+    ])
   });
 
-  function loadTransactions() {
-    let tbody = document.querySelector("#transactionTable tbody");
-    tbody.innerHTML = "";
-    let totalIncome = 0, totalExpense = 0;
-    entries.forEach((e, i) => {
-      totalIncome += e.credit;
-      totalExpense += e.debit;
-      let row = `<tr>
-        <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
-        <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
-        <td>
-          <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
-          <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
-        </td>
-      </tr>`;
-      tbody.innerHTML += row;
-    });
-    document.getElementById("totalIncome").innerText = totalIncome;
-    document.getElementById("totalExpense").innerText = totalExpense;
-  }
+  let y = doc.lastAutoTable.finalY + 10;
+  let balances = calculateBalances();
+  doc.text(`Balances: Cash ${balances.Cash} | Bank ${balances.Bank} | eSewa ${balances.eSewa} | Fonepay ${balances.Fonepay}`, 14, y);
 
-  function loadLedger() {
-    let tbody = document.querySelector("#ledgerTable tbody");
-    tbody.innerHTML = "";
-    let total = 0;
-    entries.forEach(e => {
-      total += e.credit - e.debit;
-      tbody.innerHTML += `<tr>
-        <td>${e.date}</td><td>${e.particular}</td>
-        <td>${e.debit}</td><td>${e.credit}</td>
-        <td>${e.status}</td><td>${e.paymentType}</td>
-        <td>${total}</td>
-      </tr>`;
-    });
-    document.getElementById("ledgerTotal").innerText = total;
-  }
-
-  function filterLedger() {
-    let name = document.getElementById("searchName").value.toLowerCase();
-    let date = document.getElementById("searchDate").value;
-    let tbody = document.querySelector("#ledgerTable tbody");
-    tbody.innerHTML = "";
-    let total = 0;
-    entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
-                        (!date || e.date === date))
-           .forEach(e => {
-      total += e.credit - e.debit;
-      tbody.innerHTML += `<tr>
-        <td>${e.date}</td><td>${e.particular}</td>
-        <td>${e.debit}</td><td>${e.credit}</td>
-        <td>${e.status}</td><td>${e.paymentType}</td>
-        <td>${total}</td>
-      </tr>`;
-    });
-    document.getElementById("ledgerTotal").innerText = total;
-  }
-
-  function deleteEntry(index) {
-    if (confirm("Delete this entry?")) {
-      entries.splice(index, 1);
-      localStorage.setItem("entries", JSON.stringify(entries));
-      loadTransactions();
-    }
-  }
-
-  function editEntry(index) {
-    let e = entries[index];
-    document.getElementById("particular").value = e.particular;
-    document.getElementById("debit").value = e.debit;
-    document.getElementById("credit").value = e.credit;
-    document.getElementById("status").value = e.status;
-    document.getElementById("paymentType").value = e.paymentType;
-    deleteEntry(index);
-    openPage("journal");
-  }
-
-  function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    let doc = new jsPDF();
-    doc.text("Accounting Transactions Report", 14, 15);
-    doc.autoTable({
-      startY: 20,
-      head: [["Date", "Particular", "Debit", "Credit", "Status", "Payment", "Balance"]],
-      body: entries.map((e, i) => [
-        e.date, e.particular, e.debit, e.credit, e.status, e.paymentType,
-        entries.slice(0, i+1).reduce((t, x) => t + (x.credit - x.debit), 0)
-      ])
-    });
-    doc.save("transactions.pdf");
-  }
+  doc.save("transactions.pdf");
+}
 </script>
 </body>
 </html>
