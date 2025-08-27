@@ -1,905 +1,566 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounting System with Cloud Sync</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3a0ca3;
-            --success: #4cc9f0;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-            --border: #dee2e6;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fb;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background: #2c3e50;
-            color: #fff;
-            padding: 15px;
-            text-align: center;
-            font-size: 22px;
-            border-radius: 10px 10px 0 0;
-        }
-        
-        .dashboard {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 30px;
-            flex-wrap: wrap;
-        }
-        
-        .icon {
-            width: 150px;
-            height: 150px;
-            background: #3498db;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 15px;
-            transition: 0.3s;
-        }
-        
-        .icon:hover {
-            background: #2980b9;
-            transform: translateY(-5px);
-        }
-        
-        .page {
-            display: none;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            margin-top: 20px;
-        }
-        
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-        
-        th {
-            background-color: #f2f2f2;
-        }
-        
-        button {
-            padding: 8px 16px;
-            margin: 5px;
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        
-        .back-btn {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .back-btn:hover {
-            background: #c0392b;
-        }
-        
-        .save-btn {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .save-btn:hover {
-            background: #219653;
-        }
-        
-        .edit-btn {
-            background: #f39c12;
-            color: white;
-        }
-        
-        .edit-btn:hover {
-            background: #d68910;
-        }
-        
-        .delete-btn {
-            background: #c0392b;
-            color: white;
-        }
-        
-        .delete-btn:hover {
-            background: #a93226;
-        }
-        
-        .download-btn {
-            background: #8e44ad;
-            color: white;
-        }
-        
-        .download-btn:hover {
-            background: #7d3c98;
-        }
-        
-        .sync-btn {
-            background: #2c3e50;
-            color: white;
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            z-index: 100;
-        }
-        
-        .sync-btn:hover {
-            background: #1a2530;
-        }
-        
-        .balance-div {
-            margin-top: 15px;
-            font-weight: bold;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 25px;
-            background: #27ae60;
-            color: white;
-            border-radius: 5px;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .notification.error {
-            background: #e74c3c;
-        }
-        
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .setup-container {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            margin: 20px 0;
-        }
-        
-        .step {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .step-number {
-            display: inline-block;
-            background: #3498db;
-            color: white;
-            width: 30px;
-            height: 30px;
-            text-align: center;
-            line-height: 30px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-        
-        .important {
-            background: #fff4e6;
-            border-left: 4px solid #ffa94d;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .code {
-            background: #2c3e50;
-            color: #fff;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: monospace;
-            overflow-x: auto;
-            margin: 15px 0;
-        }
-        
-        .note {
-            background: #e7f5ff;
-            border-left: 4px solid #4dabf7;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .warning {
-            background: #fff3bf;
-            border-left: 4px solid #fcc419;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .button {
-            display: inline-block;
-            background: #3498db;
-            color: white;
-            padding: 12px 25px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin: 10px 0;
-            transition: background 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .button:hover {
-            background: #2980b9;
-        }
-        
-        .center {
-            text-align: center;
-        }
-        
-        .token-setup {
-            display: none;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            margin-top: 20px;
-        }
-        
-        input[type="text"], input[type="number"], input[type="date"], select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>MyAccount - Second Accounting System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
+header { background: #2c3e50; color: #fff; padding: 15px; text-align: center; font-size: 22px; }
+.dashboard { display: flex; justify-content: center; gap: 20px; margin: 30px; flex-wrap: wrap; }
+.icon { width: 150px; height: 150px; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 15px; transition: 0.3s; }
+.icon:hover { background: #2980b9; }
+.page { display: none; padding: 20px; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+table, th, td { border: 1px solid #ddd; }
+th, td { padding: 10px; text-align: center; }
+button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-radius: 6px; }
+.back-btn { background: #e74c3c; color: white; }
+.save-btn { background: #27ae60; color: white; }
+.edit-btn { background: #f39c12; color: white; }
+.delete-btn { background: #c0392b; color: white; }
+.download-btn { background: #8e44ad; color: white; }
+.balance-div { margin-top: 15px; font-weight: bold; }
+.sync-btn { background: #2c3e50; color: white; position: fixed; top: 15px; right: 15px; }
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background: #27ae60;
+    color: white;
+    border-radius: 5px;
+    display: none;
+    z-index: 1000;
+}
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.token-section {
+    background: #fff3cd;
+    padding: 15px;
+    margin: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #ffc107;
+}
+.token-section input {
+    padding: 8px;
+    width: 300px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.token-section button {
+    padding: 8px 15px;
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>📊 Accounting System with Cloud Sync</header>
+<header>📊 MyAccount - Second Accounting System</header>
+
+<!-- Token Setup -->
+<div class="token-section">
+    <h3>GitHub Setup (Separate from your main accounting system)</h3>
+    <p>This system uses different storage than your accounting.html</p>
+    <input type="text" id="githubToken" placeholder="Enter GitHub Token for MyAccount">
+    <button onclick="saveToken()">Save Token</button>
+    <p><small>Get token from GitHub Settings > Developer Settings > Personal Access Tokens</small></p>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <div class="icon" onclick="openPage('journal')">📘 Journal</div>
+  <div class="icon" onclick="openPage('ledger')">📗 Ledger</div>
+  <div class="icon" onclick="openPage('transactions')">📒 Transactions</div>
+  <div class="icon" onclick="downloadPDF()">📑 Download PDF</div>
+</div>
+
+<button class="sync-btn" id="syncBtn" onclick="syncData()"><span class="loading" id="loadingIcon" style="display:none"></span>Sync Data</button>
+<div class="notification" id="notification">Data synced successfully!</div>
+
+<!-- Journal Page -->
+<div class="page" id="journal">
+  <h2>Journal Entry</h2>
+  <form id="journalForm">
+    <label>Particular:</label><input type="text" id="particular" required><br><br>
+    <label>Debit (Dr):</label><input type="number" id="debit" value="0"><br><br>
+    <label>Credit (Cr):</label><input type="number" id="credit" value="0"><br><br>
+    <label>Status:</label>
+    <select id="status">
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+    </select><br><br>
+    <label>Payment Type:</label>
+    <select id="paymentType">
+      <option>Cash</option>
+      <option>Bank</option>
+      <option>eSewa</option>
+      <option>Fonepay</option>
+    </select><br><br>
+    <button type="submit" class="save-btn">Save Entry</button>
+  </form>
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
+</div>
+
+<!-- Ledger Page -->
+<div class="page" id="ledger">
+  <h2>Ledger</h2>
+  <label>Search by Name:</label> <input type="text" id="searchName">
+  <label>Search by Date:</label> <input type="date" id="searchDate">
+  <button onclick="filterLedger()">Search</button>
+  <table id="ledgerTable">
+    <thead>
+      <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Balance</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h3>Total Balance: <span id="ledgerTotal">0</span></h3>
+  <div id="ledgerPaymentBalances" class="balance-div"></div>
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
+</div>
+
+<!-- Transactions Page -->
+<div class="page" id="transactions">
+  <h2>All Transactions</h2>
+  <table id="transactionTable">
+    <thead>
+      <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h3>Total Income: <span id="totalIncome">0</span> | Total Expense: <span id="totalExpense">0</span></h3>
+  <div id="paymentBalances" class="balance-div"></div>
+  <button class="back-btn" onclick="goBack()">⬅ Back</button>
+</div>
+
+<script>
+// Configuration - This uses a different filename to separate from your accounting.html
+const FILENAME = 'myaccount-data.json'; // Different from your accounting.html
+let entries = [];
+let isOnline = navigator.onLine;
+let GITHUB_TOKEN = localStorage.getItem('myaccount_github_token') || ''; // Different storage key
+let GIST_ID = localStorage.getItem('myaccount_gist_id') || ''; // Different storage key
+
+// Initialize the application
+function initApp() {
+    // Load data
+    loadData();
+    
+    // Set up offline/online detection
+    window.addEventListener('online', () => {
+        isOnline = true;
+        document.getElementById('syncBtn').disabled = false;
+        showNotification('Back online. Sync available.');
+    });
+    
+    window.addEventListener('offline', () => {
+        isOnline = false;
+        document.getElementById('syncBtn').disabled = true;
+        showNotification('Offline. Using local data.');
+    });
+    
+    // Check initial online status
+    document.getElementById('syncBtn').disabled = !isOnline;
+    
+    // Set token value if exists
+    if (GITHUB_TOKEN) {
+        document.getElementById('githubToken').value = GITHUB_TOKEN;
+    }
+}
+
+// Save GitHub token
+function saveToken() {
+    const tokenInput = document.getElementById('githubToken').value;
+    if (tokenInput && tokenInput.startsWith('ghp_')) {
+        GITHUB_TOKEN = tokenInput;
+        localStorage.setItem('myaccount_github_token', GITHUB_TOKEN); // Different storage key
+        showNotification('Token saved successfully for MyAccount!');
+    } else {
+        showNotification('Please enter a valid GitHub token. It should start with "ghp_"', true);
+    }
+}
+
+// Show notification
+function showNotification(message, isError = false) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.style.background = isError ? '#e74c3c' : '#27ae60';
+    notification.style.display = 'block';
+    
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+}
+
+// Load data from GitHub Gist or localStorage
+async function loadData() {
+    // Try to load from localStorage first for quick startup
+    const localData = localStorage.getItem("myaccount_entries"); // Different storage key
+    if (localData) {
+        entries = JSON.parse(localData);
+    }
+    
+    // If online and token exists, try to sync with GitHub
+    if (isOnline && GITHUB_TOKEN) {
+        try {
+            await syncData();
+        } catch (error) {
+            console.error('Failed to sync data:', error);
+            showNotification('Using local data. Sync failed.', true);
+        }
+    }
+    
+    // Update UI
+    if (entries.length > 0) {
+        loadTransactions();
+        loadLedger();
+    }
+}
+
+// Sync data with GitHub Gist
+async function syncData() {
+    if (!isOnline) {
+        showNotification('Cannot sync while offline', true);
+        return;
+    }
+    
+    if (!GITHUB_TOKEN) {
+        showNotification('Please set up GitHub token first', true);
+        return;
+    }
+    
+    const syncBtn = document.getElementById('syncBtn');
+    const loadingIcon = document.getElementById('loadingIcon');
+    syncBtn.disabled = true;
+    loadingIcon.style.display = 'inline-block';
+    
+    try {
+        let gistId = GIST_ID;
         
-        <button class="sync-btn" id="syncBtn" onclick="syncData()"><span class="loading" id="loadingIcon" style="display:none"></span>Sync Data</button>
-        <div class="notification" id="notification">Data synced successfully!</div>
-        
-        <!-- Token Setup Section -->
-        <div class="token-setup" id="tokenSetup">
-            <h2>GitHub Token Setup</h2>
-            
-            <div class="important">
-                <p><strong>Important:</strong> Your GitHub token is like a password. Never share it with anyone or include it in public code.</p>
-            </div>
-            
-            <div class="step">
-                <h3><span class="step-number">1</span>Go to GitHub Token Settings</h3>
-                <p>Click the button below to go directly to the token creation page on GitHub:</p>
-                <p class="center"><a href="https://github.com/settings/tokens" class="button" target="_blank">Create GitHub Token</a></p>
-                <p>You'll need to log in to your GitHub account if you're not already logged in.</p>
-            </div>
-            
-            <div class="step">
-                <h3><span class="step-number">2</span>Generate New Token</h3>
-                <p>Click on the <strong>"Generate new token"</strong> button, then select <strong>"Generate new token (classic)"</strong>.</p>
-            </div>
-            
-            <div class="step">
-                <h3><span class="step-number">3</span>Configure Token Settings</h3>
-                <p>Set the following values:</p>
-                <ul>
-                    <li><strong>Note:</strong> "Accounting App" (or any descriptive name)</li>
-                    <li><strong>Expiration:</strong> Choose "No expiration" for convenience</li>
-                    <li><strong>Select scopes:</strong> Check only the <strong>"gist"</strong> checkbox</li>
-                </ul>
-            </div>
-            
-            <div class="step">
-                <h3><span class="step-number">4</span>Generate Token</h3>
-                <p>Scroll to the bottom of the page and click the <strong>"Generate token"</strong> button.</p>
-            </div>
-            
-            <div class="step">
-                <h3><span class="step-number">5</span>Copy Your Token</h3>
-                <p>IMPORTANT: Copy your token immediately! You won't be able to see it again after you leave the page.</p>
-                <div class="warning">
-                    <p><strong>Warning:</strong> This token is like a password. Anyone with this token can access your gists. Keep it secure!</p>
-                </div>
-            </div>
-            
-            <div class="step">
-                <h3><span class="step-number">6</span>Add Token to Your App</h3>
-                <p>Paste your token in the field below:</p>
-                <div class="form-group">
-                    <label for="tokenInput">GitHub Token:</label>
-                    <input type="text" id="tokenInput" placeholder="Paste your GitHub token here">
-                </div>
-                <button class="button" onclick="saveToken()">Save Token</button>
-                
-                <div class="note">
-                    <p><strong>Note:</strong> The token will look something like <code>ghp_16CharacterAlphaNumericStringFollowedByMoreCharacters</code></p>
-                </div>
-            </div>
-            
-            <div class="warning">
-                <p><strong>Security reminder:</strong> Never commit your token to a public repository. Since you're using GitHub Pages with a private repository, your token is safe.</p>
-            </div>
-        </div>
-
-        <!-- Dashboard -->
-        <div class="dashboard" id="dashboard">
-            <div class="icon" onclick="openPage('journal')">📘 Journal</div>
-            <div class="icon" onclick="openPage('ledger')">📗 Ledger</div>
-            <div class="icon" onclick="openPage('transactions')">📒 Transactions</div>
-            <div class="icon" onclick="downloadPDF()">📑 Download PDF</div>
-        </div>
-
-        <!-- Journal Page -->
-        <div class="page" id="journal">
-            <h2>Journal Entry</h2>
-            <form id="journalForm">
-                <div class="form-group">
-                    <label for="particular">Particular:</label>
-                    <input type="text" id="particular" required>
-                </div>
-                <div class="form-group">
-                    <label for="debit">Debit (Dr):</label>
-                    <input type="number" id="debit" value="0">
-                </div>
-                <div class="form-group">
-                    <label for="credit">Credit (Cr):</label>
-                    <input type="number" id="credit" value="0">
-                </div>
-                <div class="form-group">
-                    <label for="status">Status:</label>
-                    <select id="status">
-                        <option value="Paid">Paid</option>
-                        <option value="Unpaid">Unpaid</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="paymentType">Payment Type:</label>
-                    <select id="paymentType">
-                        <option>Cash</option>
-                        <option>Bank</option>
-                        <option>eSewa</option>
-                        <option>Fonepay</option>
-                    </select>
-                </div>
-                <button type="submit" class="save-btn">Save Entry</button>
-            </form>
-            <button class="back-btn" onclick="goBack()">⬅ Back</button>
-        </div>
-
-        <!-- Ledger Page -->
-        <div class="page" id="ledger">
-            <h2>Ledger</h2>
-            <div class="form-group">
-                <label for="searchName">Search by Name:</label>
-                <input type="text" id="searchName">
-            </div>
-            <div class="form-group">
-                <label for="searchDate">Search by Date:</label>
-                <input type="date" id="searchDate">
-            </div>
-            <button onclick="filterLedger()">Search</button>
-            <table id="ledgerTable">
-                <thead>
-                    <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Balance</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <h3>Total Balance: <span id="ledgerTotal">0</span></h3>
-            <div id="ledgerPaymentBalances" class="balance-div"></div>
-            <button class="back-btn" onclick="goBack()">⬅ Back</button>
-        </div>
-
-        <!-- Transactions Page -->
-        <div class="page" id="transactions">
-            <h2>All Transactions</h2>
-            <table id="transactionTable">
-                <thead>
-                    <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <h3>Total Income: <span id="totalIncome">0</span> | Total Expense: <span id="totalExpense">0</span></h3>
-            <div id="paymentBalances" class="balance-div"></div>
-            <button class="back-btn" onclick="goBack()">⬅ Back</button>
-        </div>
-    </div>
-
-    <script>
-        // Configuration
-        const FILENAME = 'accounting-data.json';
-        let entries = [];
-        let isOnline = navigator.onLine;
-        let GITHUB_TOKEN = localStorage.getItem('github_token') || '';
-        let GIST_ID = localStorage.getItem('gist_id') || '';
-
-        // Initialize the application
-        async function initApp() {
-            // Show token setup if no token is set
-            if (!GITHUB_TOKEN) {
-                document.getElementById('tokenSetup').style.display = 'block';
-                document.getElementById('dashboard').style.display = 'none';
-            } else {
-                // Load data
-                await loadData();
-            }
-            
-            // Set up offline/online detection
-            window.addEventListener('online', () => {
-                isOnline = true;
-                document.getElementById('syncBtn').disabled = false;
-                showNotification('Back online. Sync available.');
-            });
-            
-            window.addEventListener('offline', () => {
-                isOnline = false;
-                document.getElementById('syncBtn').disabled = true;
-                showNotification('Offline. Using local data.', true);
-            });
-            
-            // Check initial online status
-            document.getElementById('syncBtn').disabled = !isOnline;
-        }
-
-        // Save GitHub token
-        function saveToken() {
-            const tokenInput = document.getElementById('tokenInput').value;
-            if (tokenInput && tokenInput.startsWith('ghp_')) {
-                GITHUB_TOKEN = tokenInput;
-                localStorage.setItem('github_token', GITHUB_TOKEN);
-                document.getElementById('tokenSetup').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'flex';
-                showNotification('Token saved successfully!');
-                loadData();
-            } else {
-                showNotification('Please enter a valid GitHub token. It should start with "ghp_"', true);
-            }
-        }
-
-        // Show notification
-        function showNotification(message, isError = false) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = isError ? 'notification error' : 'notification';
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        // Load data from GitHub Gist or localStorage
-        async function loadData() {
-            // Try to load from localStorage first for quick startup
-            const localData = localStorage.getItem("entries");
-            if (localData) {
-                entries = JSON.parse(localData);
-            }
-            
-            // If online, try to sync with GitHub
-            if (isOnline && GITHUB_TOKEN) {
-                try {
-                    await syncData();
-                } catch (error) {
-                    console.error('Failed to sync data:', error);
-                    showNotification('Using local data. Sync failed.', true);
+        // If we don't have a GIST_ID, try to find existing gists with our data
+        if (!gistId) {
+            const gists = await listGists();
+            for (const gist of gists) {
+                if (gist.files[FILENAME]) {
+                    gistId = gist.id;
+                    GIST_ID = gistId;
+                    localStorage.setItem('myaccount_gist_id', GIST_ID); // Different storage key
+                    break;
                 }
             }
-            
-            // Update UI
-            if (entries.length > 0) {
-                loadTransactions();
-                loadLedger();
-            }
         }
-
-        // Sync data with GitHub Gist
-        async function syncData() {
-            if (!isOnline) {
-                showNotification('Cannot sync while offline', true);
-                return;
-            }
-            
-            if (!GITHUB_TOKEN) {
-                document.getElementById('tokenSetup').style.display = 'block';
-                document.getElementById('dashboard').style.display = 'none';
-                showNotification('Please set up GitHub token first', true);
-                return;
-            }
-            
-            const syncBtn = document.getElementById('syncBtn');
-            const loadingIcon = document.getElementById('loadingIcon');
-            syncBtn.disabled = true;
-            loadingIcon.style.display = 'inline-block';
-            
+        
+        // Get existing data if available
+        let remoteData = [];
+        if (gistId) {
             try {
-                let gistId = GIST_ID;
+                const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
                 
-                // If we don't have a GIST_ID, try to find existing gists with our data
-                if (!gistId) {
-                    const gists = await listGists();
-                    for (const gist of gists) {
-                        if (gist.files[FILENAME]) {
-                            gistId = gist.id;
-                            GIST_ID = gistId;
-                            localStorage.setItem('gist_id', GIST_ID);
-                            break;
-                        }
+                if (response.ok) {
+                    const gist = await response.json();
+                    if (gist.files[FILENAME]) {
+                        remoteData = JSON.parse(gist.files[FILENAME].content);
                     }
                 }
-                
-                // Get existing data if available
-                let remoteData = [];
-                if (gistId) {
-                    try {
-                        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-                            headers: {
-                                'Authorization': `token ${GITHUB_TOKEN}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            const gist = await response.json();
-                            if (gist.files[FILENAME]) {
-                                remoteData = JSON.parse(gist.files[FILENAME].content);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error fetching existing gist:', error);
-                    }
-                }
-                
-                // Merge data - remote data has priority for conflicts
-                const mergedData = mergeData(entries, remoteData);
-                entries = mergedData;
-                
-                // Save to localStorage
-                localStorage.setItem("entries", JSON.stringify(entries));
-                
-                // Upload to GitHub
-                const response = await updateGist(entries, gistId);
-                
-                // If we didn't have a GIST_ID before, save it now
-                if (!gistId) {
-                    GIST_ID = response.id;
-                    localStorage.setItem('gist_id', GIST_ID);
-                }
-                
-                showNotification('Data synced successfully!');
-                
-                // Update UI
-                loadTransactions();
-                loadLedger();
-                
             } catch (error) {
-                console.error('Sync error:', error);
-                showNotification('Sync failed: ' + error.message, true);
-            } finally {
-                syncBtn.disabled = !isOnline;
-                loadingIcon.style.display = 'none';
+                console.error('Error fetching existing gist:', error);
             }
         }
-
-        // Merge local and remote data
-        function mergeData(localData, remoteData) {
-            // Create a map of entries by date and particular for efficient lookup
-            const entryMap = new Map();
-            
-            // Add all local entries
-            localData.forEach(entry => {
-                const key = `${entry.date}-${entry.particular}-${entry.debit}-${entry.credit}`;
-                entryMap.set(key, entry);
-            });
-            
-            // Add or overwrite with remote entries
-            remoteData.forEach(entry => {
-                const key = `${entry.date}-${entry.particular}-${entry.debit}-${entry.credit}`;
-                entryMap.set(key, entry);
-            });
-            
-            // Convert back to array and sort by date
-            return Array.from(entryMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // Merge data - remote data has priority for conflicts
+        const mergedData = mergeData(entries, remoteData);
+        entries = mergedData;
+        
+        // Save to localStorage
+        localStorage.setItem("myaccount_entries", JSON.stringify(entries)); // Different storage key
+        
+        // Upload to GitHub
+        const response = await updateGist(entries, gistId);
+        
+        // If we didn't have a GIST_ID before, save it now
+        if (!GIST_ID) {
+            GIST_ID = response.id;
+            localStorage.setItem('myaccount_gist_id', GIST_ID); // Different storage key
         }
+        
+        showNotification('MyAccount data synced successfully!');
+        
+        // Update UI
+        loadTransactions();
+        loadLedger();
+        
+    } catch (error) {
+        console.error('Sync error:', error);
+        showNotification('Sync failed: ' + error.message, true);
+    } finally {
+        syncBtn.disabled = !isOnline;
+        loadingIcon.style.display = 'none';
+    }
+}
 
-        // List all gists for the user
-        async function listGists() {
-            const response = await fetch('https://api.github.com/gists', {
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to list gists: ' + response.statusText);
+// Merge local and remote data
+function mergeData(localData, remoteData) {
+    // Create a map of entries by date and particular for efficient lookup
+    const entryMap = new Map();
+    
+    // Add all local entries
+    localData.forEach(entry => {
+        const key = `${entry.date}-${entry.particular}-${entry.debit}-${entry.credit}`;
+        entryMap.set(key, entry);
+    });
+    
+    // Add or overwrite with remote entries
+    remoteData.forEach(entry => {
+        const key = `${entry.date}-${entry.particular}-${entry.debit}-${entry.credit}`;
+        entryMap.set(key, entry);
+    });
+    
+    // Convert back to array and sort by date
+    return Array.from(entryMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+// List all gists for the user
+async function listGists() {
+    const response = await fetch('https://api.github.com/gists', {
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to list gists: ' + response.statusText);
+    }
+    
+    return await response.json();
+}
+
+// Update or create a gist with the accounting data
+async function updateGist(data, gistId = null) {
+    const body = {
+        files: {
+            [FILENAME]: {
+                content: JSON.stringify(data, null, 2)
             }
-            
-            return await response.json();
-        }
+        },
+        description: 'MyAccount System Data', // Different description
+        public: false
+    };
+    
+    const url = gistId ? 
+        `https://api.github.com/gists/${gistId}` : 
+        'https://api.github.com/gists';
+    
+    const method = gistId ? 'PATCH' : 'POST';
+    
+    const response = await fetch(url, {
+        method: method,
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to update gist: ' + response.statusText);
+    }
+    
+    return await response.json();
+}
 
-        // Update or create a gist with the accounting data
-        async function updateGist(data, gistId = null) {
-            const body = {
-                files: {
-                    [FILENAME]: {
-                        content: JSON.stringify(data, null, 2)
-                    }
-                },
-                description: 'Accounting System Data',
-                public: false
-            };
-            
-            const url = gistId ? 
-                `https://api.github.com/gists/${gistId}` : 
-                'https://api.github.com/gists';
-            
-            const method = gistId ? 'PATCH' : 'POST';
-            
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update gist: ' + response.statusText);
-            }
-            
-            return await response.json();
-        }
+// Your existing functions with modifications for separate storage
+function openPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById(pageId).style.display = "block";
+  if (pageId === "ledger") loadLedger();
+  if (pageId === "transactions") loadTransactions();
+}
 
-        // Your existing functions with minor modifications
-        function openPage(pageId) {
-            document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-            document.getElementById("dashboard").style.display = "none";
-            document.getElementById("tokenSetup").style.display = "none";
-            document.getElementById(pageId).style.display = "block";
-            if (pageId === "ledger") loadLedger();
-            if (pageId === "transactions") loadTransactions();
-        }
+function goBack() {
+  document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+  document.getElementById("dashboard").style.display = "flex";
+}
 
-        function goBack() {
-            document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-            document.getElementById("tokenSetup").style.display = "none";
-            document.getElementById("dashboard").style.display = "flex";
-        }
+document.getElementById("journalForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  let date = new Date().toISOString().split("T")[0];
+  let particular = document.getElementById("particular").value;
+  let debit = parseFloat(document.getElementById("debit").value) || 0;
+  let credit = parseFloat(document.getElementById("credit").value) || 0;
+  let status = document.getElementById("status").value;
+  let paymentType = document.getElementById("paymentType").value;
 
-        document.getElementById("journalForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            let date = new Date().toISOString().split("T")[0];
-            let particular = document.getElementById("particular").value;
-            let debit = parseFloat(document.getElementById("debit").value) || 0;
-            let credit = parseFloat(document.getElementById("credit").value) || 0;
-            let status = document.getElementById("status").value;
-            let paymentType = document.getElementById("paymentType").value;
+  entries.push({ date, particular, debit, credit, status, paymentType });
+  localStorage.setItem("myaccount_entries", JSON.stringify(entries)); // Different storage key
+  
+  // Try to sync if online
+  if (isOnline && GITHUB_TOKEN) {
+    try {
+      await syncData();
+    } catch (error) {
+      console.error('Sync after save failed:', error);
+      showNotification('Saved locally. Sync failed.', true);
+    }
+  } else {
+    showNotification('Entry saved to MyAccount locally. Sync when online.');
+  }
+  
+  this.reset();
+});
 
-            entries.push({ date, particular, debit, credit, status, paymentType });
-            localStorage.setItem("entries", JSON.stringify(entries));
-            
-            // Try to sync if online
-            if (isOnline && GITHUB_TOKEN) {
-                try {
-                    await syncData();
-                } catch (error) {
-                    console.error('Sync after save failed:', error);
-                    showNotification('Saved locally. Sync failed.', true);
-                }
-            } else {
-                showNotification('Entry saved locally. Sync when online.');
-            }
-            
-            this.reset();
-        });
+function calculateBalances() {
+  let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
+  entries.forEach(e => {
+    let net = (e.credit || 0) - (e.debit || 0);
+    balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
+  });
+  return balances;
+}
 
-        function calculateBalances() {
-            let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
-            entries.forEach(e => {
-                let net = (e.credit || 0) - (e.debit || 0);
-                balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
-            });
-            return balances;
-        }
+function loadTransactions() {
+  let tbody = document.querySelector("#transactionTable tbody");
+  tbody.innerHTML = "";
+  let totalIncome = 0, totalExpense = 0;
+  entries.forEach((e, i) => {
+    totalIncome += e.credit;
+    totalExpense += e.debit;
+    let row = `<tr>
+      <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
+      <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
+      <td>
+        <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
+        <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
+      </td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+  document.getElementById("totalIncome").innerText = totalIncome;
+  document.getElementById("totalExpense").innerText = totalExpense;
 
-        function loadTransactions() {
-            let tbody = document.querySelector("#transactionTable tbody");
-            tbody.innerHTML = "";
-            let totalIncome = 0, totalExpense = 0;
-            entries.forEach((e, i) => {
-                totalIncome += e.credit;
-                totalExpense += e.debit;
-                let row = `<tr>
-                    <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
-                    <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
-                    <td>
-                    <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
-                    <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-            document.getElementById("totalIncome").innerText = totalIncome;
-            document.getElementById("totalExpense").innerText = totalExpense;
+  let balances = calculateBalances();
+  let balanceDiv = document.getElementById("paymentBalances");
+  balanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
 
-            let balances = calculateBalances();
-            let balanceDiv = document.getElementById("paymentBalances");
-            balanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-        }
+function loadLedger() {
+  let tbody = document.querySelector("#ledgerTable tbody");
+  tbody.innerHTML = "";
+  let total = 0;
+  entries.forEach(e => {
+    total += e.credit - e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td>
+      <td>${e.debit}</td><td>${e.credit}</td>
+      <td>${e.status}</td><td>${e.paymentType}</td>
+      <td>${total}</td>
+    </tr>`;
+  });
+  document.getElementById("ledgerTotal").innerText = total;
 
-        function loadLedger() {
-            let tbody = document.querySelector("#ledgerTable tbody");
-            tbody.innerHTML = "";
-            let total = 0;
-            entries.forEach(e => {
-                total += e.credit - e.debit;
-                tbody.innerHTML += `<tr>
-                    <td>${e.date}</td><td>${e.particular}</td>
-                    <td>${e.debit}</td><td>${e.credit}</td>
-                    <td>${e.status}</td><td>${e.paymentType}</td>
-                    <td>${total}</td>
-                </tr>`;
-            });
-            document.getElementById("ledgerTotal").innerText = total;
+  let balances = calculateBalances();
+  let ledgerBalanceDiv = document.getElementById("ledgerPaymentBalances");
+  ledgerBalanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
 
-            let balances = calculateBalances();
-            let ledgerBalanceDiv = document.getElementById("ledgerPaymentBalances");
-            ledgerBalanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-        }
+function filterLedger() {
+  let name = document.getElementById("searchName").value.toLowerCase();
+  let date = document.getElementById("searchDate").value;
+  let tbody = document.querySelector("#ledgerTable tbody");
+  tbody.innerHTML = "";
+  let total = 0;
+  entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
+                      (!date || e.date === date))
+         .forEach(e => {
+    total += e.credit - e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td>
+      <td>${e.debit}</td><td>${e.credit}</td>
+      <td>${e.status}</td><td>${e.paymentType}</td>
+      <td>${total}</td>
+    </tr>`;
+  });
+  document.getElementById("ledgerTotal").innerText = total;
 
-        function filterLedger() {
-            let name = document.getElementById("searchName").value.toLowerCase();
-            let date = document.getElementById("searchDate").value;
-            let tbody = document.querySelector("#ledgerTable tbody");
-            tbody.innerHTML = "";
-            let total = 0;
-            entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
-                            (!date || e.date === date))
-                .forEach(e => {
-                total += e.credit - e.debit;
-                tbody.innerHTML += `<tr>
-                    <td>${e.date}</td><td>${e.particular}</td>
-                    <td>${e.debit}</td><td>${e.credit}</td>
-                    <td>${e.status}</td><td>${e.paymentType}</td>
-                    <td>${total}</td>
-                </tr>`;
-            });
-            document.getElementById("ledgerTotal").innerText = total;
+  let balances = calculateBalances();
+  document.getElementById("ledgerPaymentBalances").innerHTML =
+    `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
 
-            let balances = calculateBalances();
-            document.getElementById("ledgerPaymentBalances").innerHTML =
-                `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-        }
+async function deleteEntry(index) {
+  if (confirm("Delete this entry from MyAccount?")) {
+    entries.splice(index, 1);
+    localStorage.setItem("myaccount_entries", JSON.stringify(entries)); // Different storage key
+    
+    // Try to sync if online
+    if (isOnline && GITHUB_TOKEN) {
+      try {
+        await syncData();
+      } catch (error) {
+        console.error('Sync after delete failed:', error);
+        showNotification('Deleted locally. Sync failed.', true);
+      }
+    } else {
+      showNotification('Entry deleted from MyAccount locally. Sync when online.');
+    }
+    
+    loadTransactions();
+    loadLedger();
+  }
+}
 
-        async function deleteEntry(index) {
-            if (confirm("Delete this entry?")) {
-                entries.splice(index, 1);
-                localStorage.setItem("entries", JSON.stringify(entries));
-                
-                // Try to sync if online
-                if (isOnline && GITHUB_TOKEN) {
-                    try {
-                        await syncData();
-                    } catch (error) {
-                        console.error('Sync after delete failed:', error);
-                        showNotification('Deleted locally. Sync failed.', true);
-                    }
-                } else {
-                    showNotification('Entry deleted locally. Sync when online.');
-                }
-                
-                loadTransactions();
-                loadLedger();
-            }
-        }
+function editEntry(index) {
+  let e = entries[index];
+  document.getElementById("particular").value = e.particular;
+  document.getElementById("debit").value = e.debit;
+  document.getElementById("credit").value = e.credit;
+  document.getElementById("status").value = e.status;
+  document.getElementById("paymentType").value = e.paymentType;
+  deleteEntry(index);
+  openPage("journal");
+}
 
-        function editEntry(index) {
-            let e = entries[index];
-            document.getElementById("particular").value = e.particular;
-            document.getElementById("debit").value = e.debit;
-            document.getElementById("credit").value = e.credit;
-            document.getElementById("status").value = e.status;
-            document.getElementById("paymentType").value = e.paymentType;
-            deleteEntry(index);
-            openPage("journal");
-        }
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+  doc.text("MyAccount Transactions Report", 14, 15);
+  doc.autoTable({
+    startY: 20,
+    head: [["Date", "Particular", "Debit", "Credit", "Status", "Payment", "Balance"]],
+    body: entries.map((e, i) => [
+      e.date, e.particular, e.debit, e.credit, e.status, e.paymentType,
+      entries.slice(0, i+1).reduce((t, x) => t + (x.credit - x.debit), 0)
+    ])
+  });
 
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            let doc = new jsPDF();
-            doc.text("Accounting Transactions Report", 14, 15);
-            doc.autoTable({
-                startY: 20,
-                head: [["Date", "Particular", "Debit", "Credit", "Status", "Payment", "Balance"]],
-                body: entries.map((e, i) => [
-                    e.date, e.particular, e.debit, e.credit, e.status, e.paymentType,
-                    entries.slice(0, i+1).reduce((t, x) => t + (x.credit - x.debit), 0)
-                ])
-            });
+  let y = doc.lastAutoTable.finalY + 10;
+  let balances = calculateBalances();
+  doc.text(`Balances: Cash ${balances.Cash} | Bank ${balances.Bank} | eSewa ${balances.eSewa} | Fonepay ${balances.Fonepay}`, 14, y);
 
-            let y = doc.lastAutoTable.finalY + 10;
-            let balances = calculateBalances();
-            doc.text(`Balances: Cash ${balances.Cash} | Bank ${balances.Bank} | eSewa ${balances.eSewa} | Fonepay ${balances.Fonepay}`, 14, y);
+  doc.save("myaccount_transactions.pdf");
+}
 
-            doc.save("transactions.pdf");
-        }
-
-        // Initialize the app
-        initApp();
-    </script>
+// Initialize the app
+initApp();
+</script>
 </body>
-    </html>
+</html>
