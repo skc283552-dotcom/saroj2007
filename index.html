@@ -2,83 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Login - My Portal</title>
+  <title>Login Page</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #74ebd5, #ACB6E5);
+      background: linear-gradient(to right, #6a11cb, #2575fc);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
-    .login-box {
-      background: white;
+    .login-container {
+      background: #fff;
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
+      width: 320px;
       text-align: center;
     }
-    input {
+    .login-container h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    input[type="text"], input[type="password"] {
       width: 90%;
       padding: 10px;
       margin: 10px 0;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      border-radius: 6px;
     }
     button {
-      width: 95%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      background: #4CAF50;
+      width: 100%;
+      padding: 12px;
+      background: #2575fc;
       color: white;
-      font-weight: bold;
-      border-radius: 6px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
     }
-    button:hover { background: #45a049; }
-    .link {
-      margin-top: 15px;
+    button:hover {
+      background: #1b5fd6;
+    }
+    .error {
+      color: red;
       font-size: 14px;
-      color: blue;
-      cursor: pointer;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
+
+  <div class="login-container">
     <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
+    <input type="text" id="username" placeholder="Enter Username">
+    <input type="password" id="password" placeholder="Enter Password">
     <button onclick="login()">Login</button>
-    <div class="link" onclick="createAccount()">Create Account</div>
+    <p class="error" id="error"></p>
   </div>
 
   <script>
-    // Store accounts in localStorage
-    function createAccount() {
-      const user = prompt("Enter new username:");
-      const pass = prompt("Enter new password:");
-      if(user && pass) {
-        localStorage.setItem(user, pass);
-        alert("Account created! You can now login.");
-      }
-    }
-
     function login() {
-      const user = document.getElementById("username").value;
-      const pass = document.getElementById("password").value;
+      let user = document.getElementById("username").value;
+      let pass = document.getElementById("password").value;
 
-      const storedPass = localStorage.getItem(user);
-      if(storedPass && storedPass === pass) {
-        // Save session
-        sessionStorage.setItem("loggedInUser", user);
-        window.location.href = "dashboard.html";
+      // Default login credentials
+      let correctUser = "mail@sarojkc2007.com.np";
+      let correctPass = "Saroj@9768281946";
+
+      if (user === correctUser && pass === correctPass) {
+        alert("Login Successful!");
+        window.location.href = "dashboard.html"; // Redirect to dashboard
       } else {
-        alert("Invalid username or password!");
+        document.getElementById("error").innerText = "Invalid Username or Password!";
       }
     }
   </script>
+
 </body>
 </html>
