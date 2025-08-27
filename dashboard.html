@@ -21,6 +21,7 @@
       justify-content: center;
       margin-top: 50px;
       gap: 20px;
+      flex-wrap: wrap;
     }
     .card {
       background: white;
@@ -29,11 +30,17 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       text-align: center;
       width: 200px;
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: scale(1.05);
     }
     .card a {
       text-decoration: none;
       color: #2c3e50;
       font-weight: bold;
+      font-size: 16px;
+      display: block;
     }
   </style>
 </head>
@@ -46,6 +53,7 @@
     <div class="card"><a href="cv.html">📄 My CV</a></div>
     <div class="card"><a href="calculator.html">🧮 Calculator</a></div>
     <div class="card"><a href="accounting.html">📊 Accounting</a></div>
-    <div class="card><a href="myaccount.html">📊 Myaccount</a></div>
+    <div class="card"><a href="myaccount.html">👤 My Account</a></div>
+  </div>
 </body>
 </html>
