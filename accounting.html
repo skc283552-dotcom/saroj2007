@@ -3,8 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <title>Accounting System</title>
+
+<!-- Firebase Setup -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+// Firebase configuration (replace with your own)
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID",
+    measurementId: "YOUR_MEASUREMENT_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Make Firebase functions global
+window.db = db;
+window.collection = collection;
+window.addDoc = addDoc;
+window.getDocs = getDocs;
+window.deleteDoc = deleteDoc;
+window.doc = doc;
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
 <style>
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f9; }
 header { background: #2c3e50; color: #fff; padding: 15px; text-align: center; font-size: 22px; }
@@ -25,6 +55,7 @@ button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-r
 </style>
 </head>
 <body>
+
 <header>📊 Accounting System</header>
 
 <!-- Dashboard -->
@@ -90,8 +121,10 @@ button { padding: 6px 12px; margin: 5px; cursor: pointer; border: none; border-r
   <button class="back-btn" onclick="goBack()">⬅ Back</button>
 </div>
 
-<script>
-let entries = JSON.parse(localStorage.getItem("entries")) || [];
+<script type="module">
+import { db, collection, addDoc, getDocs, deleteDoc, doc } from window;
+
+let entries = [];
 
 function openPage(pageId) {
   document.querySelectorAll(".page").forEach(p => p.style.display = "none");
@@ -106,7 +139,8 @@ function goBack() {
   document.getElementById("dashboard").style.display = "flex";
 }
 
-document.getElementById("journalForm").addEventListener("submit", function(e) {
+// Save entry to Firebase
+document.getElementById("journalForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   let date = new Date().toISOString().split("T")[0];
   let particular = document.getElementById("particular").value;
@@ -115,110 +149,117 @@ document.getElementById("journalForm").addEventListener("submit", function(e) {
   let status = document.getElementById("status").value;
   let paymentType = document.getElementById("paymentType").value;
 
-  entries.push({ date, particular, debit, credit, status, paymentType });
-  localStorage.setItem("entries", JSON.stringify(entries));
-  alert("Entry Saved!");
-  this.reset();
+  try {
+    await addDoc(collection(db, "transactions"), { date, particular, debit, credit, status, paymentType });
+    alert("Entry saved to Firebase!");
+    this.reset();
+    loadTransactions();
+    loadLedger();
+  } catch (err) {
+    console.error(err);
+  }
 });
 
-function calculateBalances() {
+// Load transactions from Firebase
+async function loadTransactions() {
+  const tbody = document.querySelector("#transactionTable tbody");
+  tbody.innerHTML = "";
+  const querySnapshot = await getDocs(collection(db, "transactions"));
+  entries = [];
+  let totalIncome = 0, totalExpense = 0;
+
+  querySnapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    data.id = docSnap.id;
+    entries.push(data);
+  });
+
+  entries.forEach((e) => {
+    totalIncome += e.credit;
+    totalExpense += e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
+      <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
+      <td><button class="delete-btn" onclick="deleteEntry('${e.id}')">Delete</button></td>
+    </tr>`;
+  });
+
+  document.getElementById("totalIncome").innerText = totalIncome;
+  document.getElementById("totalExpense").innerText = totalExpense;
+
   let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
   entries.forEach(e => {
     let net = (e.credit || 0) - (e.debit || 0);
     balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
   });
-  return balances;
+  document.getElementById("paymentBalances").innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
 }
 
-function loadTransactions() {
-  let tbody = document.querySelector("#transactionTable tbody");
-  tbody.innerHTML = "";
-  let totalIncome = 0, totalExpense = 0;
-  entries.forEach((e, i) => {
-    totalIncome += e.credit;
-    totalExpense += e.debit;
-    let row = `<tr>
-      <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
-      <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
-      <td>
-        <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
-        <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
-      </td>
-    </tr>`;
-    tbody.innerHTML += row;
-  });
-  document.getElementById("totalIncome").innerText = totalIncome;
-  document.getElementById("totalExpense").innerText = totalExpense;
-
-  let balances = calculateBalances();
-  let balanceDiv = document.getElementById("paymentBalances");
-  balanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-}
-
-function loadLedger() {
-  let tbody = document.querySelector("#ledgerTable tbody");
-  tbody.innerHTML = "";
-  let total = 0;
-  entries.forEach(e => {
-    total += e.credit - e.debit;
-    tbody.innerHTML += `<tr>
-      <td>${e.date}</td><td>${e.particular}</td>
-      <td>${e.debit}</td><td>${e.credit}</td>
-      <td>${e.status}</td><td>${e.paymentType}</td>
-      <td>${total}</td>
-    </tr>`;
-  });
-  document.getElementById("ledgerTotal").innerText = total;
-
-  let balances = calculateBalances();
-  let ledgerBalanceDiv = document.getElementById("ledgerPaymentBalances");
-  ledgerBalanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-}
-
-function filterLedger() {
-  let name = document.getElementById("searchName").value.toLowerCase();
-  let date = document.getElementById("searchDate").value;
-  let tbody = document.querySelector("#ledgerTable tbody");
-  tbody.innerHTML = "";
-  let total = 0;
-  entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
-                      (!date || e.date === date))
-         .forEach(e => {
-    total += e.credit - e.debit;
-    tbody.innerHTML += `<tr>
-      <td>${e.date}</td><td>${e.particular}</td>
-      <td>${e.debit}</td><td>${e.credit}</td>
-      <td>${e.status}</td><td>${e.paymentType}</td>
-      <td>${total}</td>
-    </tr>`;
-  });
-  document.getElementById("ledgerTotal").innerText = total;
-
-  let balances = calculateBalances();
-  document.getElementById("ledgerPaymentBalances").innerHTML =
-    `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-}
-
-function deleteEntry(index) {
+// Delete entry from Firebase
+async function deleteEntry(id) {
   if (confirm("Delete this entry?")) {
-    entries.splice(index, 1);
-    localStorage.setItem("entries", JSON.stringify(entries));
+    await deleteDoc(doc(db, "transactions", id));
     loadTransactions();
     loadLedger();
   }
 }
 
-function editEntry(index) {
-  let e = entries[index];
-  document.getElementById("particular").value = e.particular;
-  document.getElementById("debit").value = e.debit;
-  document.getElementById("credit").value = e.credit;
-  document.getElementById("status").value = e.status;
-  document.getElementById("paymentType").value = e.paymentType;
-  deleteEntry(index);
-  openPage("journal");
+// Ledger page
+async function loadLedger() {
+  const tbody = document.querySelector("#ledgerTable tbody");
+  tbody.innerHTML = "";
+  const querySnapshot = await getDocs(collection(db, "transactions"));
+  let total = 0;
+
+  querySnapshot.forEach(docSnap => {
+    const e = docSnap.data();
+    total += e.credit - e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td><td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td><td>${total}</td>
+    </tr>`;
+  });
+
+  document.getElementById("ledgerTotal").innerText = total;
+
+  let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
+  querySnapshot.forEach(docSnap => {
+    const e = docSnap.data();
+    let net = (e.credit || 0) - (e.debit || 0);
+    balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
+  });
+  document.getElementById("ledgerPaymentBalances").innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
 }
 
+// Filter ledger
+function filterLedger() {
+  let name = document.getElementById("searchName").value.toLowerCase();
+  let date = document.getElementById("searchDate").value;
+  const tbody = document.querySelector("#ledgerTable tbody");
+  tbody.innerHTML = "";
+  let total = 0;
+
+  entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
+                      (!date || e.date === date))
+         .forEach(e => {
+    total += e.credit - e.debit;
+    tbody.innerHTML += `<tr>
+      <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td><td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td><td>${total}</td>
+    </tr>`;
+  });
+
+  document.getElementById("ledgerTotal").innerText = total;
+
+  let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
+  entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
+                      (!date || e.date === date))
+         .forEach(e => {
+    let net = (e.credit || 0) - (e.debit || 0);
+    balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
+  });
+  document.getElementById("ledgerPaymentBalances").innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
+}
+
+// PDF Download
 function downloadPDF() {
   const { jsPDF } = window.jspdf;
   let doc = new jsPDF();
@@ -233,9 +274,13 @@ function downloadPDF() {
   });
 
   let y = doc.lastAutoTable.finalY + 10;
-  let balances = calculateBalances();
-  doc.text(`Balances: Cash ${balances.Cash} | Bank ${balances.Bank} | eSewa ${balances.eSewa} | Fonepay ${balances.Fonepay}`, 14, y);
+  let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
+  entries.forEach(e => {
+    let net = (e.credit || 0) - (e.debit || 0);
+    balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
+  });
 
+  doc.text(`Balances: Cash ${balances.Cash} | Bank ${balances.Bank} | eSewa ${balances.eSewa} | Fonepay ${balances.Fonepay}`, 14, y);
   doc.save("transactions.pdf");
 }
 </script>
