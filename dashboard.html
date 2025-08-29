@@ -1,240 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Personal Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(120deg,#4facfe,#00f2fe);
-      color: #333;
-    }
-    header {
-      background: #2c3e50;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: white;
-    }
-    #searchBar {
-      padding: 8px;
-      width: 250px;
-      border-radius: 5px;
-      border: none;
-      outline: none;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      transition: 0.3s;
-      cursor: pointer;
-    }
-    .card:hover {
-      transform: scale(1.05);
-      background: #f9f9f9;
-    }
-    .card h3 {
-      margin: 10px 0;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .close {
-      float: right;
-      cursor: pointer;
-      font-size: 20px;
-      color: red;
-    }
-    input, button {
-      padding: 8px;
-      margin: 5px 0;
-      width: 95%;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: 'Roboto', sans-serif;
+  margin:0; padding:0;
+  background: #f0f2f5;
+}
+header {
+  background: #4e73df;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+#searchBar {
+  width: 80%;
+  max-width: 400px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 10px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+  padding: 30px;
+}
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
+}
+.card img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+}
+.card span {
+  display:block;
+  font-weight: bold;
+  color: #333;
+}
+</style>
 </head>
 <body>
 
 <header>
-  <h2>📊 My Dashboard</h2>
-  <input type="text" id="searchBar" placeholder="🔍 Search apps...">
+  <h1>My Personal Dashboard</h1>
+  <input type="text" id="searchBar" placeholder="Search module...">
 </header>
 
-<div class="grid" id="dashboard">
-  <div class="card" onclick="openApp('phonebook')"><h3>📞 Phone Book</h3></div>
-  <div class="card" onclick="openApp('birthday')"><h3>🎂 Birthday Reminder</h3></div>
-  <div class="card" onclick="openApp('todo')"><h3>✅ To-Do List</h3></div>
-  <div class="card" onclick="openApp('calculator')"><h3>🧮 Calculator</h3></div>
-  <div class="card" onclick="openApp('favorites')"><h3>⭐ My Favorites</h3></div>
-  <div class="card" onclick="alert('👉 Link your Accounting Software here')"><h3>💰 Accounting Software</h3></div>
-  <div class="card" onclick="alert('👉 Link your CV page here')"><h3>👤 My CV</h3></div>
+<div class="grid" id="dashboardGrid">
+  <div class="card" onclick="openModule('accounting.html')">
+    <img src="https://img.icons8.com/fluency/48/000000/money-bag.png"/>
+    <span>Personal Accounting</span>
+  </div>
+  <div class="card" onclick="openModule('accounting.html')">
+    <img src="https://img.icons8.com/color/48/000000/accounting.png"/>
+    <span>Accounting Software</span>
+  </div>
+  <div class="card" onclick="openModule('birthday.html')">
+    <img src="https://img.icons8.com/color/48/000000/birthday-cake.png"/>
+    <span>Birthday Reminder</span>
+  </div>
+  <div class="card" onclick="openModule('phonebook.html')">
+    <img src="https://img.icons8.com/color/48/000000/contacts.png"/>
+    <span>Phone Book</span>
+  </div>
+  <div class="card" onclick="openModule('todo.html')">
+    <img src="https://img.icons8.com/color/48/000000/todo-list.png"/>
+    <span>To-Do List</span>
+  </div>
+  <div class="card" onclick="openModule('calculator.html')">
+    <img src="https://img.icons8.com/color/48/000000/calculator.png"/>
+    <span>Calculator</span>
+  </div>
+  <div class="card" onclick="openModule('favorites.html')">
+    <img src="https://img.icons8.com/color/48/000000/star--v1.png"/>
+    <span>My Favorites</span>
+  </div>
+  <div class="card" onclick="openModule('cv.html')">
+    <img src="https://img.icons8.com/color/48/000000/resume.png"/>
+    <span>CV</span>
+  </div>
 </div>
 
-<!-- Modals -->
-<div id="phonebook" class="modal"><div class="modal-content">
-  <span class="close" onclick="closeApp('phonebook')">&times;</span>
-  <h3>📞 Phone Book</h3>
-  <input id="contactName" placeholder="Name">
-  <input id="contactNumber" placeholder="Phone Number">
-  <button onclick="addContact()">Add Contact</button>
-  <table><thead><tr><th>Name</th><th>Phone</th></tr></thead><tbody id="contactsList"></tbody></table>
-</div></div>
-
-<div id="birthday" class="modal"><div class="modal-content">
-  <span class="close" onclick="closeApp('birthday')">&times;</span>
-  <h3>🎂 Birthday Reminder</h3>
-  <input id="bName" placeholder="Name">
-  <input type="date" id="bDate">
-  <button onclick="addBirthday()">Add Birthday</button>
-  <ul id="birthdayList"></ul>
-</div></div>
-
-<div id="todo" class="modal"><div class="modal-content">
-  <span class="close" onclick="closeApp('todo')">&times;</span>
-  <h3>✅ To-Do List</h3>
-  <input id="todoTask" placeholder="Enter task">
-  <button onclick="addTask()">Add Task</button>
-  <ul id="todoList"></ul>
-</div></div>
-
-<div id="calculator" class="modal"><div class="modal-content">
-  <span class="close" onclick="closeApp('calculator')">&times;</span>
-  <h3>🧮 Calculator</h3>
-  <input id="calcDisplay" readonly>
-  <div>
-    <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button><button onclick="press('/')">/</button><br>
-    <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button><button onclick="press('*')">*</button><br>
-    <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button><button onclick="press('-')">-</button><br>
-    <button onclick="press('0')">0</button><button onclick="press('.')">.</button><button onclick="calculate()">=</button><button onclick="press('+')">+</button><br>
-    <button onclick="clearCalc()">C</button>
-  </div>
-</div></div>
-
-<div id="favorites" class="modal"><div class="modal-content">
-  <span class="close" onclick="closeApp('favorites')">&times;</span>
-  <h3>⭐ My Favorites</h3>
-  <input id="favName" placeholder="Name">
-  <input id="favPhoto" placeholder="Photo URL">
-  <button onclick="addFavorite()">Add Favorite</button>
-  <div id="favList"></div>
-</div></div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
-    authDomain: "personaldashboard-a6738.firebaseapp.com",
-    databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "personaldashboard-a6738",
-    storageBucket: "personaldashboard-a6738.firebasestorage.app",
-    messagingSenderId: "936129174674",
-    appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
-    measurementId: "G-85JJGPJ7K4"
-  };
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+const firebaseConfig = {
+  apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
+  authDomain: "personaldashboard-a6738.firebaseapp.com",
+  databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "personaldashboard-a6738",
+  storageBucket: "personaldashboard-a6738.appspot.com",
+  messagingSenderId: "936129174674",
+  appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
+  measurementId: "G-85JJGPJ7K4"
+};
+firebase.initializeApp(firebaseConfig);
 
-  // Search Filter
-  document.getElementById("searchBar").addEventListener("keyup", function() {
-    let filter = this.value.toLowerCase();
-    document.querySelectorAll(".card").forEach(card => {
-      card.style.display = card.innerText.toLowerCase().includes(filter) ? "block" : "none";
-    });
+const searchBar = document.getElementById('searchBar');
+const cards = document.querySelectorAll('.card');
+
+function filterCards() {
+  const query = searchBar.value.toLowerCase();
+  cards.forEach(card => {
+    const text = card.innerText.toLowerCase();
+    card.style.display = text.includes(query) ? 'block' : 'none';
   });
+}
 
-  // Modal functions
-  function openApp(id){ document.getElementById(id).style.display="flex"; }
-  function closeApp(id){ document.getElementById(id).style.display="none"; }
+// Trigger search while typing
+searchBar.addEventListener('input', filterCards);
 
-  // Phonebook
-  function addContact(){
-    let name=document.getElementById("contactName").value;
-    let phone=document.getElementById("contactNumber").value;
-    if(name && phone){
-      db.ref("contacts").push({name,phone});
-      document.getElementById("contactName").value="";
-      document.getElementById("contactNumber").value="";
-    }
+// Trigger search when pressing Enter
+searchBar.addEventListener('keypress', function(event) {
+  if(event.key === 'Enter') {
+    filterCards();
   }
-  db.ref("contacts").on("value",snap=>{
-    let list=""; snap.forEach(c=>{let v=c.val(); list+=`<tr><td>${v.name}</td><td>${v.phone}</td></tr>`;});
-    document.getElementById("contactsList").innerHTML=list;
-  });
+});
 
-  // Birthdays
-  function addBirthday(){
-    let name=document.getElementById("bName").value;
-    let date=document.getElementById("bDate").value;
-    if(name && date){ db.ref("birthdays").push({name,date}); }
-  }
-  db.ref("birthdays").on("value",snap=>{
-    let list=""; snap.forEach(b=>{let v=b.val(); list+=`<li>${v.name} 🎂 ${v.date}</li>`;});
-    document.getElementById("birthdayList").innerHTML=list;
-  });
-
-  // To-Do
-  function addTask(){
-    let task=document.getElementById("todoTask").value;
-    if(task){ db.ref("tasks").push({task}); }
-    document.getElementById("todoTask").value="";
-  }
-  db.ref("tasks").on("value",snap=>{
-    let list=""; snap.forEach(t=>{let v=t.val(); list+=`<li>${v.task}</li>`;});
-    document.getElementById("todoList").innerHTML=list;
-  });
-
-  // Calculator
-  function press(val){ document.getElementById("calcDisplay").value+=val; }
-  function calculate(){ try{document.getElementById("calcDisplay").value=eval(document.getElementById("calcDisplay").value);}catch(e){alert("Error");} }
-  function clearCalc(){ document.getElementById("calcDisplay").value=""; }
-
-  // Favorites
-  function addFavorite(){
-    let name=document.getElementById("favName").value;
-    let photo=document.getElementById("favPhoto").value;
-    if(name && photo){ db.ref("favorites").push({name,photo}); }
-  }
-  db.ref("favorites").on("value",snap=>{
-    let html=""; snap.forEach(f=>{let v=f.val(); html+=`<div><img src="${v.photo}" width="60"><p>${v.name}</p></div>`;});
-    document.getElementById("favList").innerHTML=html;
-  });
+function openModule(url){
+  window.location.href = url;
+}
 </script>
+
 </body>
 </html>
