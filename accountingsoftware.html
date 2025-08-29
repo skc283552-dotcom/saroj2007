@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Account — Real-time Accounting (GitHub Gist)</title>
+  <style>
+    :root{--bg:#f7f9fc;--card:#fff;--accent:#0b74ff;--muted:#6b7280}
+    body{font-family:Inter,Segoe UI,Roboto,Arial;background:var(--bg);margin:0;padding:24px;color:#111}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    h1{margin:0;font-size:20px}
+    .card{background:var(--card);box-shadow:0 6px 18px rgba(15,23,42,.06);padding:16px;border-radius:12px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+    .form-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    input,select,textarea{padding:8px;border-radius:8px;border:1px solid #e6eef8;width:100%}
+    button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,116,255,.12)}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
+    .actions button{margin-right:6px}
+    .small{font-size:13px;color:var(--muted)}
+    .balances{display:flex;gap:8px}
+    .balance{flex:1;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);box-shadow:0 4px 10px rgba(2,6,23,.04)}
+    .right{text-align:right}
+    .back{margin-left:auto}
+    .hidden{display:none}
+    footer{margin-top:18px;font-size:13px;color:var(--muted)}
+    .top-controls{display:flex;gap:8px;align-items:center}
+    .token-box{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .status{margin-top:8px;padding:8px;border-radius:8px;background:#fbfdff;border:1px solid #eef6ff}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>My Account — Real-time (GitHub)</h1>
+      <div class="small">This page syncs instantly to a <strong>private GitHub Gist</strong>. Token is stored locally in your browser for convenience. Use only on your personal devices.</div>
+    </div>
+    <div class="back">
+      <button id="backBtn" class="ghost">← Back</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card" id="mainSection">
+      <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+        <strong>New Transaction</strong>
+        <div class="top-controls">
+          <button id="openGist" class="ghost">Open Gist on GitHub</button>
+          <button id="downloadPdf">Download PDF</button>
+        </div>
+      </div>
+
+      <div class="status" id="statusBox">Status: <span id="statusMsg">Idle</span></div>
+
+      <div class="token-box">
+        <input id="tokenInput" placeholder="Paste GitHub token (will be stored locally)" />
+        <button id="saveTokenBtn" class="ghost">Save Token</button>
+        <button id="logoutTokenBtn" class="ghost">Remove Token</button>
+      </div>
+
+      <form id="txForm" style="margin-top:12px">
+        <div class="form-row">
+          <input id="date" type="date" required />
+          <input id="desc" placeholder="Description (e.g., Payment for invoice #123)" required />
+        </div>
+        <div class="form-row">
+          <select id="account" required>
+            <option value="Cash">Cash</option>
+            <option value="Bank">Bank</option>
+            <option value="eSewa">eSewa</option>
+            <option value="Other">Other</option>
+          </select>
+          <select id="type" required>
+            <option value="Dr">Debit (Dr)</option>
+            <option value="Cr">Credit (Cr)</option>
+          </select>
+          <input id="amount" type="number" step="0.01" placeholder="Amount" required />
+        </div>
+        <div class="form-row">
+          <input id="category" placeholder="Category (Sales / Expense / Salary)" />
+          <input id="phone" placeholder="Contact (optional)" />
+        </div>
+        <div class="form-row">
+          <textarea id="notes" rows="2" placeholder="Notes (optional)" style="resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="submit">Add Transaction</button>
+          <button type="button" id="clearBtn" class="ghost">Clear Form</button>
+        </div>
+      </form>
+
+      <div style="margin-top:18px">
+        <strong>Ledger</strong>
+        <div class="small">Showing transactions (newest first). Use Edit / Delete to modify. Changes are saved to GitHub automatically when token and gist are set.</div>
+        <table id="ledger">
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Account</th><th>Type</th><th>Amount</th><th>Balance</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div><strong>Summary</strong></div>
+      <div style="margin-top:10px" class="balances">
+        <div class="balance">
+          <div class="small">Total Debits</div>
+          <div id="totalDr" style="font-weight:700;font-size:20px">0.00</div>
+        </div>
+        <div class="balance">
+          <div class="small">Total Credits</div>
+          <div id="totalCr" style="font-weight:700;font-size:20px">0.00</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="small">Account Balances</div>
+        <div id="accountBalances" style="margin-top:8px"></div>
+      </div>
+
+      <hr style="margin:12px 0" />
+      <div>
+        <div class="small">Storage</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="createGist" class="ghost">Create Gist</button>
+          <button id="forceSync" class="ghost">Force Sync Now</button>
+        </div>
+        <div id="gistInfo" class="small" style="margin-top:8px;color:var(--muted)"></div>
+      </div>
+
+      <hr style="margin:12px 0" />
+      <div>
+        <div class="small">Quick Actions</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+          <button id="exportJson" class="ghost">Export JSON</button>
+          <button id="importJson" class="ghost">Import JSON</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+        </div>
+      </div>
+
+      <footer>
+        <div class="small">Note: Storing your GitHub token in localStorage is convenient but less secure. Use your personal devices only. If you'd like a safer server-based setup later I can help.</div>
+      </footer>
+    </aside>
+  </main>
+
+  <script>
+    // -------------------- Config --------------------
+    const GIST_DESCRIPTION = 'my-account-db.json (My Account - Real-time)';
+    const LOCAL_DB_KEY = 'myaccount_db';
+    const LOCAL_TOKEN_KEY = 'myaccount_gist_token';
+    const LOCAL_GIST_ID = 'myaccount_gist_id';
+
+    // -------------------- State --------------------
+    let DB = { entries: [] };
+    let GIST_ID = localStorage.getItem(LOCAL_GIST_ID) || null;
+    let GH_TOKEN = localStorage.getItem(LOCAL_TOKEN_KEY) || null;
+    let syncPending = null; // timer id for debounce
+
+    // -------------------- Init --------------------
+    const statusMsg = document.getElementById('statusMsg');
+    function setStatus(s){ statusMsg.textContent = s; }
+
+    loadLocal(); renderLedger(); renderSummary(); setStatus('Loaded local data');
+    // show token in input if exists
+    document.getElementById('tokenInput').value = GH_TOKEN || '';
+    updateGistInfo();
+
+    // if token exists, attempt automatic load from gist
+    if(GH_TOKEN) autoLoadFromGist();
+
+    // -------------------- UI bindings --------------------
+    const form = document.getElementById('txForm');
+    const ledgerTbody = document.querySelector('#ledger tbody');
+    const totalDrEl = document.getElementById('totalDr');
+    const totalCrEl = document.getElementById('totalCr');
+    const accountBalancesEl = document.getElementById('accountBalances');
+
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const data = {
+        id: 'tx_'+Date.now(),
+        date: document.getElementById('date').value || new Date().toISOString().slice(0,10),
+        desc: document.getElementById('desc').value,
+        account: document.getElementById('account').value,
+        type: document.getElementById('type').value,
+        amount: parseFloat(document.getElementById('amount').value) || 0,
+        category: document.getElementById('category').value || '',
+        phone: document.getElementById('phone').value || '',
+        notes: document.getElementById('notes').value || ''
+      };
+      DB.entries.unshift(data); // newest first
+      saveLocal(); renderLedger(); renderSummary();
+      form.reset();
+      triggerAutoSync('Added transaction');
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', ()=>form.reset());
+    document.getElementById('exportJson').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'my-account-db.json'; a.click(); URL.revokeObjectURL(url); });
+    document.getElementById('importJson').addEventListener('click', ()=>document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', async (e)=>{ const file = e.target.files[0]; if(!file) return; const text = await file.text(); try{ DB = JSON.parse(text); saveLocal(); renderLedger(); renderSummary(); triggerAutoSync('Imported JSON'); alert('Imported OK'); }catch(err){ alert('Invalid JSON'); } });
+
+    document.getElementById('saveTokenBtn').addEventListener('click', ()=>{ const t = document.getElementById('tokenInput').value.trim(); if(!t) return alert('Paste a token'); GH_TOKEN = t; localStorage.setItem(LOCAL_TOKEN_KEY, GH_TOKEN); setStatus('Token saved locally'); updateGistInfo(); autoLoadFromGist(); });
+    document.getElementById('logoutTokenBtn').addEventListener('click', ()=>{ if(confirm('Remove saved token from this browser?')){ GH_TOKEN = null; localStorage.removeItem(LOCAL_TOKEN_KEY); localStorage.removeItem(LOCAL_GIST_ID); GIST_ID = null; document.getElementById('tokenInput').value = ''; updateGistInfo(); setStatus('Token removed'); } });
+
+    document.getElementById('createGist').addEventListener('click', async ()=>{ if(!ensureToken()) return; setStatus('Creating gist...'); try{ // create private gist
+        const payload = { description: GIST_DESCRIPTION, public: false, files: { 'my-account-db.json': { content: JSON.stringify(DB, null, 2) } } };
+        const created = await ghApi('POST','https://api.github.com/gists', GH_TOKEN, payload);
+        GIST_ID = created.id; localStorage.setItem(LOCAL_GIST_ID, GIST_ID); updateGistInfo(); setStatus('Gist created: '+GIST_ID); alert('Gist created');
+      }catch(err){ console.error(err); alert('GitHub error: '+err.message); setStatus('Gist creation failed'); }
+    });
+
+    document.getElementById('forceSync').addEventListener('click', ()=>{ triggerAutoSync('Manual sync'); });
+    document.getElementById('openGist').addEventListener('click', ()=>{ if(!GIST_ID) return alert('No gist connected yet'); window.open('https://gist.github.com/'+GIST_ID,'_blank'); });
+
+    document.getElementById('downloadPdf').addEventListener('click', ()=>{ if(typeof jspdf === 'undefined'){ const s = document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload=generatePdf; document.head.appendChild(s); }else generatePdf(); });
+
+    document.getElementById('backBtn').addEventListener('click', ()=>{ if(history.length>1) history.back(); else alert('No previous page'); });
+
+    // -------------------- Render functions --------------------
+    function renderLedger(){
+      ledgerTbody.innerHTML='';
+      for(const tx of DB.entries){
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td>${tx.date}</td>
+          <td>${escapeHtml(tx.desc)}</td>
+          <td>${escapeHtml(tx.account)}</td>
+          <td>${tx.type}</td>
+          <td>${tx.amount.toFixed(2)}</td>
+          <td class="small">${computeCumulative(tx)}</td>
+          <td class="actions">
+            <button class="ghost" onclick="editTx('${tx.id}')">Edit</button>
+            <button class="ghost" onclick="deleteTx('${tx.id}')">Delete</button>
+          </td>`;
+        ledgerTbody.appendChild(tr);
+      }
+    }
+
+    function computeCumulative(tx){
+      let cr=0, dr=0;
+      for(const t of DB.entries){
+        if(t.type==='Cr') cr+=t.amount; else dr+=t.amount;
+        if(t.id===tx.id) break;
+      }
+      return (cr - dr).toFixed(2);
+    }
+
+    function renderSummary(){
+      let totalDr=0, totalCr=0; const acc={};
+      for(const t of DB.entries){ if(t.type==='Dr') totalDr+=t.amount; else totalCr+=t.amount; acc[t.account] = (acc[t.account]||0) + (t.type==='Cr'?t.amount:-t.amount); }
+      totalDrEl.textContent = totalDr.toFixed(2); totalCrEl.textContent = totalCr.toFixed(2);
+      accountBalancesEl.innerHTML='';
+      for(const k of Object.keys(acc)){
+        const el = document.createElement('div'); el.className='small'; el.textContent = `${k}: ${acc[k].toFixed(2)}`; accountBalancesEl.appendChild(el);
+      }
+    }
+
+    // -------------------- Edit / Delete --------------------
+    window.editTx = function(id){
+      const tx = DB.entries.find(t=>t.id===id); if(!tx) return alert('Not found');
+      document.getElementById('date').value = tx.date;
+      document.getElementById('desc').value = tx.desc;
+      document.getElementById('account').value = tx.account;
+      document.getElementById('type').value = tx.type;
+      document.getElementById('amount').value = tx.amount;
+      document.getElementById('category').value = tx.category;
+      document.getElementById('phone').value = tx.phone;
+      document.getElementById('notes').value = tx.notes;
+      DB.entries = DB.entries.filter(t=>t.id!==id);
+      saveLocal(); renderLedger(); renderSummary(); triggerAutoSync('Edited transaction');
+    }
+
+    window.deleteTx = function(id){ if(!confirm('Delete this transaction?')) return; DB.entries = DB.entries.filter(t=>t.id!==id); saveLocal(); renderLedger(); renderSummary(); triggerAutoSync('Deleted transaction'); }
+
+    // -------------------- Auto Sync (real-time) --------------------
+    function triggerAutoSync(reason){
+      setStatus(reason+' — scheduling sync...');
+      // debounce frequent changes
+      if(syncPending) clearTimeout(syncPending);
+      syncPending = setTimeout(()=>{ syncPending = null; autoSaveToGist(); }, 800);
+    }
+
+    async function autoSaveToGist(){
+      if(!ensureToken()) return setStatus('No token — changes saved locally only');
+      try{
+        // ensure gist exists
+        if(!GIST_ID){ setStatus('Searching for existing gist...'); const g = await findGistByDescription(); if(g) { GIST_ID = g.id; localStorage.setItem(LOCAL_GIST_ID, GIST_ID); setStatus('Found gist: '+GIST_ID); } }
+        if(!GIST_ID){ // create if missing
+          setStatus('Creating new gist...'); const payload = { description: GIST_DESCRIPTION, public: false, files: { 'my-account-db.json': { content: JSON.stringify(DB, null, 2) } } };
+          const created = await ghApi('POST','https://api.github.com/gists', GH_TOKEN, payload); GIST_ID = created.id; localStorage.setItem(LOCAL_GIST_ID, GIST_ID); setStatus('Created gist: '+GIST_ID); updateGistInfo(); return;
+        }
+        // update gist
+        setStatus('Syncing to gist '+GIST_ID+'...');
+        const payload = { files: { 'my-account-db.json': { content: JSON.stringify(DB, null, 2) } } };
+        await ghApi('PATCH', 'https://api.github.com/gists/'+GIST_ID, GH_TOKEN, payload);
+        setStatus('Synced to gist '+GIST_ID+' at '+new Date().toLocaleTimeString());
+      }catch(err){ console.error(err); setStatus('Sync failed: '+err.message); }
+      updateGistInfo();
+    }
+
+    async function autoLoadFromGist(){
+      if(!ensureToken()) return;
+      try{
+        setStatus('Looking for gist...');
+        if(!GIST_ID){ const g = await findGistByDescription(); if(g){ GIST_ID = g.id; localStorage.setItem(LOCAL_GIST_ID, GIST_ID); updateGistInfo(); setStatus('Found gist: '+GIST_ID); } }
+        if(!GIST_ID){ setStatus('No gist found. Create one to enable real-time sync.'); return; }
+        setStatus('Fetching data from gist '+GIST_ID+'...');
+        const gist = await ghApi('GET','https://api.github.com/gists/'+GIST_ID, GH_TOKEN);
+        const file = gist.files['my-account-db.json'];
+        if(file && file.content){ try{ const parsed = JSON.parse(file.content); DB = parsed; saveLocal(); renderLedger(); renderSummary(); setStatus('Loaded data from gist'); }catch(err){ setStatus('Gist content parse error'); }
+        }else setStatus('Gist has no data file');
+      }catch(err){ console.error(err); setStatus('Load failed: '+err.message); }
+    }
+
+    async function findGistByDescription(){
+      // search user's gists for our special description
+      const list = await ghApi('GET','https://api.github.com/gists', GH_TOKEN);
+      return list.find(g=>g.description===GIST_DESCRIPTION);
+    }
+
+    function ensureToken(){ if(!GH_TOKEN){ return false; } return true; }
+
+    function updateGistInfo(){ const el = document.getElementById('gistInfo'); el.textContent = GIST_ID ? ('Gist ID: '+GIST_ID) : 'No gist connected'; }
+
+    // -------------------- GitHub API helper --------------------
+    async function ghApi(method,url,token,payload){
+      const opts = { method, headers: { Accept: 'application/vnd.github+json' } };
+      if(token) opts.headers['Authorization'] = 'token '+token;
+      if(payload){ opts.body = JSON.stringify(payload); opts.headers['Content-Type']='application/json'; }
+      const res = await fetch(url, opts);
+      if(!res.ok){ const text = await res.text(); throw new Error(res.status+' '+text.slice(0,200)); }
+      return await res.json();
+    }
+
+    // -------------------- Local Storage --------------------
+    function saveLocal(){ localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(DB)); }
+    function loadLocal(){ const s=localStorage.getItem(LOCAL_DB_KEY); if(s) DB = JSON.parse(s); }
+
+    // -------------------- PDF export --------------------
+    function generatePdf(){ const { jsPDF } = window.jspdf || window.jspdf || window.jspdf?.default || window.jspdf; const doc = new jsPDF(); doc.setFontSize(14); doc.text('My Account — Transaction Ledger', 12, 12); let y=22; doc.setFontSize(10); doc.text('Generated: '+new Date().toLocaleString(), 12, y); y+=6; doc.setFontSize(9); doc.text('Total Debits: '+totalDrEl.textContent+'   Total Credits: '+totalCrEl.textContent, 12, y); y+=8; doc.setFontSize(8); doc.text('Date',12,y); doc.text('Desc',36,y); doc.text('Acc',110,y); doc.text('Type',140,y); doc.text('Amt',156,y); y+=6; for(const t of DB.entries){ if(y>280){ doc.addPage(); y=12; } doc.text(t.date,12,y); doc.text(truncate(t.desc,36),36,y); doc.text(t.account,110,y); doc.text(t.type,140,y); doc.text(t.amount.toFixed(2),156,y); y+=6; } doc.save('ledger-'+(new Date().toISOString().slice(0,10))+'.pdf'); }
+
+    // -------------------- Utilities --------------------
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+    function truncate(s,n){ return (s||'').length>n? (s.slice(0,n-1)+'…') : s; }
+
+  </script>
+</body>
+</html>
