@@ -6,133 +6,183 @@
 <title>My Accounting</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#fff3e0;}
-header{background:#fb8c00;color:white;padding:20px;text-align:center;}
-input,select,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#fffde7;}
+header{background:#fbc02d;color:white;padding:20px;text-align:center;}
+input,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
 button{border:none;background:#4e73df;color:white;cursor:pointer;}
-table{width:90%;margin:20px auto;border-collapse:collapse;}
-table,th,td{border:1px solid #ccc;text-align:center;}
-th,td{padding:10px;}
+table{width:90%;margin:10px auto;border-collapse:collapse;}
+th,td{border:1px solid #ccc;padding:8px;text-align:center;}
+th{background:#ffeb3b;}
 .section{width:90%;margin:20px auto;background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 </style>
 </head>
 <body>
-<header>
-<h1>My Personal Accounting</h1>
-<button onclick="window.location.href='index.html'">Back to Dashboard</button>
-</header>
+<header><h1>My Accounting</h1></header>
 
 <div class="section">
 <h3>Add Transaction</h3>
-<input type="text" id="transName" placeholder="Name">
-<input type="number" id="transAmount" placeholder="Amount (Rs)">
-<select id="transType"><option value="income">Income</option><option value="expense">Expense</option></select>
-<select id="paymentMethod"><option value="cash">Cash</option><option value="esewa">eSewa</option><option value="bank">Bank</option></select>
-<select id="paidStatus"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
+<input type="text" id="name" placeholder="Name">
+<input type="number" id="amount" placeholder="Amount">
+<select id="type">
+<option value="income">Income</option>
+<option value="expense">Expense</option>
+</select>
+<select id="method">
+<option value="cash">Cash</option>
+<option value="esewa">eSewa</option>
+<option value="bank">Bank</option>
+</select>
+<select id="status">
+<option value="paid">Paid</option>
+<option value="unpaid">Unpaid</option>
+</select>
 <button onclick="addTransaction()">Add</button>
-<input type="date" id="transDate">
 </div>
 
 <div class="section">
-<h3>Search Transactions</h3>
-<input type="text" id="searchName" placeholder="Search by Name">
-<input type="date" id="searchDate">
-<button onclick="searchTransactions()">Search</button>
-<button onclick="loadTransactions()">Reset</button>
+<h3>Actions</h3>
+<input type="text" id="searchName" placeholder="Search by Name" onkeyup="searchTransactions(event)">
+<button onclick="generateLedger()">📊 Ledger</button>
+<button onclick="generateJournal()">📝 Journal</button>
+<button onclick="downloadPDF()">📄 Download PDF</button>
 </div>
 
 <div class="section">
-<h3>Ledger & Journal</h3>
-<table id="ledgerTable">
-<tr><th>Name</th><th>Total Income</th><th>Total Expense</th><th>Balance</th></tr>
-</table>
-</div>
-
-<div class="section">
-<h3>All Transactions</h3>
+<h3>Transactions</h3>
 <table id="transactionTable">
 <tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>
 </table>
 </div>
 
+<div class="section">
+<h3>Ledger</h3>
+<table id="ledgerTable">
+<tr><th>Name</th><th>Total Income</th><th>Total Expense</th><th>Balance</th></tr>
+</table>
+</div>
+
+<div style="text-align:center;margin:20px;">
+<button onclick="window.location.href='index.html'">Back to Dashboard</button>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-const firebaseConfig = { apiKey:"AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA", authDomain:"personaldashboard-a6738.firebaseapp.com", databaseURL:"https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"personaldashboard-a6738", storageBucket:"personaldashboard-a6738.appspot.com", messagingSenderId:"936129174674", appId:"1:936129174674:web:71dcc2cb9c590a3f361a4b", measurementId:"G-85JJGPJ7K4" };
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
+  authDomain: "personaldashboard-a6738.firebaseapp.com",
+  databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "personaldashboard-a6738",
+  storageBucket: "personaldashboard-a6738.appspot.com",
+  messagingSenderId: "936129174674",
+  appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
+  measurementId: "G-85JJGPJ7K4"
+};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database().ref("myaccounting");
 
+// Add Transaction
 function addTransaction(){
-    const name=document.getElementById('transName').value;
-    const amount=document.getElementById('transAmount').value;
-    const type=document.getElementById('transType').value;
-    const method=document.getElementById('paymentMethod').value;
-    const status=document.getElementById('paidStatus').value;
-    const date=document.getElementById('transDate').value || new Date().toISOString().split('T')[0];
-    if(name && amount){
-        const id=Date.now();
-        db.child(id).set({name, amount:Number(amount), type, method, status, date});
-        document.getElementById('transName').value='';
-        document.getElementById('transAmount').value='';
-    }
+  const name=document.getElementById('name').value;
+  const amount=Number(document.getElementById('amount').value);
+  const type=document.getElementById('type').value;
+  const method=document.getElementById('method').value;
+  const status=document.getElementById('status').value;
+  if(!name||!amount) return alert("Enter Name and Amount");
+  const date=new Date().toLocaleString();
+  const id=Date.now();
+  db.child(id).set({name,amount,type,method,status,date});
+  document.getElementById('name').value=''; document.getElementById('amount').value='';
 }
 
-function loadTransactions(){
-    db.on('value', snapshot=>{
-        const data=snapshot.val();
-        const tTable=document.getElementById('transactionTable');
-        const ledger=document.getElementById('ledgerTable');
-        tTable.innerHTML="<tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>";
-        let ledgerData={};
-        for(let key in data){
-            let row=tTable.insertRow();
-            row.insertCell(0).innerText=data[key].date;
-            row.insertCell(1).innerText=data[key].name;
-            row.insertCell(2).innerText=data[key].amount;
-            row.insertCell(3).innerText=data[key].type;
-            row.insertCell(4).innerText=data[key].method;
-            row.insertCell(5).innerText=data[key].status;
+// Load all transactions
+db.on('value', snapshot=>{
+  const data=snapshot.val();
+  displayTransactions(data);
+  updateLedger(data);
+});
 
-            if(!ledgerData[data[key].name]) ledgerData[data[key].name]={income:0,expense:0};
-            if(data[key].type==="income") ledgerData[data[key].name].income+=data[key].amount;
-            else ledgerData[data[key].name].expense+=data[key].amount;
-        }
-        // Ledger table
-        ledger.innerHTML="<tr><th>Name</th><th>Total Income</th><th>Total Expense</th><th>Balance</th></tr>";
-        for(let name in ledgerData){
-            let row=ledger.insertRow();
-            row.insertCell(0).innerText=name;
-            row.insertCell(1).innerText=ledgerData[name].income;
-            row.insertCell(2).innerText=ledgerData[name].expense;
-            row.insertCell(3).innerText=ledgerData[name].income-ledgerData[name].expense;
-        }
-    });
+// Display Transactions Table
+function displayTransactions(data){
+  const tTable=document.getElementById('transactionTable');
+  tTable.innerHTML="<tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>";
+  for(let key in data){
+    let row=tTable.insertRow();
+    row.insertCell(0).innerText=data[key].date;
+    row.insertCell(1).innerText=data[key].name;
+    row.insertCell(2).innerText=data[key].amount;
+    row.insertCell(3).innerText=data[key].type;
+    row.insertCell(4).innerText=data[key].method;
+    row.insertCell(5).innerText=data[key].status;
+  }
 }
 
+// Search Transactions by Name
 function searchTransactions(){
-    const nameFilter=document.getElementById('searchName').value.toLowerCase();
-    const dateFilter=document.getElementById('searchDate').value;
-    db.on('value', snapshot=>{
-        const data=snapshot.val();
-        const tTable=document.getElementById('transactionTable');
-        tTable.innerHTML="<tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>";
-        for(let key in data){
-            const trName=data[key].name.toLowerCase();
-            const trDate=data[key].date;
-            if((nameFilter && trName.includes(nameFilter)) || (dateFilter && trDate===dateFilter)){
-                let row=tTable.insertRow();
-                row.insertCell(0).innerText=data[key].date;
-                row.insertCell(1).innerText=data[key].name;
-                row.insertCell(2).innerText=data[key].amount;
-                row.insertCell(3).innerText=data[key].type;
-                row.insertCell(4).innerText=data[key].method;
-                row.insertCell(5).innerText=data[key].status;
-            }
-        }
-    });
+  const nameFilter=document.getElementById('searchName').value.toLowerCase();
+  db.once('value', snapshot=>{
+    const data=snapshot.val();
+    let filtered={};
+    for(let key in data){
+      if(data[key].name.toLowerCase().includes(nameFilter)){
+        filtered[key]=data[key];
+      }
+    }
+    displayTransactions(filtered);
+    updateLedger(filtered);
+  });
 }
 
-loadTransactions();
+// Generate Ledger
+function updateLedger(data){
+  const ledger=document.getElementById('ledgerTable');
+  let ledgerData={}, totals={cash:0,esewa:0,bank:0};
+  for(let key in data){
+    const t=data[key];
+    if(!ledgerData[t.name]) ledgerData[t.name]={income:0,expense:0};
+    if(t.type==="income") ledgerData[t.name].income+=t.amount;
+    else ledgerData[t.name].expense+=t.amount;
+    if(t.status==="paid") totals[t.method]+=t.amount;
+  }
+  ledger.innerHTML="<tr><th>Name</th><th>Total Income</th><th>Total Expense</th><th>Balance</th></tr>";
+  for(let name in ledgerData){
+    let row=ledger.insertRow();
+    row.insertCell(0).innerText=name;
+    row.insertCell(1).innerText=ledgerData[name].income;
+    row.insertCell(2).innerText=ledgerData[name].expense;
+    row.insertCell(3).innerText=ledgerData[name].income-ledgerData[name].expense;
+  }
+  let totalRow=ledger.insertRow();
+  totalRow.insertCell(0).innerText="TOTAL PAID";
+  totalRow.insertCell(1).innerText="";
+  totalRow.insertCell(2).innerText="";
+  totalRow.insertCell(3).innerText=`Cash: ${totals.cash} | eSewa: ${totals.esewa} | Bank: ${totals.bank}`;
+}
+
+// Generate Journal (same as ledger for simplicity)
+function generateLedger(){ /* Ledger is auto displayed */ }
+function generateJournal(){ alert("Journal is same as ledger for now."); }
+
+// Download PDF
+function downloadPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const tTable=document.getElementById('transactionTable');
+  let rows=[];
+  for(let i=1;i<tTable.rows.length;i++){
+    let r=[];
+    for(let j=0;j<tTable.rows[i].cells.length;j++){
+      r.push(tTable.rows[i].cells[j].innerText);
+    }
+    rows.push(r);
+  }
+  doc.text("My Accounting Transactions",10,10);
+  doc.autoTable({head:[["Date","Name","Amount","Type","Method","Status"]],body:rows,startY:20});
+  doc.save("transactions.pdf");
+}
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>
