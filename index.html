@@ -1,84 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login Page</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #6a11cb, #2575fc);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .login-container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
-      width: 320px;
-      text-align: center;
-    }
-    .login-container h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-    input[type="text"], input[type="password"] {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #2575fc;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1b5fd6;
-    }
-    .error {
-      color: red;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#f5f5f5;}
+header{background:#4e73df;color:white;padding:20px;text-align:center;}
+.container{display:flex;flex-wrap:wrap;justify-content:center;margin:30px;}
+.card{width:150px;height:150px;margin:15px;background:white;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;transition:0.3s;}
+.card:hover{transform:scale(1.05);}
+.card img{width:60px;height:60px;margin-bottom:10px;}
+.search-bar{width:80%;margin:20px auto;text-align:center;}
+.search-bar input{width:50%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+</style>
 </head>
 <body>
+<header>
+<h1>My Personal Dashboard</h1>
+</header>
 
-  <div class="login-container">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Enter Username">
-    <input type="password" id="password" placeholder="Enter Password">
-    <button onclick="login()">Login</button>
-    <p class="error" id="error"></p>
-  </div>
+<div class="search-bar">
+<input type="text" id="moduleSearch" placeholder="Search modules..." onkeyup="searchModule(event)">
+</div>
 
-  <script>
-    function login() {
-      let user = document.getElementById("username").value;
-      let pass = document.getElementById("password").value;
+<div class="container" id="modulesContainer">
+<div class="card" onclick="openModule('myaccounting.html')"><img src="https://img.icons8.com/ios-filled/50/000000/budget.png"/><span>My Accounting</span></div>
+<div class="card" onclick="openModule('accounting.html')"><img src="https://img.icons8.com/ios-filled/50/000000/calculator.png"/><span>Accounting Software</span></div>
+<div class="card" onclick="openModule('phonebook.html')"><img src="https://img.icons8.com/ios-filled/50/000000/contacts.png"/><span>Phone Book</span></div>
+<div class="card" onclick="openModule('birthday.html')"><img src="https://img.icons8.com/ios-filled/50/000000/birthday-cake.png"/><span>Birthday Reminder</span></div>
+<div class="card" onclick="openModule('todo.html')"><img src="https://img.icons8.com/ios-filled/50/000000/todo-list.png"/><span>To-Do List</span></div>
+<div class="card" onclick="openModule('favorites.html')"><img src="https://img.icons8.com/ios-filled/50/000000/star.png"/><span>Favorites</span></div>
+<div class="card" onclick="openModule('calculator.html')"><img src="https://img.icons8.com/ios-filled/50/000000/calculator.png"/><span>Calculator</span></div>
+</div>
 
-      // Default login credentials
-      let correctUser = "2007";
-      let correctPass = "Saroj@9768281946";
-
-      if (user === correctUser && pass === correctPass) {
-        alert("Login Successful!");
-        window.location.href = "dashboard.html"; // Redirect to dashboard
-      } else {
-        document.getElementById("error").innerText = "Invalid Username or Password!";
-      }
+<script>
+function openModule(url){ window.location.href=url; }
+function searchModule(event){
+    if(event.key==='Enter'){
+        let val=document.getElementById('moduleSearch').value.toLowerCase();
+        let cards=document.querySelectorAll('.card');
+        cards.forEach(c=>{
+            if(c.innerText.toLowerCase().includes(val)){ c.style.display='flex'; }else{ c.style.display='none'; }
+        });
     }
-  </script>
-
+}
+</script>
 </body>
 </html>
