@@ -6,27 +6,29 @@
 <title>To-Do List</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#e3f2fd;}
-header{background:#1976d2;color:white;padding:20px;text-align:center;}
+body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#fff9c4;}
+header{background:#f57f17;color:white;padding:20px;text-align:center;}
+.section{width:90%;margin:20px auto;background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 input,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
 button{border:none;background:#4e73df;color:white;cursor:pointer;}
-ul{width:90%;margin:20px auto;list-style:none;padding:0;}
-li{background:white;margin:5px;padding:10px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;}
-.done{text-decoration:line-through;color:gray;}
-.section{width:90%;margin:20px auto;background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+ul{list-style:none;padding:0;}
+li{padding:10px;margin:5px;background:#ffeb3b;border-radius:6px;display:flex;justify-content:space-between;align-items:center;}
+li.done{background:#c8e6c9;text-decoration:line-through;}
 </style>
 </head>
 <body>
-<header>
-<h1>To-Do List</h1>
-</header>
+<header><h1>To-Do List</h1></header>
 
 <div class="section">
-<input type="text" id="taskInput" placeholder="Add Task">
+<h3>Add Task</h3>
+<input type="text" id="taskInput" placeholder="Enter task">
 <button onclick="addTask()">Add</button>
 </div>
 
+<div class="section">
+<h3>Tasks</h3>
 <ul id="taskList"></ul>
+</div>
 
 <div style="text-align:center;margin:20px;">
 <button onclick="window.location.href='index.html'">Back to Dashboard</button>
@@ -35,37 +37,54 @@ li{background:white;margin:5px;padding:10px;border-radius:6px;display:flex;align
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
-const firebaseConfig = { apiKey:"AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA", authDomain:"personaldashboard-a6738.firebaseapp.com", databaseURL:"https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"personaldashboard-a6738", storageBucket:"personaldashboard-a6738.appspot.com", messagingSenderId:"936129174674", appId:"1:936129174674:web:71dcc2cb9c590a3f361a4b", measurementId:"G-85JJGPJ7K4" };
+const firebaseConfig = {
+  apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
+  authDomain: "personaldashboard-a6738.firebaseapp.com",
+  databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "personaldashboard-a6738",
+  storageBucket: "personaldashboard-a6738.appspot.com",
+  messagingSenderId: "936129174674",
+  appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
+  measurementId: "G-85JJGPJ7K4"
+};
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database().ref("todo");
+const db=firebase.database().ref("todolist");
 
+// Add Task
 function addTask(){
-    const task=document.getElementById('taskInput').value;
-    if(task){
-        const id=Date.now();
-        db.child(id).set({task, done:false});
-        document.getElementById('taskInput').value='';
-    }
+  const task=document.getElementById('taskInput').value;
+  if(!task) return alert("Enter a task");
+  const id=Date.now();
+  db.child(id).set({task,done:false});
+  document.getElementById('taskInput').value='';
 }
 
+// Load Tasks
 db.on('value', snapshot=>{
-    const data=snapshot.val();
-    const ul=document.getElementById('taskList');
-    ul.innerHTML='';
-    for(let key in data){
-        let li=document.createElement('li');
-        li.innerHTML='<span class="'+(data[key].done?'done':'')+'">'+data[key].task+'</span> <div><button onclick="toggleDone('+key+')">✔</button> <button onclick="deleteTask('+key+')">✖</button></div>';
-        ul.appendChild(li);
-    }
+  const data=snapshot.val();
+  displayTasks(data);
 });
 
-function toggleDone(key){
-    db.child(key).once('value', snap=>{
-        db.child(key).update({done:!snap.val().done});
-    });
+// Display Tasks
+function displayTasks(data){
+  const ul=document.getElementById('taskList');
+  ul.innerHTML='';
+  for(let key in data){
+    const li=document.createElement('li');
+    li.innerHTML=`<span>${data[key].task}</span>`;
+    if(data[key].done) li.classList.add('done');
+    const btn=document.createElement('button');
+    btn.innerText=data[key].done?'Undo':'Done';
+    btn.onclick=()=>toggleDone(key,data[key].done);
+    li.appendChild(btn);
+    ul.appendChild(li);
+  }
 }
 
-function deleteTask(key){ db.child(key).remove(); }
+// Toggle Done
+function toggleDone(key,current){
+  db.child(key).update({done:!current});
+}
 </script>
 </body>
 </html>
