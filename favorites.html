@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Favorites</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Roboto',sans-serif;background:#fce4ec;margin:0;padding:0;}
+header{background:#ec407a;color:white;padding:20px;text-align:center;}
+input,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+button{border:none;background:#4e73df;color:white;cursor:pointer;}
+ul{width:90%;margin:20px auto;list-style:none;padding:0;}
+li{background:white;margin:5px;padding:10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;}
+img{width:40px;height:40px;margin-right:10px;border-radius:50%;}
+</style>
+</head>
+<body>
+<header>
+<h1>My Favorites</h1>
+<button onclick="window.location.href='index.html'">Back to Dashboard</button>
+</header>
+
+<div style="text-align:center; margin-top:20px;">
+<input type="text" id="favName" placeholder="Name">
+<input type="text" id="favPhoto" placeholder="Photo URL">
+<button onclick="addFavorite()">Add Favorite</button>
+</div>
+
+<ul id="favList"></ul>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = { apiKey:"AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA", authDomain:"personaldashboard-a6738.firebaseapp.com", databaseURL:"https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"personaldashboard-a6738", storageBucket:"personaldashboard-a6738.appspot.com", messagingSenderId:"936129174674", appId:"1:936129174674:web:71dcc2cb9c590a3f361a4b", measurementId:"G-85JJGPJ7K4" };
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database().ref("favorites");
+
+function addFavorite(){
+    const name=document.getElementById('favName').value;
+    const photo=document.getElementById('favPhoto').value;
+    if(name){
+        const id=Date.now();
+        db.child(id).set({name,photo});
+        document.getElementById('favName').value='';
+        document.getElementById('favPhoto').value='';
+    }
+}
+
+db.on('value', snapshot=>{
+    const data=snapshot.val();
+    const ul=document.getElementById('favList');
+    ul.innerHTML='';
+    for(let key in data){
+        let li=document.createElement('li');
+        li.innerHTML='<div style="display:flex;align-items:center;"><img src="'+data[key].photo+'">'+data[key].name+'</div> <button onclick="deleteFav('+key+')">Delete</button>';
+        ul.appendChild(li);
+    }
+});
+
+function deleteFav(key){ db.child(key).remove(); }
+</script>
+</body>
+</html>
