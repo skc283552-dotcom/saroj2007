@@ -6,70 +6,74 @@
 <title>Birthday Reminder</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body { font-family: 'Roboto', sans-serif; background:#fff8e1; margin:0; padding:0; }
-header { background:#ffb74d; color:white; padding:20px; text-align:center;}
-button {padding:10px 15px;margin:10px;border:none;background:#4e73df;color:white;border-radius:5px;cursor:pointer;}
-input {padding:8px; margin:5px; border-radius:5px; border:1px solid #ccc;}
-table {width:90%; margin:20px auto;border-collapse:collapse;}
-table, th, td {border:1px solid #ccc; text-align:center;}
-th, td {padding:10px;}
+body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#fffde7;}
+header{background:#fdd835;color:white;padding:20px;text-align:center;}
+input,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+button{border:none;background:#4e73df;color:white;cursor:pointer;}
+ul{width:90%;margin:20px auto;list-style:none;padding:0;}
+li{background:white;margin:5px;padding:10px;border-radius:6px;display:flex;align-items:center;justify-content:space-between;}
+.section{width:90%;margin:20px auto;background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 </style>
 </head>
 <body>
 <header>
 <h1>Birthday Reminder</h1>
-<button onclick="window.location.href='index.html'">Back to Dashboard</button>
 </header>
 
-<div style="text-align:center; margin-top:20px;">
-<input type="text" id="name" placeholder="Name">
-<input type="date" id="bday">
+<div class="section">
+<input type="text" id="bName" placeholder="Name">
+<input type="text" id="bDate" placeholder="BS Date (YYYY-MM-DD)">
 <button onclick="addBirthday()">Add Birthday</button>
 </div>
 
-<table id="birthdayTable">
-  <tr><th>Name</th><th>Date</th></tr>
-</table>
+<div class="section">
+<input type="text" id="searchBirthday" placeholder="Search by Name" onkeyup="searchBirthday(event)">
+</div>
+
+<ul id="birthdayList"></ul>
+
+<div style="text-align:center;margin:20px;">
+<button onclick="window.location.href='index.html'">Back to Dashboard</button>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
-    authDomain: "personaldashboard-a6738.firebaseapp.com",
-    databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "personaldashboard-a6738",
-    storageBucket: "personaldashboard-a6738.appspot.com",
-    messagingSenderId: "936129174674",
-    appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
-    measurementId: "G-85JJGPJ7K4"
-};
+const firebaseConfig = { apiKey:"AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA", authDomain:"personaldashboard-a6738.firebaseapp.com", databaseURL:"https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"personaldashboard-a6738", storageBucket:"personaldashboard-a6738.appspot.com", messagingSenderId:"936129174674", appId:"1:936129174674:web:71dcc2cb9c590a3f361a4b", measurementId:"G-85JJGPJ7K4" };
 firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database().ref("birthday");
+const db=firebase.database().ref("birthdays");
 
 function addBirthday(){
-    const name = document.getElementById('name').value;
-    const bday = document.getElementById('bday').value;
-    if(name && bday){
-        const id = Date.now();
-        db.child(id).set({name,bday});
-        document.getElementById('name').value = '';
-        document.getElementById('bday').value = '';
+    const name=document.getElementById('bName').value;
+    const date=document.getElementById('bDate').value;
+    if(name && date){
+        const id=Date.now();
+        db.child(id).set({name, date});
+        document.getElementById('bName').value='';
+        document.getElementById('bDate').value='';
     }
 }
 
-// Auto-update table
-db.on('value', snapshot => {
-    const data = snapshot.val();
-    const table = document.getElementById('birthdayTable');
-    table.innerHTML = "<tr><th>Name</th><th>Date</th></tr>";
+db.on('value', snapshot=>{
+    const data=snapshot.val();
+    const ul=document.getElementById('birthdayList');
+    ul.innerHTML='';
     for(let key in data){
-        let row = table.insertRow();
-        row.insertCell(0).innerText = data[key].name;
-        row.insertCell(1).innerText = data[key].bday;
+        let li=document.createElement('li');
+        li.innerHTML=data[key].name+' - '+data[key].date+' <button onclick="deleteBirthday('+key+')">Delete</button>';
+        ul.appendChild(li);
     }
 });
+
+function deleteBirthday(key){ db.child(key).remove(); }
+
+function searchBirthday(event){
+    const val=document.getElementById('searchBirthday').value.toLowerCase();
+    const items=document.querySelectorAll('#birthdayList li');
+    items.forEach(item=>{
+        if(item.innerText.toLowerCase().includes(val)){ item.style.display='flex'; } else { item.style.display='none'; }
+    });
+}
 </script>
 </body>
 </html>
