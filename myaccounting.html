@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Accounting</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Roboto',sans-serif;margin:0;padding:0;background:#fff3e0;}
+header{background:#fb8c00;color:white;padding:20px;text-align:center;}
+input,select,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+button{border:none;background:#4e73df;color:white;cursor:pointer;}
+table{width:90%;margin:20px auto;border-collapse:collapse;}
+table,th,td{border:1px solid #ccc;text-align:center;}
+th,td{padding:10px;}
+.section{width:90%;margin:20px auto;background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+</style>
+</head>
+<body>
+<header>
+<h1>My Personal Accounting</h1>
+<button onclick="window.location.href='index.html'">Back to Dashboard</button>
+</header>
+
+<div class="section">
+<h3>Add Transaction</h3>
+<input type="text" id="transName" placeholder="Name">
+<input type="number" id="transAmount" placeholder="Amount (Rs)">
+<select id="transType"><option value="income">Income</option><option value="expense">Expense</option></select>
+<select id="paymentMethod"><option value="cash">Cash</option><option value="esewa">eSewa</option><option value="bank">Bank</option></select>
+<select id="paidStatus"><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
+<button onclick="addTransaction()">Add</button>
+<input type="date" id="transDate">
+</div>
+
+<div class="section">
+<h3>Search Transactions</h3>
+<input type="text" id="searchName" placeholder="Search by Name">
+<input type="date" id="searchDate">
+<button onclick="searchTransactions()">Search</button>
+<button onclick="loadTransactions()">Reset</button>
+</div>
+
+<div class="section">
+<h3>Ledger & Journal</h3>
+<table id="ledgerTable">
+<tr><th>Name</th><th>Total Income</th><th>Total Expense</th><th>Balance</th></tr>
+</table>
+</div>
+
+<div class="section">
+<h3>All Transactions</h3>
+<table id="transactionTable">
+<tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>
+</table>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = { apiKey:"AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA", authDomain:"personaldashboard-a6738.firebaseapp.com", databaseURL:"https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"personaldashboard-a6738", storageBucket:"personaldashboard-a6738.appspot.com", messagingSenderId:"936129174674", appId:"1:936129174674:web:71dcc2cb9c590a3f361a4b", measurementId:"G-85JJGPJ7K4" };
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database().ref("myaccounting");
+
+function addTransaction(){
+    const name=document.getElementById('transName').value;
+    const amount=document.getElementById('transAmount').value;
+    const type=document.getElementById('transType').value;
+    const method=document.getElementById('paymentMethod').value;
+    const status=document.getElementById('paidStatus').value;
+    const date=document.getElementById('transDate').value || new Date().toISOString().split('T')[0];
+    if(name && amount){
+        const id=Date.now();
+        db.child(id).set({name, amount:Number(amount), type, method, status, date});
+        document.getElementById('transName').value='';
+        document.getElementById('transAmount').value='';
+    }
+}
+
+function loadTransactions(){
+    db.on('value', snapshot=>{
+        const data=snapshot.val();
+        const tTable=document.getElementById('transactionTable');
+        const ledger=document.getElementById('ledgerTable');
+        tTable.innerHTML="<tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>";
+        let ledgerData={};
+        for(let key in data){
+            let row=tTable.insertRow();
+            row.insertCell(0).innerText=data[key].date;
+            row.insertCell(1).innerText=data[key].name;
+            row.insertCell(2).innerText=data[key].amount;
+            row.insertCell(3).innerText=data[key].type;
+            row.insertCell(4).innerText=data[key].method;
+            row.insertCell(5).innerText=data[key].status;
+
+            if(!ledgerData[data[key].name]) ledgerData[data[key].name]={income:0,expense:0};
+            if(data[key].type==="income") ledgerData[data[key].name].income+=data[key].amount;
+            else ledgerData[data[key].name].expense+=data[key].amount;
+        }
+        // Ledger table
+        ledger.innerHTML="<tr><th>Name</th><th>Total Income</th><th>Total Expense</th><th>Balance</th></tr>";
+        for(let name in ledgerData){
+            let row=ledger.insertRow();
+            row.insertCell(0).innerText=name;
+            row.insertCell(1).innerText=ledgerData[name].income;
+            row.insertCell(2).innerText=ledgerData[name].expense;
+            row.insertCell(3).innerText=ledgerData[name].income-ledgerData[name].expense;
+        }
+    });
+}
+
+function searchTransactions(){
+    const nameFilter=document.getElementById('searchName').value.toLowerCase();
+    const dateFilter=document.getElementById('searchDate').value;
+    db.on('value', snapshot=>{
+        const data=snapshot.val();
+        const tTable=document.getElementById('transactionTable');
+        tTable.innerHTML="<tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Payment Method</th><th>Status</th></tr>";
+        for(let key in data){
+            const trName=data[key].name.toLowerCase();
+            const trDate=data[key].date;
+            if((nameFilter && trName.includes(nameFilter)) || (dateFilter && trDate===dateFilter)){
+                let row=tTable.insertRow();
+                row.insertCell(0).innerText=data[key].date;
+                row.insertCell(1).innerText=data[key].name;
+                row.insertCell(2).innerText=data[key].amount;
+                row.insertCell(3).innerText=data[key].type;
+                row.insertCell(4).innerText=data[key].method;
+                row.insertCell(5).innerText=data[key].status;
+            }
+        }
+    });
+}
+
+loadTransactions();
+</script>
+</body>
+</html>
