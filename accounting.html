@@ -510,6 +510,50 @@
             
             // Check initial online status
             document.getElementById('syncBtn').disabled = !isOnline;
+            
+            // Set up form submission
+            document.getElementById("journalForm").addEventListener("submit", async function(e) {
+                e.preventDefault();
+                let date = new Date().toISOString().split("T")[0];
+                let particular = document.getElementById("particular").value;
+                let debit = parseFloat(document.getElementById("debit").value) || 0;
+                let credit = parseFloat(document.getElementById("credit").value) || 0;
+                let status = document.getElementById("status").value;
+                let paymentType = document.getElementById("paymentType").value;
+
+                // Check if we're editing an existing entry
+                const editingIndex = this.dataset.editingIndex;
+                if (editingIndex !== undefined) {
+                    // Update existing entry
+                    entries[editingIndex] = { date, particular, debit, credit, status, paymentType };
+                    delete this.dataset.editingIndex;
+                    showNotification('Entry updated successfully!');
+                } else {
+                    // Add new entry
+                    entries.push({ date, particular, debit, credit, status, paymentType });
+                    showNotification('Entry saved successfully!');
+                }
+                
+                localStorage.setItem("entries", JSON.stringify(entries));
+                
+                // Try to sync if online
+                if (isOnline && GITHUB_TOKEN) {
+                    try {
+                        await syncData();
+                    } catch (error) {
+                        console.error('Sync after save failed:', error);
+                        showNotification('Saved locally. Sync failed.', true);
+                    }
+                } else {
+                    showNotification('Entry saved locally. Sync when online.');
+                }
+                
+                this.reset();
+                
+                // Force UI update
+                loadTransactions();
+                loadLedger();
+            });
         }
 
         // Save GitHub token
@@ -740,33 +784,6 @@
             document.getElementById("dashboard").style.display = "flex";
         }
 
-        document.getElementById("journalForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            let date = new Date().toISOString().split("T")[0];
-            let particular = document.getElementById("particular").value;
-            let debit = parseFloat(document.getElementById("debit").value) || 0;
-            let credit = parseFloat(document.getElementById("credit").value) || 0;
-            let status = document.getElementById("status").value;
-            let paymentType = document.getElementById("paymentType").value;
-
-            entries.push({ date, particular, debit, credit, status, paymentType });
-            localStorage.setItem("entries", JSON.stringify(entries));
-            
-            // Try to sync if online
-            if (isOnline && GITHUB_TOKEN) {
-                try {
-                    await syncData();
-                } catch (error) {
-                    console.error('Sync after save failed:', error);
-                    showNotification('Saved locally. Sync failed.', true);
-                }
-            } else {
-                showNotification('Entry saved locally. Sync when online.');
-            }
-            
-            this.reset();
-        });
-
         function calculateBalances() {
             let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
             entries.forEach(e => {
@@ -862,6 +879,7 @@
                     showNotification('Entry deleted locally. Sync when online.');
                 }
                 
+                // Force UI update
                 loadTransactions();
                 loadLedger();
             }
@@ -874,7 +892,10 @@
             document.getElementById("credit").value = e.credit;
             document.getElementById("status").value = e.status;
             document.getElementById("paymentType").value = e.paymentType;
-            deleteEntry(index);
+            
+            // Store the index being edited
+            document.getElementById("journalForm").dataset.editingIndex = index;
+            
             openPage("journal");
         }
 
