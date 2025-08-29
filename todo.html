@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Roboto',sans-serif;background:#e8f5e9;margin:0;padding:0;}
+header{background:#66bb6a;color:white;padding:20px;text-align:center;}
+input,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
+button{border:none;background:#4e73df;color:white;cursor:pointer;}
+ul{width:90%;margin:20px auto;list-style:none;padding:0;}
+li{background:white;margin:5px;padding:10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;}
+</style>
+</head>
+<body>
+<header>
+<h1>To-Do List</h1>
+<button onclick="window.location.href='index.html'">Back to Dashboard</button>
+</header>
+<div style="text-align:center; margin-top:20px;">
+<input type="text" id="taskInput" placeholder="Enter Task">
+<button onclick="addTask()">Add Task</button>
+</div>
+<ul id="taskList"></ul>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = { apiKey:"AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA", authDomain:"personaldashboard-a6738.firebaseapp.com", databaseURL:"https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app", projectId:"personaldashboard-a6738", storageBucket:"personaldashboard-a6738.appspot.com", messagingSenderId:"936129174674", appId:"1:936129174674:web:71dcc2cb9c590a3f361a4b", measurementId:"G-85JJGPJ7K4" };
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database().ref("todo");
+
+function addTask(){
+    const task=document.getElementById('taskInput').value;
+    if(task){
+        const id=Date.now();
+        db.child(id).set({task});
+        document.getElementById('taskInput').value='';
+    }
+}
+
+db.on('value', snapshot=>{
+    const data=snapshot.val();
+    const ul=document.getElementById('taskList');
+    ul.innerHTML='';
+    for(let key in data){
+        let li=document.createElement('li');
+        li.innerHTML=data[key].task+' <button onclick="deleteTask('+key+')">Delete</button>';
+        ul.appendChild(li);
+    }
+});
+
+function deleteTask(key){ db.child(key).remove(); }
+</script>
+</body>
+</html>
