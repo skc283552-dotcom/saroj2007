@@ -87,13 +87,14 @@ input, select { padding:6px; margin:4px; width:150px; }
 
 <script>
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
+  authDomain: "personaldashboard-a6738.firebaseapp.com",
+  databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "personaldashboard-a6738",
+  storageBucket: "personaldashboard-a6738.appspot.com",
+  messagingSenderId: "936129174674",
+  appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
+  measurementId: "G-85JJGPJ7K4"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -104,7 +105,6 @@ function showSection(id){
   else{ document.getElementById('dashboard').style.display='none'; document.getElementById(id).style.display='block'; }
 }
 
-// Add Transaction
 function addTransaction(){
   const name=document.getElementById('tname').value;
   const amount=parseFloat(document.getElementById('tamount').value);
@@ -114,54 +114,80 @@ function addTransaction(){
   const date=document.getElementById('tdate').value || new Date().toLocaleDateString();
   if(!name || !amount){ alert('Fill all fields'); return; }
   const newRef=db.ref('transactions').push();
-  newRef.set({id:newRef.key, name, amount, type, category, desc, date});
+  newRef.set({id:newRef.key,name,amount,type,category,desc,date});
   document.getElementById('tname').value=''; document.getElementById('tamount').value=''; document.getElementById('tdesc').value=''; document.getElementById('tdate').value='';
 }
 
-// Render Data with Remaining Balance
+// Real-time Data Render
 db.ref('transactions').on('value', snapshot=>{
   const data=snapshot.val()||{};
-  let ledgerHTML="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th><th>Action</th></tr>";
-  let journalHTML="<table><tr><th>Date</th><th>Name</th><th>Category</th><th>Type</th><th>Description</th><th>Amount</th></tr>";
-  let allHTML=ledgerHTML;
+  renderLedger(data);
+  renderJournal(data);
+  renderAll(data);
+});
 
-  let balances={Cash:0, Bank:0, eSewa:0};
-
+function calculateBalances(data){
+  let balances={Cash:0,Bank:0,eSewa:0};
   for(let id in data){
     const t=data[id];
     const amt=(t.category==='Income'? t.amount : -t.amount);
     balances[t.type]+=amt;
+  }
+  balances.Total = balances.Cash+balances.Bank+balances.eSewa;
+  return balances;
+}
 
-    const totalBalance=balances.Cash + balances.Bank + balances.eSewa;
-
-    ledgerHTML+=`<tr>
+function renderLedger(data){
+  let html="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th><th>Action</th></tr>";
+  let balances={Cash:0,Bank:0,eSewa:0};
+  for(let id in data){
+    const t=data[id];
+    const amt=(t.category==='Income'? t.amount : -t.amount);
+    balances[t.type]+=amt;
+    const totalBalance=balances.Cash+balances.Bank+balances.eSewa;
+    html+=`<tr>
       <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
       <td>
         <button class='edit' onclick="editTransaction('${id}')">Edit</button>
         <button class='delete' onclick="deleteTransaction('${id}')">Delete</button>
       </td>
     </tr>`;
-    journalHTML+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.amount}</td></tr>`;
-    allHTML+=`<tr>
-      <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td>
-      <td>${totalBalance}</td>
+  }
+  html+="</table>"; document.getElementById('ledgerData').innerHTML=html;
+  const b=calculateBalances(data);
+  document.getElementById('cashBalance').innerText=b.Cash;
+  document.getElementById('bankBalance').innerText=b.Bank;
+  document.getElementById('esewaBalance').innerText=b.eSewa;
+  document.getElementById('totalBalance').innerText=b.Total;
+}
+
+function renderJournal(data){
+  let html="<table><tr><th>Date</th><th>Name</th><th>Category</th><th>Type</th><th>Description</th><th>Amount</th></tr>";
+  for(let id in data){
+    const t=data[id];
+    html+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.amount}</td></tr>`;
+  }
+  html+="</table>"; document.getElementById('journalData').innerHTML=html;
+}
+
+function renderAll(data){
+  let html="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th><th>Action</th></tr>";
+  let balances={Cash:0,Bank:0,eSewa:0};
+  for(let id in data){
+    const t=data[id];
+    const amt=(t.category==='Income'? t.amount : -t.amount);
+    balances[t.type]+=amt;
+    const totalBalance=balances.Cash+balances.Bank+balances.eSewa;
+    html+=`<tr>
+      <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
       <td>
         <button class='edit' onclick="editTransaction('${id}')">Edit</button>
         <button class='delete' onclick="deleteTransaction('${id}')">Delete</button>
       </td>
     </tr>`;
   }
-
-  ledgerHTML+="</table>"; journalHTML+="</table>"; allHTML+="</table>";
-  document.getElementById('ledgerData').innerHTML=ledgerHTML;
-  document.getElementById('journalData').innerHTML=journalHTML;
-  document.getElementById('allData').innerHTML=allHTML;
-
-  document.getElementById('cashBalance').innerText=balances.Cash;
-  document.getElementById('bankBalance').innerText=balances.Bank;
-  document.getElementById('esewaBalance').innerText=balances.eSewa;
-  document.getElementById('totalBalance').innerText=balances.Cash + balances.Bank + balances.eSewa;
-});
+  html+="</table>"; document.getElementById('allData').innerHTML=html;
+}
 
 // Delete
 function deleteTransaction(id){ if(confirm('Delete?')) db.ref('transactions/'+id).remove(); }
@@ -182,14 +208,14 @@ function editTransaction(id){
   });
 }
 
-// Search Ledger by Name or Date
+// Search Ledger
 function searchLedgerFn(){
   const name=document.getElementById('searchLedger').value.toLowerCase();
   const date=document.getElementById('searchLedgerDate').value;
   db.ref('transactions').once('value',snap=>{
     const data=snap.val()||{};
     let html="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th></tr>";
-    let balances={Cash:0, Bank:0, eSewa:0};
+    let balances={Cash:0,Bank:0,eSewa:0};
     for(let id in data){
       const t=data[id];
       if((!name || t.name.toLowerCase().includes(name)) && (!date || t.date===date)){
