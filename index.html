@@ -14,9 +14,30 @@ header{background:#4e73df;color:white;padding:20px;text-align:center;}
 .card img{width:60px;height:60px;margin-bottom:10px;}
 .search-bar{width:80%;margin:20px auto;text-align:center;}
 .search-bar input{width:50%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+/* Login Page Styles */
+#loginPage{display:flex;justify-content:center;align-items:center;height:100vh;background:#4e73df;}
+.login-box{background:white;padding:30px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.2);width:300px;text-align:center;}
+.login-box h2{margin-bottom:20px;color:#4e73df;}
+.login-box input{width:90%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:6px;font-size:16px;}
+.login-box button{width:95%;padding:10px;background:#4e73df;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer;}
+.login-box button:hover{background:#3b5bcc;}
 </style>
 </head>
 <body>
+
+<!-- Login Page -->
+<div id="loginPage">
+  <div class="login-box">
+    <h2>🔑 Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p style="font-size:13px;color:#555">Default: admin / 12345</p>
+  </div>
+</div>
+
+<!-- Dashboard (hidden until login) -->
+<div id="dashboardPage" style="display:none;">
 <header>
 <h1>My Personal Dashboard</h1>
 </header>
@@ -34,17 +55,35 @@ header{background:#4e73df;color:white;padding:20px;text-align:center;}
 <div class="card" onclick="openModule('favorites.html')"><img src="https://img.icons8.com/ios-filled/50/000000/star.png"/><span>Favorites</span></div>
 <div class="card" onclick="openModule('calculator.html')"><img src="https://img.icons8.com/ios-filled/50/000000/calculator.png"/><span>Calculator</span></div>
 </div>
+</div>
 
 <script>
 function openModule(url){ window.location.href=url; }
+
 function searchModule(event){
     if(event.key==='Enter'){
         let val=document.getElementById('moduleSearch').value.toLowerCase();
         let cards=document.querySelectorAll('.card');
         cards.forEach(c=>{
-            if(c.innerText.toLowerCase().includes(val)){ c.style.display='flex'; }else{ c.style.display='none'; }
+            if(c.innerText.toLowerCase().includes(val)){ 
+                c.style.display='flex'; 
+            }else{ 
+                c.style.display='none'; 
+            }
         });
     }
+}
+
+function login() {
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+
+  if(user === "mail@sarojkc2007.com.np" && pass === "Saroj@2007ad") {
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboardPage").style.display = "block";
+  } else {
+    alert("❌ Invalid Username or Password!");
+  }
 }
 </script>
 </body>
