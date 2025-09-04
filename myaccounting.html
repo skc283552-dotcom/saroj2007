@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,19 +235,43 @@ function searchLedgerFn(){
 
 // PDF
 function downloadPDF(){
-  const { jsPDF }=window.jspdf;
-  const doc=new jsPDF();
-  doc.text("My Accounting Transactions",20,20);
-  let y=30;
-  db.ref('transactions').once('value',snap=>{
-    const data=snap.val()||{};
-    for(let id in data){
-      const t=data[id];
-      doc.text(`${t.date} | ${t.name} | ${t.category} | ${t.type} | ${t.amount} | ${t.desc}`,20,y); y+=10;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(12);
+  doc.text("My Accounting Transactions", 20, 20);
+
+  let y = 30;
+  db.ref('transactions').once('value', snap => {
+    const data = snap.val() || {};
+    let balances = { Cash: 0, Bank: 0, eSewa: 0 };
+
+    // Add table header
+    doc.text("Date | Name | Amount | Type | Category | Total Balance", 20, y);
+    y += 10;
+
+    for (let id in data) {
+      const t = data[id];
+      const amt = t.category === 'Income' ? t.amount : -t.amount;
+      balances[t.type] += amt;
+      const totalBalance = balances.Cash + balances.Bank + balances.eSewa;
+
+      const line = `${t.date} | ${t.name} | ${t.amount} | ${t.type} | ${t.category} | ${totalBalance}`;
+      doc.text(line, 20, y);
+      y += 10;
+
+      // Add page break if needed
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
     }
+
     doc.save("transactions.pdf");
   });
 }
+
+  
+
 </script>
 </body>
 </html>
