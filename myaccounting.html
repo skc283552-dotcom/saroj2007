@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,11 @@
 <title>My Accounting Pro</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<!-- jsPDF and jsPDF-AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f9; }
 header { background:#2c3e50; color:#fff; text-align:center; padding:15px; font-size:24px; font-weight:bold; }
@@ -134,7 +137,7 @@ function calculateBalances(data){
     const amt=(t.category==='Income'? t.amount : -t.amount);
     balances[t.type]+=amt;
   }
-  balances.Total = balances.Cash+balances.Bank+balances.eSewa;
+  balances.Total = (balances.Cash||0) + (balances.Bank||0) + (balances.eSewa||0);
   return balances;
 }
 
@@ -145,7 +148,7 @@ function renderLedger(data){
     const t=data[id];
     const amt=(t.category==='Income'? t.amount : -t.amount);
     balances[t.type]+=amt;
-    const totalBalance=balances.Cash+balances.Bank+balances.eSewa;
+    const totalBalance=(balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
     html+=`<tr>
       <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
       <td>
@@ -178,7 +181,7 @@ function renderAll(data){
     const t=data[id];
     const amt=(t.category==='Income'? t.amount : -t.amount);
     balances[t.type]+=amt;
-    const totalBalance=balances.Cash+balances.Bank+balances.eSewa;
+    const totalBalance=(balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
     html+=`<tr>
       <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
       <td>
@@ -222,7 +225,7 @@ function searchLedgerFn(){
       if((!name || t.name.toLowerCase().includes(name)) && (!date || t.date===date)){
         const amt=(t.category==='Income'? t.amount : -t.amount);
         balances[t.type]+=amt;
-        const totalBalance=balances.Cash+balances.Bank+balances.eSewa;
+        const totalBalance=(balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
         html+=`<tr>
           <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
         </tr>`;
@@ -233,42 +236,85 @@ function searchLedgerFn(){
   });
 }
 
-// PDF
+/* ---------- PDF generation: table format using autoTable ---------- */
 function downloadPDF(){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(12);
-  doc.text("My Accounting Transactions", 20, 20);
+  const doc = new jsPDF('p', 'pt', 'a4'); // portrait, points, A4
+  const title = "My Accounting Transactions";
+  const leftMargin = 40;
+  const topMargin = 60;
 
-  let y = 30;
+  // columns definition
+  const head = [['Date', 'Name', 'Amount', 'Type', 'Category', 'Description', 'Running Balance']];
+
+  // fetch data once from firebase and build rows
   db.ref('transactions').once('value', snap => {
     const data = snap.val() || {};
-    let balances = { Cash: 0, Bank: 0, eSewa: 0 };
+    // sort by date if dates are consistent (attempt). If date strings vary, you may want to store ISO dates.
+    const entries = Object.values(data);
 
-    // Add table header
-    doc.text("Date | Name | Amount | Type | Category | Total Balance", 20, y);
-    y += 10;
+    // compute running balances per row (by chronological order)
+    // We'll compute cumulative totals across Cash/Bank/eSewa and show total running balance
+    // Sort entries by date if possible (YYYY-MM-DD). If not, keep insertion order.
+    entries.sort((a,b)=>{
+      const da = new Date(a.date).getTime() || 0;
+      const dbt = new Date(b.date).getTime() || 0;
+      return da - dbt;
+    });
 
-    for (let id in data) {
-      const t = data[id];
-      const amt = t.category === 'Income' ? t.amount : -t.amount;
-      balances[t.type] += amt;
-      const totalBalance = balances.Cash + balances.Bank + balances.eSewa;
+    let balances = { Cash:0, Bank:0, eSewa:0 };
+    const body = entries.map(t => {
+      const amt = (t.category === 'Income' ? Number(t.amount) : -Number(t.amount));
+      balances[t.type] = (balances[t.type] || 0) + amt;
+      const running = (balances.Cash||0) + (balances.Bank||0) + (balances.eSewa||0);
+      return [
+        String(t.date || ''),
+        String(t.name || ''),
+        Number(t.amount).toFixed(2),
+        String(t.type || ''),
+        String(t.category || ''),
+        String(t.desc || ''),
+        Number(running).toFixed(2)
+      ];
+    });
 
-      const line = `${t.date} | ${t.name} | ${t.amount} | ${t.type} | ${t.category} | ${totalBalance}`;
-      doc.text(line, 20, y);
-      y += 10;
+    // Add title
+    doc.setFontSize(14);
+    doc.text(title, leftMargin, topMargin - 10);
 
-      // Add page break if needed
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
+    // Use autoTable to create table
+    doc.autoTable({
+      head: head,
+      body: body,
+      startY: topMargin + 10,
+      margin: { left: leftMargin, right: 40 },
+      styles: { fontSize: 10, cellPadding: 6 },
+      headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
+      didDrawPage: function (data) {
+        // header on each page
+        doc.setFontSize(10);
+        const page = doc.internal.getNumberOfPages();
+        doc.text(`Generated: ${new Date().toLocaleString()}`, leftMargin, 20);
+        doc.text(`Page ${page}`, doc.internal.pageSize.getWidth() - 80, 20);
+      },
+      // columns can auto-wrap description if long
+      columnStyles: {
+        5: { cellWidth: 150 }, // description column wider
+        2: { halign: 'right' }, // amount right aligned
+        6: { halign: 'right' }  // running balance right aligned
       }
-    }
+    });
 
-    doc.save("transactions.pdf");
+    // save
+    doc.save('transactions_table.pdf');
   });
 }
+
+/* Optional helpers if you want separate PDF downloads (ledger/journal) later:
+   You can implement similar functions that filter entries by name or type
+   and then call doc.autoTable with the filtered rows.
+*/
+
 </script>
 </body>
 </html>
