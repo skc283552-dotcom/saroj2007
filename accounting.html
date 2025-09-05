@@ -3,10 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Accounting System</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <title>Accounting System</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --sidebar-width: 250px;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -15,788 +25,1167 @@
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background-color: #f5f7fa;
             color: #333;
         }
         
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
+        /* Login Page Styles */
+        #login-page {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         
-        header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .setup-container {
-            padding: 25px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .setup-container h2 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
-        
-        .input-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        
-        input[type="text"] {
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             width: 100%;
-            padding: 12px;
+            max-width: 400px;
+        }
+        
+        .login-container h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
             border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 5px;
+            font-size: 1rem;
         }
         
         button {
-            padding: 12px 20px;
-            background: #3498db;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: background 0.3s;
+            transition: background-color 0.3s;
         }
         
         button:hover {
-            background: #2980b9;
+            background-color: #2980b9;
         }
         
-        .dashboard {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 30px;
-            flex-wrap: wrap;
+        /* Dashboard Styles */
+        #dashboard {
+            display: none;
+            min-height: 100vh;
         }
         
-        .icon {
-            width: 150px;
-            height: 150px;
-            background: #3498db;
+        .sidebar {
+            position: fixed;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--dark-color);
             color: white;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-header h2 {
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 1.5rem 0;
+        }
+        
+        .sidebar-menu li {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 15px;
-            transition: 0.3s;
         }
         
-        .icon:hover {
-            background: #2980b9;
-            transform: translateY(-5px);
+        .sidebar-menu li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
         
-        .page {
-            display: none;
-            padding: 20px;
+        .sidebar-menu li.active {
+            background-color: var(--primary-color);
+        }
+        
+        .sidebar-menu li i {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-bar input {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 300px;
+            margin-right: 1rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-header h3 {
+            color: var(--dark-color);
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -0.75rem;
+        }
+        
+        .form-col {
+            flex: 1 0 250px;
+            padding: 0 0.75rem;
+            margin-bottom: 1rem;
         }
         
         table {
-            border-collapse: collapse;
             width: 100%;
-            margin-top: 20px;
+            border-collapse: collapse;
         }
         
-        table, th, td {
-            border: 1px solid #ddd;
+        table th, table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
         }
         
-        th, td {
-            padding: 10px;
+        table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .action-buttons button {
+            width: auto;
+            padding: 0.25rem 0.75rem;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-edit {
+            background-color: #f39c12;
+        }
+        
+        .btn-delete {
+            background-color: var(--accent-color);
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
             text-align: center;
         }
         
-        th {
-            background-color: #f2f2f2;
+        .summary-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
         }
         
-        .back-btn {
-            background: #e74c3c;
+        .summary-card .amount {
+            font-size: 1.5rem;
+            font-weight: 700;
         }
         
-        .back-btn:hover {
-            background: #c0392b;
-        }
+        .cash { color: #27ae60; }
+        .bank { color: #3498db; }
+        .esewa { color: #9b59b6; }
+        .debtors { color: #f39c12; }
+        .creditors { color: #e74c3c; }
         
-        .save-btn {
-            background: #27ae60;
-        }
-        
-        .save-btn:hover {
-            background: #219653;
-        }
-        
-        .edit-btn {
-            background: #f39c12;
-        }
-        
-        .edit-btn:hover {
-            background: #d68910;
-        }
-        
-        .delete-btn {
-            background: #c0392b;
-        }
-        
-        .delete-btn:hover {
-            background: #a93226;
-        }
-        
-        .download-btn {
-            background: #8e44ad;
-        }
-        
-        .download-btn:hover {
-            background: #7d3c98;
-        }
-        
-        .sync-btn {
-            background: #2c3e50;
-            position: fixed;
-            top: 15px;
-            right: 15px;
-        }
-        
-        .sync-btn:hover {
-            background: #1a2530;
-        }
-        
-        .balance-div {
-            margin-top: 15px;
-            font-weight: bold;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 25px;
-            background: #27ae60;
-            color: white;
-            border-radius: 5px;
+        /* Modal Styles */
+        .modal {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
-        .notification.error {
-            background: #e74c3c;
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
         }
         
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
         }
         
-        .instructions {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
+        /* Dashboard info section */
+        .dashboard-info {
+            transition: opacity 0.3s ease;
         }
         
-        .instructions ol {
-            margin-left: 20px;
+        /* Content sections */
+        .content-section {
+            display: none;
         }
         
-        .instructions li {
-            margin-bottom: 10px;
-        }
-        
-        .instructions code {
-            background: #2c3e50;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
+        .content-section.active {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>GitHub Accounting System</h1>
-            <p>Access your accounting data from any device</p>
-        </header>
-        
-        <div class="setup-container">
-            <h2>GitHub Setup</h2>
-            
-            <div class="instructions">
-                <p><strong>Follow these steps to set up GitHub integration:</strong></p>
-                <ol>
-                    <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Token Settings</a></li>
-                    <li>Click "Generate new token" → "Generate new token (classic)"</li>
-                    <li>Give it a name like "Accounting App"</li>
-                    <li>Select the <code>gist</code> scope</li>
-                    <li>Click "Generate token" and copy it</li>
-                    <li>Paste it below and click "Save Token"</li>
-                </ol>
+    <!-- Login Page -->
+    <div id="login-page">
+        <div class="login-container">
+            <h1>Accounting System</h1>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email">
             </div>
-            
-            <div class="input-group">
-                <label for="githubToken">GitHub Personal Access Token:</label>
-                <input type="text" id="githubToken" placeholder="Paste your GitHub token here">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password">
             </div>
-            
-            <button onclick="saveToken()">Save Token</button>
-            <button class="sync-btn" onclick="syncData()" id="syncBtn" style="display: none;">
-                <span class="loading" id="loadingIcon" style="display: none;"></span>Sync Data
-            </button>
+            <button id="login-btn">Login</button>
         </div>
-        
-        <div class="notification" id="notification">Data synced successfully!</div>
+    </div>
 
-        <!-- Dashboard -->
-        <div class="dashboard" id="dashboard">
-            <div class="icon" onclick="openPage('journal')">📘 Journal</div>
-            <div class="icon" onclick="openPage('ledger')">📗 Ledger</div>
-            <div class="icon" onclick="openPage('transactions')">📒 Transactions</div>
-            <div class="icon" onclick="downloadPDF()">📑 Download PDF</div>
+    <!-- Dashboard -->
+    <div id="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Accounting</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active" data-target="dashboard-info"><i>📊</i> Dashboard</li>
+                <li data-target="new-transaction"><i>💼</i> New Transaction</li>
+                <li data-target="journal"><i>📒</i> Journal</li>
+                <li data-target="ledger"><i>📊</i> Ledger</li>
+                <li data-target="debtors"><i>👤</i> Debtors</li>
+                <li data-target="creditors"><i>🏢</i> Creditors</li>
+                <li data-target="pdf-download"><i>📥</i> PDF Download</li>
+                <li id="logout-btn"><i>🚪</i> Logout</li>
+            </ul>
         </div>
 
-        <!-- Journal Page -->
-        <div class="page" id="journal">
-            <h2>Journal Entry</h2>
-            <form id="journalForm">
-                <div class="input-group">
-                    <label for="particular">Particular:</label>
-                    <input type="text" id="particular" required>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Info Section (shown by default) -->
+            <div id="dashboard-info" class="content-section active">
+                <div class="content-header">
+                    <h1>Dashboard</h1>
+                    <div class="search-bar">
+                        <input type="text" id="search-input" placeholder="Search transactions...">
+                        <button id="search-btn">Search</button>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="debit">Debit (Dr):</label>
-                    <input type="number" id="debit" value="0">
+
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Cash Balance</h3>
+                        <div class="amount cash">₹<span id="cash-balance">0.00</span></div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Bank Balance</h3>
+                        <div class="amount bank">₹<span id="bank-balance">0.00</span></div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>eSewa Balance</h3>
+                        <div class="amount esewa">₹<span id="esewa-balance">0.00</span></div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Debtors</h3>
+                        <div class="amount debtors">₹<span id="debtors-total">0.00</span></div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Creditors</h3>
+                        <div class="amount creditors">₹<span id="creditors-total">0.00</span></div>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="credit">Credit (Cr):</label>
-                    <input type="number" id="credit" value="0">
+
+                <!-- Recent Transactions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Transactions</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Account</th>
+                                    <th>Details</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-transactions">
+                                <tr>
+                                    <td colspan="5" style="text-align: center;">No recent transactions</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label for="status">Status:</label>
-                    <select id="status">
-                        <option value="Paid">Paid</option>
-                        <option value="Unpaid">Unpaid</option>
-                    </select>
+            </div>
+
+            <!-- New Transaction Form -->
+            <div id="new-transaction" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>New Transaction</h3>
+                    </div>
+                    <form id="transaction-form">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="account-name">Account Name</label>
+                                <input type="text" id="account-name" required placeholder="e.g., Pranish">
+                            </div>
+                            <div class="form-col">
+                                <label for="details">Details</label>
+                                <input type="text" id="details" required placeholder="Transaction details">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="payment-type">Payment Type</label>
+                                <select id="payment-type" required>
+                                    <option value="">Select Payment Type</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="bank">Bank</option>
+                                    <option value="esewa">eSewa</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label for="transaction-type">Transaction Type</label>
+                                <select id="transaction-type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="income">Income</option>
+                                    <option value="expense">Expense</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="amount">Amount (₹)</label>
+                                <input type="number" id="amount" required min="0" step="0.01">
+                            </div>
+                            <div class="form-col">
+                                <label for="date">Date</label>
+                                <input type="date" id="date" required>
+                            </div>
+                        </div>
+                        <button type="submit">Save Transaction</button>
+                    </form>
                 </div>
-                <div class="input-group">
-                    <label for="paymentType">Payment Type:</label>
-                    <select id="paymentType">
-                        <option>Cash</option>
-                        <option>Bank</option>
-                        <option>eSewa</option>
-                        <option>Fonepay</option>
-                    </select>
+            </div>
+
+            <!-- Journal -->
+            <div id="journal" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Journal</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Account</th>
+                                    <th>Details</th>
+                                    <th>Payment Type</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="journal-entries">
+                                <!-- Journal entries will be populated here -->
+                                <tr>
+                                    <td colspan="7" style="text-align: center;">No journal entries yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <button type="submit" class="save-btn">Save Entry</button>
+            </div>
+
+            <!-- Ledger -->
+            <div id="ledger" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Ledger</h3>
+                        <select id="ledger-account-select">
+                            <option value="">Select Account</option>
+                            <!-- Account options will be populated here -->
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Details</th>
+                                    <th>Payment Type</th>
+                                    <th>Income</th>
+                                    <th>Expense</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-entries">
+                                <!-- Ledger entries will be populated here -->
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Select an account to view ledger</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debtors Section -->
+            <div id="debtors" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Debtors</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <th>Total Amount</th>
+                                    <th>Last Transaction</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="debtors-entries">
+                                <tr>
+                                    <td colspan="4" style="text-align: center;">No debtors data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creditors Section -->
+            <div id="creditors" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Creditors</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <th>Total Amount</th>
+                                    <th>Last Transaction</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="creditors-entries">
+                                <tr>
+                                    <td colspan="4" style="text-align: center;">No creditors data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Download Section -->
+            <div id="pdf-download" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>PDF Downloads</h3>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <button id="download-journal-pdf">Download Journal PDF</button>
+                        <button id="download-ledger-pdf">Download Ledger PDF</button>
+                        <button id="download-debtors-pdf">Download Debtors PDF</button>
+                        <button id="download-creditors-pdf">Download Creditors PDF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Transaction</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="edit-transaction-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="edit-account-name">Account Name</label>
+                        <input type="text" id="edit-account-name" required>
+                    </div>
+                    <div class="form-col">
+                        <label for="edit-details">Details</label>
+                        <input type="text" id="edit-details" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="edit-payment-type">Payment Type</label>
+                        <select id="edit-payment-type" required>
+                            <option value="cash">Cash</option>
+                            <option value="bank">Bank</option>
+                            <option value="esewa">eSewa</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="edit-transaction-type">Transaction Type</label>
+                        <select id="edit-transaction-type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="edit-amount">Amount (₹)</label>
+                        <input type="number" id="edit-amount" required min="0" step="0.01">
+                    </div>
+                    <div class="form-col">
+                        <label for="edit-date">Date</label>
+                        <input type="date" id="edit-date" required>
+                    </div>
+                </div>
+                <button type="submit">Update Transaction</button>
             </form>
-            <button class="back-btn" onclick="goBack()">⬅ Back</button>
-        </div>
-
-        <!-- Ledger Page -->
-        <div class="page" id="ledger">
-            <h2>Ledger</h2>
-            <div class="input-group">
-                <label for="searchName">Search by Name:</label>
-                <input type="text" id="searchName">
-            </div>
-            <div class="input-group">
-                <label for="searchDate">Search by Date:</label>
-                <input type="date" id="searchDate">
-            </div>
-            <button onclick="filterLedger()">Search</button>
-            <table id="ledgerTable">
-                <thead>
-                    <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Balance</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <h3>Total Balance: <span id="ledgerTotal">0</span></h3>
-            <div id="ledgerPaymentBalances" class="balance-div"></div>
-            <button class="back-btn" onclick="goBack()">⬅ Back</button>
-        </div>
-
-        <!-- Transactions Page -->
-        <div class="page" id="transactions">
-            <h2>All Transactions</h2>
-            <table id="transactionTable">
-                <thead>
-                    <tr><th>Date</th><th>Particular</th><th>Debit</th><th>Credit</th><th>Status</th><th>Payment</th><th>Actions</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <h3>Total Income: <span id="totalIncome">0</span> | Total Expense: <span id="totalExpense">0</span></h3>
-            <div id="paymentBalances" class="balance-div"></div>
-            <button class="back-btn" onclick="goBack()">⬅ Back</button>
         </div>
     </div>
 
     <script>
-        // Configuration
-        const FILENAME = 'accounting-data.json';
-        let entries = [];
-        let isOnline = navigator.onLine;
-        let GITHUB_TOKEN = localStorage.getItem('github_token') || '';
-        let GIST_ID = localStorage.getItem('gist_id') || '';
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgScLw0UPPs0t2KYulnCAIcvk6vw6ay18",
+            authDomain: "data-d6493.firebaseapp.com",
+            projectId: "data-d6493",
+            storageBucket: "data-d6493.firebasestorage.app",
+            messagingSenderId: "628882897413",
+            appId: "1:628882897413:web:a2f4bd770457c71a427a6c",
+            measurementId: "G-WE23QDWD33"
+        };
 
-        // Initialize the application
-        function initApp() {
-            // Set token value if exists
-            if (GITHUB_TOKEN) {
-                document.getElementById('githubToken').value = GITHUB_TOKEN;
-                document.getElementById('syncBtn').style.display = 'inline-block';
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // DOM Elements
+        const loginPage = document.getElementById('login-page');
+        const dashboard = document.getElementById('dashboard');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const sidebarItems = document.querySelectorAll('.sidebar-menu li');
+        const contentSections = document.querySelectorAll('.content-section');
+        const transactionForm = document.getElementById('transaction-form');
+        const journalEntries = document.getElementById('journal-entries');
+        const ledgerAccountSelect = document.getElementById('ledger-account-select');
+        const ledgerEntries = document.getElementById('ledger-entries');
+        const editModal = document.getElementById('edit-modal');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const editTransactionForm = document.getElementById('edit-transaction-form');
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+
+        // Global variables
+        let transactions = [];
+        let accounts = [];
+        let currentUser = null;
+
+        // Event Listeners
+        loginBtn.addEventListener('click', login);
+        logoutBtn.addEventListener('click', logout);
+        sidebarItems.forEach(item => {
+            if (item.id !== 'logout-btn') {
+                item.addEventListener('click', () => switchContent(item.dataset.target));
+            }
+        });
+        transactionForm.addEventListener('submit', addTransaction);
+        ledgerAccountSelect.addEventListener('change', displayLedger);
+        closeModalBtn.addEventListener('click', () => editModal.style.display = 'none');
+        editTransactionForm.addEventListener('submit', updateTransaction);
+        searchBtn.addEventListener('click', searchTransactions);
+
+        // Set current date as default
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Authentication functions
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple validation
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
             }
             
-            // Load data
+            // For demo purposes, we'll just show the dashboard
+            // In a real app, you would use Firebase authentication
+            currentUser = { uid: 'demo-user' };
+            loginPage.style.display = 'none';
+            dashboard.style.display = 'block';
             loadData();
             
-            // Set up offline/online detection
-            window.addEventListener('online', () => {
-                isOnline = true;
-                document.getElementById('syncBtn').disabled = false;
-                showNotification('Back online. Sync available.');
-            });
-            
-            window.addEventListener('offline', () => {
-                isOnline = false;
-                document.getElementById('syncBtn').disabled = true;
-                showNotification('Offline. Using local data.', true);
-            });
-            
-            // Check initial online status
-            document.getElementById('syncBtn').disabled = !isOnline;
-        }
-
-        // Save GitHub token
-        function saveToken() {
-            const tokenInput = document.getElementById('githubToken').value;
-            if (tokenInput && tokenInput.startsWith('ghp_')) {
-                GITHUB_TOKEN = tokenInput;
-                localStorage.setItem('github_token', GITHUB_TOKEN);
-                document.getElementById('syncBtn').style.display = 'inline-block';
-                showNotification('Token saved successfully!');
-                syncData();
-            } else {
-                showNotification('Please enter a valid GitHub token. It should start with "ghp_"', true);
-            }
-        }
-
-        // Show notification
-        function showNotification(message, isError = false) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = isError ? 'notification error' : 'notification';
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        // Load data from GitHub Gist or localStorage
-        async function loadData() {
-            // Try to load from localStorage first for quick startup
-            const localData = localStorage.getItem("entries");
-            if (localData) {
-                entries = JSON.parse(localData);
-            }
-            
-            // If online and token exists, try to sync with GitHub
-            if (isOnline && GITHUB_TOKEN) {
-                try {
-                    await syncData();
-                } catch (error) {
-                    console.error('Failed to sync data:', error);
-                    showNotification('Using local data. Sync failed.', true);
-                }
-            }
-            
-            // Update UI
-            if (entries.length > 0) {
-                loadTransactions();
-                loadLedger();
-            }
-        }
-
-        // Sync data with GitHub Gist
-        async function syncData() {
-            if (!isOnline) {
-                showNotification('Cannot sync while offline', true);
-                return;
-            }
-            
-            if (!GITHUB_TOKEN) {
-                showNotification('Please set up GitHub token first', true);
-                return;
-            }
-            
-            const syncBtn = document.getElementById('syncBtn');
-            const loadingIcon = document.getElementById('loadingIcon');
-            syncBtn.disabled = true;
-            loadingIcon.style.display = 'inline-block';
-            
-            try {
-                let gistId = GIST_ID;
-                
-                // If we don't have a GIST_ID, try to find existing gists with our data
-                if (!gistId) {
-                    try {
-                        const gists = await listGists();
-                        for (const gist of gists) {
-                            if (gist.files[FILENAME]) {
-                                gistId = gist.id;
-                                GIST_ID = gistId;
-                                localStorage.setItem('gist_id', GIST_ID);
-                                break;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error listing gists:', error);
-                    }
-                }
-                
-                // Get existing data if available
-                let remoteData = [];
-                if (gistId) {
-                    try {
-                        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-                            headers: {
-                                'Authorization': `token ${GITHUB_TOKEN}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            const gist = await response.json();
-                            if (gist.files[FILENAME]) {
-                                remoteData = JSON.parse(gist.files[FILENAME].content);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error fetching existing gist:', error);
-                    }
-                }
-                
-                // Merge data - remote data has priority for conflicts
-                const mergedData = mergeData(entries, remoteData);
-                entries = mergedData;
-                
-                // Save to localStorage
-                localStorage.setItem("entries", JSON.stringify(entries));
-                
-                // Upload to GitHub
-                const response = await updateGist(entries, gistId);
-                
-                // If we didn't have a GIST_ID before, save it now
-                if (!gistId) {
-                    GIST_ID = response.id;
-                    localStorage.setItem('gist_id', GIST_ID);
-                }
-                
-                showNotification('Data synced successfully!');
-                
-                // Update UI
-                loadTransactions();
-                loadLedger();
-                
-            } catch (error) {
-                console.error('Sync error:', error);
-                showNotification('Sync failed: ' + error.message, true);
-            } finally {
-                syncBtn.disabled = !isOnline;
-                loadingIcon.style.display = 'none';
-            }
-        }
-
-        // Merge local and remote data
-        function mergeData(localData, remoteData) {
-            // Create a map of entries by date and particular for efficient lookup
-            const entryMap = new Map();
-            
-            // Add all local entries
-            if (localData && localData.length) {
-                localData.forEach(entry => {
-                    const key = `${entry.date}-${entry.particular}-${entry.debit}-${entry.credit}`;
-                    entryMap.set(key, entry);
+            // In a real app, you would use:
+            /*
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    currentUser = userCredential.user;
+                    loginPage.style.display = 'none';
+                    dashboard.style.display = 'block';
+                    loadData();
+                })
+                .catch(error => {
+                    alert('Login failed: ' + error.message);
                 });
-            }
-            
-            // Add or overwrite with remote entries
-            if (remoteData && remoteData.length) {
-                remoteData.forEach(entry => {
-                    const key = `${entry.date}-${entry.particular}-${entry.debit}-${entry.credit}`;
-                    entryMap.set(key, entry);
-                });
-            }
-            
-            // Convert back to array and sort by date
-            return Array.from(entryMap.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
+            */
         }
 
-        // List all gists for the user
-        async function listGists() {
-            const response = await fetch('https://api.github.com/gists', {
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
+        function logout() {
+            // For demo purposes
+            currentUser = null;
+            dashboard.style.display = 'none';
+            loginPage.style.display = 'flex';
+            transactions = [];
+            accounts = [];
+            
+            // In a real app, you would use:
+            /*
+            auth.signOut().then(() => {
+                currentUser = null;
+                dashboard.style.display = 'none';
+                loginPage.style.display = 'flex';
+                transactions = [];
+                accounts = [];
+            });
+            */
+        }
+
+        // Content switching
+        function switchContent(target) {
+            // Hide all content sections
+            contentSections.forEach(section => {
+                section.style.display = 'none';
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to list gists: ' + response.statusText);
-            }
+            // Show the selected content section
+            document.getElementById(target).style.display = 'block';
             
-            return await response.json();
+            // Update active menu item
+            sidebarItems.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            document.querySelector(`[data-target="${target}"]`).classList.add('active');
         }
 
-        // Update or create a gist with the accounting data
-        async function updateGist(data, gistId = null) {
-            const body = {
-                files: {
-                    [FILENAME]: {
-                        content: JSON.stringify(data, null, 2)
-                    }
-                },
-                description: 'Accounting System Data',
-                public: false
+        // Firebase operations
+        function addTransaction(e) {
+            e.preventDefault();
+            
+            const transaction = {
+                accountName: document.getElementById('account-name').value,
+                details: document.getElementById('details').value,
+                paymentType: document.getElementById('payment-type').value,
+                transactionType: document.getElementById('transaction-type').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                date: document.getElementById('date').value,
+                userId: currentUser.uid,
+                createdAt: new Date()
             };
             
-            const url = gistId ? 
-                `https://api.github.com/gists/${gistId}` : 
-                'https://api.github.com/gists';
+            // For demo purposes, we'll add to local array
+            transaction.id = 'temp-' + Date.now();
+            transactions.unshift(transaction);
             
-            const method = gistId ? 'PATCH' : 'POST';
+            alert('Transaction added successfully!');
+            transactionForm.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            updateJournal();
+            updateAccounts();
+            updateSummary();
+            updateRecentTransactions();
             
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
+            // In a real app, you would use:
+            /*
+            db.collection('transactions').add(transaction)
+                .then(() => {
+                    alert('Transaction added successfully!');
+                    transactionForm.reset();
+                    document.getElementById('date').valueAsDate = new Date();
+                    loadData();
+                })
+                .catch(error => {
+                    alert('Error adding transaction: ' + error.message);
+                });
+            */
+        }
+
+        function loadData() {
+            if (!currentUser) return;
+            
+            // For demo purposes, we'll create some sample data
+            transactions = [
+                {
+                    id: '1',
+                    accountName: 'Pranish',
+                    details: 'Website Development',
+                    paymentType: 'bank',
+                    transactionType: 'income',
+                    amount: 50000,
+                    date: '2023-06-15',
+                    userId: 'demo-user',
+                    createdAt: new Date('2023-06-15')
                 },
-                body: JSON.stringify(body)
+                {
+                    id: '2',
+                    accountName: 'Supplier Co.',
+                    details: 'Office Supplies',
+                    paymentType: 'cash',
+                    transactionType: 'expense',
+                    amount: 15000,
+                    date: '2023-06-10',
+                    userId: 'demo-user',
+                    createdAt: new Date('2023-06-10')
+                },
+                {
+                    id: '3',
+                    accountName: 'Pranish',
+                    details: 'Consultation Fee',
+                    paymentType: 'esewa',
+                    transactionType: 'income',
+                    amount: 10000,
+                    date: '2023-06-05',
+                    userId: 'demo-user',
+                    createdAt: new Date('2023-06-05')
+                }
+            ];
+            
+            updateJournal();
+            updateAccounts();
+            updateSummary();
+            updateRecentTransactions();
+            
+            // In a real app, you would use:
+            /*
+            db.collection('transactions')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    transactions = [];
+                    snapshot.forEach(doc => {
+                        transactions.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    updateJournal();
+                    updateAccounts();
+                    updateSummary();
+                    updateRecentTransactions();
+                });
+            */
+        }
+
+        function updateJournal() {
+            journalEntries.innerHTML = '';
+            
+            if (transactions.length === 0) {
+                journalEntries.innerHTML = '<tr><td colspan="7" style="text-align: center;">No journal entries yet</td></tr>';
+                return;
+            }
+            
+            transactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${transaction.accountName}</td>
+                    <td>${transaction.details}</td>
+                    <td>${transaction.paymentType}</td>
+                    <td>${transaction.transactionType}</td>
+                    <td>₹${transaction.amount.toFixed(2)}</td>
+                    <td class="action-buttons">
+                        <button class="btn-edit" data-id="${transaction.id}">Edit</button>
+                        <button class="btn-delete" data-id="${transaction.id}">Delete</button>
+                    </td>
+                `;
+                journalEntries.appendChild(row);
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to update gist: ' + response.statusText);
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteTransaction(btn.dataset.id));
+            });
+        }
+        
+        function updateRecentTransactions() {
+            const recentTransactions = document.getElementById('recent-transactions');
+            recentTransactions.innerHTML = '';
+            
+            if (transactions.length === 0) {
+                recentTransactions.innerHTML = '<tr><td colspan="5" style="text-align: center;">No recent transactions</td></tr>';
+                return;
             }
             
-            return await response.json();
-        }
-
-        // Your existing functions
-        function openPage(pageId) {
-            document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-            document.getElementById("dashboard").style.display = "none";
-            document.getElementById(pageId).style.display = "block";
-            if (pageId === "ledger") loadLedger();
-            if (pageId === "transactions") loadTransactions();
-        }
-
-        function goBack() {
-            document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-            document.getElementById("dashboard").style.display = "flex";
-        }
-
-        document.getElementById("journalForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            let date = new Date().toISOString().split("T")[0];
-            let particular = document.getElementById("particular").value;
-            let debit = parseFloat(document.getElementById("debit").value) || 0;
-            let credit = parseFloat(document.getElementById("credit").value) || 0;
-            let status = document.getElementById("status").value;
-            let paymentType = document.getElementById("paymentType").value;
-
-            entries.push({ date, particular, debit, credit, status, paymentType });
-            localStorage.setItem("entries", JSON.stringify(entries));
+            // Show only the 5 most recent transactions
+            const recent = transactions.slice(0, 5);
             
-            // Try to sync if online
-            if (isOnline && GITHUB_TOKEN) {
-                try {
-                    await syncData();
-                } catch (error) {
-                    console.error('Sync after save failed:', error);
-                    showNotification('Saved locally. Sync failed.', true);
+            recent.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${transaction.accountName}</td>
+                    <td>${transaction.details}</td>
+                    <td>${transaction.transactionType}</td>
+                    <td>₹${transaction.amount.toFixed(2)}</td>
+                `;
+                recentTransactions.appendChild(row);
+            });
+        }
+
+        function updateAccounts() {
+            // Get unique account names
+            accounts = [...new Set(transactions.map(t => t.accountName))];
+            
+            // Update ledger account selector
+            ledgerAccountSelect.innerHTML = '<option value="">Select Account</option>';
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account;
+                option.textContent = account;
+                ledgerAccountSelect.appendChild(option);
+            });
+        }
+
+        function updateSummary() {
+            // Calculate balances
+            let cashBalance = 0;
+            let bankBalance = 0;
+            let esewaBalance = 0;
+            let debtorsTotal = 0;
+            let creditorsTotal = 0;
+            
+            transactions.forEach(transaction => {
+                const amount = transaction.transactionType === 'income' 
+                    ? transaction.amount 
+                    : -transaction.amount;
+                
+                switch(transaction.paymentType) {
+                    case 'cash':
+                        cashBalance += amount;
+                        break;
+                    case 'bank':
+                        bankBalance += amount;
+                        break;
+                    case 'esewa':
+                        esewaBalance += amount;
+                        break;
                 }
-            } else {
-                showNotification('Entry saved locally. Sync when online.');
+                
+                // Simple logic for debtors/creditors - in a real app, this would be more complex
+                if (transaction.transactionType === 'income') {
+                    debtorsTotal += transaction.amount;
+                } else {
+                    creditorsTotal += transaction.amount;
+                }
+            });
+            
+            // Update UI
+            document.getElementById('cash-balance').textContent = cashBalance.toFixed(2);
+            document.getElementById('bank-balance').textContent = bankBalance.toFixed(2);
+            document.getElementById('esewa-balance').textContent = esewaBalance.toFixed(2);
+            document.getElementById('debtors-total').textContent = debtorsTotal.toFixed(2);
+            document.getElementById('creditors-total').textContent = creditorsTotal.toFixed(2);
+        }
+
+        function displayLedger() {
+            const account = ledgerAccountSelect.value;
+            if (!account) {
+                ledgerEntries.innerHTML = '<tr><td colspan="6" style="text-align: center;">Select an account to view ledger</td></tr>';
+                return;
             }
             
-            this.reset();
+            const accountTransactions = transactions.filter(t => t.accountName === account);
+            
+            if (accountTransactions.length === 0) {
+                ledgerEntries.innerHTML = '<tr><td colspan="6" style="text-align: center;">No transactions found for this account</td></tr>';
+                return;
+            }
+            
+            ledgerEntries.innerHTML = '';
+            let balance = 0;
+            
+            accountTransactions.forEach(transaction => {
+                const income = transaction.transactionType === 'income' ? transaction.amount : 0;
+                const expense = transaction.transactionType === 'expense' ? transaction.amount : 0;
+                
+                balance += income - expense;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${transaction.details}</td>
+                    <td>${transaction.paymentType}</td>
+                    <td>${income > 0 ? '₹' + income.toFixed(2) : ''}</td>
+                    <td>${expense > 0 ? '₹' + expense.toFixed(2) : ''}</td>
+                    <td>₹${balance.toFixed(2)}</td>
+                `;
+                ledgerEntries.appendChild(row);
+            });
+        }
+
+        function openEditModal(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+            
+            document.getElementById('edit-id').value = transaction.id;
+            document.getElementById('edit-account-name').value = transaction.accountName;
+            document.getElementById('edit-details').value = transaction.details;
+            document.getElementById('edit-payment-type').value = transaction.paymentType;
+            document.getElementById('edit-transaction-type').value = transaction.transactionType;
+            document.getElementById('edit-amount').value = transaction.amount;
+            document.getElementById('edit-date').value = transaction.date;
+            
+            editModal.style.display = 'flex';
+        }
+
+        function updateTransaction(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('edit-id').value;
+            const updatedTransaction = {
+                accountName: document.getElementById('edit-account-name').value,
+                details: document.getElementById('edit-details').value,
+                paymentType: document.getElementById('edit-payment-type').value,
+                transactionType: document.getElementById('edit-transaction-type').value,
+                amount: parseFloat(document.getElementById('edit-amount').value),
+                date: document.getElementById('edit-date').value
+            };
+            
+            // For demo purposes, update local array
+            const index = transactions.findIndex(t => t.id === id);
+            if (index !== -1) {
+                transactions[index] = { ...transactions[index], ...updatedTransaction };
+            }
+            
+            alert('Transaction updated successfully!');
+            editModal.style.display = 'none';
+            updateJournal();
+            updateAccounts();
+            updateSummary();
+            updateRecentTransactions();
+            displayLedger();
+            
+            // In a real app, you would use:
+            /*
+            db.collection('transactions').doc(id).update(updatedTransaction)
+                .then(() => {
+                    alert('Transaction updated successfully!');
+                    editModal.style.display = 'none';
+                })
+                .catch(error => {
+                    alert('Error updating transaction: ' + error.message);
+                });
+            */
+        }
+
+        function deleteTransaction(id) {
+            if (confirm('Are you sure you want to delete this transaction?')) {
+                // For demo purposes, remove from local array
+                transactions = transactions.filter(t => t.id !== id);
+                
+                alert('Transaction deleted successfully!');
+                updateJournal();
+                updateAccounts();
+                updateSummary();
+                updateRecentTransactions();
+                displayLedger();
+                
+                // In a real app, you would use:
+                /*
+                db.collection('transactions').doc(id).delete()
+                    .then(() => {
+                        alert('Transaction deleted successfully!');
+                    })
+                    .catch(error => {
+                        alert('Error deleting transaction: ' + error.message);
+                    });
+                */
+            }
+        }
+
+        function searchTransactions() {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            if (!searchTerm) {
+                updateJournal();
+                return;
+            }
+            
+            const filteredTransactions = transactions.filter(transaction => 
+                transaction.accountName.toLowerCase().includes(searchTerm) ||
+                transaction.details.toLowerCase().includes(searchTerm) ||
+                transaction.paymentType.toLowerCase().includes(searchTerm) ||
+                transaction.transactionType.toLowerCase().includes(searchTerm) ||
+                transaction.amount.toString().includes(searchTerm) ||
+                transaction.date.includes(searchTerm)
+            );
+            
+            journalEntries.innerHTML = '';
+            
+            if (filteredTransactions.length === 0) {
+                journalEntries.innerHTML = '<tr><td colspan="7" style="text-align: center;">No matching transactions found</td></tr>';
+                return;
+            }
+            
+            filteredTransactions.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${transaction.accountName}</td>
+                    <td>${transaction.details}</td>
+                    <td>${transaction.paymentType}</td>
+                    <td>${transaction.transactionType}</td>
+                    <td>₹${transaction.amount.toFixed(2)}</td>
+                    <td class="action-buttons">
+                        <button class="btn-edit" data-id="${transaction.id}">Edit</button>
+                        <button class="btn-delete" data-id="${transaction.id}">Delete</button>
+                    </td>
+                `;
+                journalEntries.appendChild(row);
+            });
+            
+            // Reattach event listeners
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+            });
+            
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteTransaction(btn.dataset.id));
+            });
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // PDF download functions (simplified for this example)
+        document.getElementById('download-journal-pdf').addEventListener('click', () => {
+            alert('Journal PDF download functionality would be implemented here');
         });
 
-        function calculateBalances() {
-            let balances = { Cash:0, Bank:0, eSewa:0, Fonepay:0 };
-            entries.forEach(e => {
-                let net = (e.credit || 0) - (e.debit || 0);
-                balances[e.paymentType] = (balances[e.paymentType] || 0) + net;
-            });
-            return balances;
-        }
+        document.getElementById('download-ledger-pdf').addEventListener('click', () => {
+            alert('Ledger PDF download functionality would be implemented here');
+        });
 
-        function loadTransactions() {
-            let tbody = document.querySelector("#transactionTable tbody");
-            tbody.innerHTML = "";
-            let totalIncome = 0, totalExpense = 0;
-            entries.forEach((e, i) => {
-                totalIncome += e.credit;
-                totalExpense += e.debit;
-                let row = `<tr>
-                    <td>${e.date}</td><td>${e.particular}</td><td>${e.debit}</td>
-                    <td>${e.credit}</td><td>${e.status}</td><td>${e.paymentType}</td>
-                    <td>
-                    <button class="edit-btn" onclick="editEntry(${i})">Edit</button>
-                    <button class="delete-btn" onclick="deleteEntry(${i})">Delete</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-            document.getElementById("totalIncome").innerText = totalIncome;
-            document.getElementById("totalExpense").innerText = totalExpense;
+        document.getElementById('download-debtors-pdf').addEventListener('click', () => {
+            alert('Debtors PDF download functionality would be implemented here');
+        });
 
-            let balances = calculateBalances();
-            let balanceDiv = document.getElementById("paymentBalances");
-            balanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-        }
-
-        function loadLedger() {
-            let tbody = document.querySelector("#ledgerTable tbody");
-            tbody.innerHTML = "";
-            let total = 0;
-            entries.forEach(e => {
-                total += e.credit - e.debit;
-                tbody.innerHTML += `<tr>
-                    <td>${e.date}</td><td>${e.particular}</td>
-                    <td>${e.debit}</td><td>${e.credit}</td>
-                    <td>${e.status}</td><td>${e.paymentType}</td>
-                    <td>${total}</td>
-                </tr>`;
-            });
-            document.getElementById("ledgerTotal").innerText = total;
-
-            let balances = calculateBalances();
-            let ledgerBalanceDiv = document.getElementById("ledgerPaymentBalances");
-            ledgerBalanceDiv.innerHTML = `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-        }
-
-        function filterLedger() {
-            let name = document.getElementById("searchName").value.toLowerCase();
-            let date = document.getElementById("searchDate").value;
-            let tbody = document.querySelector("#ledgerTable tbody");
-            tbody.innerHTML = "";
-            let total = 0;
-            entries.filter(e => (!name || e.particular.toLowerCase().includes(name)) &&
-                            (!date || e.date === date))
-                .forEach(e => {
-                total += e.credit - e.debit;
-                tbody.innerHTML += `<tr>
-                    <td>${e.date}</td><td>${e.particular}</td>
-                    <td>${e.debit}</td><td>${e.credit}</td>
-                    <td>${e.status}</td><td>${e.paymentType}</td>
-                    <td>${total}</td>
-                </tr>`;
-            });
-            document.getElementById("ledgerTotal").innerText = total;
-
-            let balances = calculateBalances();
-            document.getElementById("ledgerPaymentBalances").innerHTML =
-                `Cash: ${balances.Cash} | Bank: ${balances.Bank} | eSewa: ${balances.eSewa} | Fonepay: ${balances.Fonepay}`;
-        }
-
-        async function deleteEntry(index) {
-            if (confirm("Delete this entry?")) {
-                entries.splice(index, 1);
-                localStorage.setItem("entries", JSON.stringify(entries));
-                
-                // Try to sync if online
-                if (isOnline && GITHUB_TOKEN) {
-                    try {
-                        await syncData();
-                    } catch (error) {
-                        console.error('Sync after delete failed:', error);
-                        showNotification('Deleted locally. Sync failed.', true);
-                    }
-                } else {
-                    showNotification('Entry deleted locally. Sync when online.');
-                }
-                
-                loadTransactions();
-                loadLedger();
-            }
-        }
-
-        function editEntry(index) {
-            let e = entries[index];
-            document.getElementById("particular").value = e.particular;
-            document.getElementById("debit").value = e.debit;
-            document.getElementById("credit").value = e.credit;
-            document.getElementById("status").value = e.status;
-            document.getElementById("paymentType").value = e.paymentType;
-            deleteEntry(index);
-            openPage("journal");
-        }
-
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            let doc = new jsPDF();
-            doc.text("Accounting Transactions Report", 14, 15);
-            doc.autoTable({
-                startY: 20,
-                head: [["Date", "Particular", "Debit", "Credit", "Status", "Payment", "Balance"]],
-                body: entries.map((e, i) => [
-                    e.date, e.particular, e.debit, e.credit, e.status, e.paymentType,
-                    entries.slice(0, i+1).reduce((t, x) => t + (x.credit - x.debit), 0)
-                ])
-            });
-
-            let y = doc.lastAutoTable.finalY + 10;
-            let balances = calculateBalances();
-            doc.text(`Balances: Cash ${balances.Cash} | Bank ${balances.Bank} | eSewa ${balances.eSewa} | Fonepay ${balances.Fonepay}`, 14, y);
-
-            doc.save("accounting_transactions.pdf");
-        }
-
-        // Initialize the app
-        initApp();
+        document.getElementById('download-creditors-pdf').addEventListener('click', () => {
+            alert('Creditors PDF download functionality would be implemented here');
+        });
     </script>
 </body>
-</html>
+    </html>
