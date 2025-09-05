@@ -11,6 +11,8 @@ header{background:#0288d1;color:white;padding:20px;text-align:center;}
 .section{width:90%;margin:20px auto;background:white;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 input,button{padding:8px;margin:5px;border-radius:5px;border:1px solid #ccc;}
 button{border:none;background:#4e73df;color:white;cursor:pointer;}
+button.delete{background:#e74c3c;}
+button.edit{background:#f39c12;}
 table{width:100%;border-collapse:collapse;}
 th,td{border:1px solid #ccc;padding:8px;text-align:center;}
 th{background:#03a9f4;color:white;}
@@ -36,7 +38,7 @@ img{width:50px;height:50px;border-radius:6px;}
 <div class="section">
 <h3>Contacts</h3>
 <table id="contactTable">
-<tr><th>Photo</th><th>Name</th><th>Phone Number</th></tr>
+<tr><th>Photo</th><th>Name</th><th>Phone Number</th><th>Actions</th></tr>
 </table>
 </div>
 
@@ -82,14 +84,36 @@ db.on('value', snapshot=>{
 // Display Contacts
 function displayContacts(data){
   const table=document.getElementById('contactTable');
-  table.innerHTML="<tr><th>Photo</th><th>Name</th><th>Phone Number</th></tr>";
+  table.innerHTML="<tr><th>Photo</th><th>Name</th><th>Phone Number</th><th>Actions</th></tr>";
   for(let key in data){
     let row=table.insertRow();
-    let imgCell=row.insertCell(0);
-    imgCell.innerHTML=`<img src="${data[key].photo}">`;
+    row.insertCell(0).innerHTML=`<img src="${data[key].photo}">`;
     row.insertCell(1).innerText=data[key].name;
     row.insertCell(2).innerText=data[key].phone;
+    row.insertCell(3).innerHTML=`
+      <button class="edit" onclick="editContact('${key}')">Edit</button>
+      <button class="delete" onclick="deleteContact('${key}')">Delete</button>`;
   }
+}
+
+// Delete Contact
+function deleteContact(id){
+  if(confirm("Are you sure you want to delete this contact?")){
+    db.child(id).remove();
+  }
+}
+
+// Edit Contact
+function editContact(id){
+  db.child(id).once('value',snap=>{
+    const data=snap.val();
+    const newName=prompt("Edit Name:", data.name);
+    const newPhone=prompt("Edit Phone:", data.phone);
+    const newPhoto=prompt("Edit Photo URL:", data.photo);
+    if(newName && newPhone && newPhoto){
+      db.child(id).update({name:newName, phone:newPhone, photo:newPhoto});
+    }
+  });
 }
 
 // Search Contacts by Name
