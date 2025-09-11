@@ -1,813 +1,518 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Accounting System</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Accounting System</title>
 
-    <!-- Firebase compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
-    <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --accent-color: #e74c3c;
-            --dark-color: #2c3e50;
-            --light-color: #ecf0f1;
-            --sidebar-width: 250px;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color:#f5f7fa; color:#333; }
+<style>
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --accent-color: #e74c3c;
+    --dark-color: #2c3e50;
+    --light-color: #ecf0f1;
+    --sidebar-width: 250px;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background-color:#f5f7fa; color:#333; }
 
-        /* Login Page */
-        #login-page { height:100vh; display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
-        .login-container { background:white; padding:2rem; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.2); width:100%; max-width:400px; }
-        .login-container h1 { text-align:center; margin-bottom:1.5rem; color:var(--primary-color); font-weight:700; }
-        .form-group { margin-bottom:1.5rem; }
-        .form-group label { display:block; margin-bottom:0.5rem; font-weight:600; color:var(--dark-color); }
-        .form-group input { width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:5px; font-size:1rem; }
-        button { width:100%; padding:0.75rem; background-color:var(--primary-color); color:white; border:none; border-radius:5px; font-size:1rem; font-weight:600; cursor:pointer; transition:background-color 0.3s; }
-        button:hover { background-color:#2980b9; }
+/* Login Page */
+#login-page { height:100vh; display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+.login-container { background:white; padding:2rem; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.2); width:100%; max-width:400px; }
+.login-container h1 { text-align:center; margin-bottom:1.5rem; color:var(--primary-color); font-weight:700; }
+.form-group { margin-bottom:1.5rem; }
+.form-group label { display:block; margin-bottom:0.5rem; font-weight:600; color:var(--dark-color); }
+.form-group input { width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:5px; font-size:1rem; }
+button { width:100%; padding:0.75rem; background-color:var(--primary-color); color:white; border:none; border-radius:5px; font-size:1rem; font-weight:600; cursor:pointer; transition:background-color 0.3s; }
+button:hover { background-color:#2980b9; }
 
-        /* Dashboard */
-        #dashboard { display:none; min-height:100vh; }
-        .sidebar { position:fixed; width:var(--sidebar-width); height:100vh; background-color:var(--dark-color); color:white; padding:1rem 0; overflow-y:auto; }
-        .sidebar-header { padding:0 1.5rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.1); }
-        .sidebar-header h2 { color:white; font-size:1.5rem; }
-        .sidebar-menu { list-style:none; padding:1.5rem 0; }
-        .sidebar-menu li { padding:0.75rem 1.5rem; cursor:pointer; transition:background-color 0.3s; display:flex; align-items:center; }
-        .sidebar-menu li:hover { background-color: rgba(255,255,255,0.1); }
-        .sidebar-menu li.active { background-color: var(--primary-color); }
-        .sidebar-menu li i { margin-right:0.75rem; font-size:1.25rem; }
-        .main-content { margin-left:var(--sidebar-width); padding:2rem; }
-        .content-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
-        .search-bar { display:flex; align-items:center; }
-        .search-bar input { padding:0.75rem; border:1px solid #ddd; border-radius:5px; width:300px; margin-right:1rem; }
-        .card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); padding:1.5rem; margin-bottom:2rem; }
-        .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:0.75rem; border-bottom:1px solid #eee; }
-        .card-header h3 { color:var(--dark-color); }
-        .form-row { display:flex; flex-wrap:wrap; margin:0 -0.75rem; }
-        .form-col { flex:1 0 250px; padding:0 0.75rem; margin-bottom:1rem; }
-        table { width:100%; border-collapse:collapse; }
-        table th, table td { padding:0.75rem; text-align:left; border-bottom:1px solid #eee; }
-        table th { background-color:#f8f9fa; font-weight:600; }
-        .action-buttons button { width:auto; padding:0.25rem 0.75rem; margin-right:0.5rem; }
-        .btn-edit { background-color:#f39c12; color:white; border:none; border-radius:4px; cursor:pointer; }
-        .btn-delete { background-color:var(--accent-color); color:white; border:none; border-radius:4px; cursor:pointer; }
-        .summary-cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1.5rem; margin-bottom:2rem; }
-        .summary-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); padding:1.5rem; text-align:center; }
-        .summary-card h3 { font-size:1rem; margin-bottom:0.5rem; color:var(--dark-color); }
-        .summary-card .amount { font-size:1.5rem; font-weight:700; }
-        .cash { color:#27ae60; } .bank { color:#3498db; } .esewa { color:#9b59b6; } .debtors { color:#f39c12; } .creditors { color:#e74c3c; }
+/* Dashboard */
+#dashboard { display:none; min-height:100vh; }
+.sidebar { position:fixed; width:var(--sidebar-width); height:100vh; background-color:var(--dark-color); color:white; padding:1rem 0; overflow-y:auto; }
+.sidebar-header { padding:0 1.5rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { color:white; font-size:1.5rem; }
+.sidebar-menu { list-style:none; padding:1.5rem 0; }
+.sidebar-menu li { padding:0.75rem 1.5rem; cursor:pointer; transition:background-color 0.3s; display:flex; align-items:center; }
+.sidebar-menu li:hover { background-color: rgba(255,255,255,0.1); }
+.sidebar-menu li.active { background-color: var(--primary-color); }
+.sidebar-menu li i { margin-right:0.75rem; font-size:1.25rem; }
+.main-content { margin-left:var(--sidebar-width); padding:2rem; }
+.content-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+.search-bar { display:flex; align-items:center; }
+.search-bar input { padding:0.75rem; border:1px solid #ddd; border-radius:5px; width:300px; margin-right:1rem; }
+.card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); padding:1.5rem; margin-bottom:2rem; }
+.card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:0.75rem; border-bottom:1px solid #eee; }
+.card-header h3 { color:var(--dark-color); }
+.form-row { display:flex; flex-wrap:wrap; margin:0 -0.75rem; }
+.form-col { flex:1 0 250px; padding:0 0.75rem; margin-bottom:1rem; }
+table { width:100%; border-collapse:collapse; }
+table th, table td { padding:0.75rem; text-align:left; border-bottom:1px solid #eee; }
+table th { background-color:#f8f9fa; font-weight:600; }
+.action-buttons button { width:auto; padding:0.25rem 0.75rem; margin-right:0.5rem; }
+.btn-edit { background-color:#f39c12; color:white; border:none; border-radius:4px; cursor:pointer; }
+.btn-delete { background-color:var(--accent-color); color:white; border:none; border-radius:4px; cursor:pointer; }
+.summary-cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1.5rem; margin-bottom:2rem; }
+.summary-card { background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); padding:1.5rem; text-align:center; }
+.summary-card h3 { font-size:1rem; margin-bottom:0.5rem; color:var(--dark-color); }
+.summary-card .amount { font-size:1.5rem; font-weight:700; }
+.cash { color:#27ae60; } .bank { color:#3498db; } .esewa { color:#9b59b6; } .debtors { color:#f39c12; } .creditors { color:#e74c3c; }
 
-        /* Modal */
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
-        .modal-content { background:white; border-radius:10px; width:100%; max-width:500px; padding:2rem; }
-        .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
-        .close-modal { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999; }
+/* Modal */
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
+.modal-content { background:white; border-radius:10px; width:100%; max-width:500px; padding:2rem; }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+.close-modal { background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999; }
 
-        .content-section { display:none; }
-        .content-section.active { display:block; }
-    </style>
+.content-section { display:none; }
+.content-section.active { display:block; }
+</style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="login-page">
-        <div class="login-container">
-            <h1>Accounting System</h1>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" placeholder="Enter your email">
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter your password">
-            </div>
-            <button id="login-btn">Login (Demo)</button>
+
+<!-- Login Page -->
+<div id="login-page">
+    <div class="login-container">
+        <h1>Accounting System</h1>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email">
         </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password">
+        </div>
+        <button id="login-btn">Login (Demo)</button>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+    <div class="sidebar">
+        <div class="sidebar-header"><h2>Accounting</h2></div>
+        <ul class="sidebar-menu">
+            <li class="active" data-target="dashboard-info"><i>📊</i> Dashboard</li>
+            <li data-target="new-transaction"><i>💼</i> New Transaction</li>
+            <li data-target="journal"><i>📒</i> Journal</li>
+            <li data-target="ledger"><i>📊</i> Ledger</li>
+            <li data-target="debtors"><i>👤</i> Debtors</li>
+            <li data-target="creditors"><i>🏢</i> Creditors</li>
+            <li data-target="pdf-download"><i>📥</i> PDF Download</li>
+            <li id="logout-btn"><i>🚪</i> Logout</li>
+        </ul>
     </div>
 
-    <!-- Dashboard -->
-    <div id="dashboard">
-        <div class="sidebar">
-            <div class="sidebar-header"><h2>Accounting</h2></div>
-            <ul class="sidebar-menu">
-                <li class="active" data-target="dashboard-info"><i>📊</i> Dashboard</li>
-                <li data-target="new-transaction"><i>💼</i> New Transaction</li>
-                <li data-target="journal"><i>📒</i> Journal</li>
-                <li data-target="ledger"><i>📊</i> Ledger</li>
-                <li data-target="debtors"><i>👤</i> Debtors</li>
-                <li data-target="creditors"><i>🏢</i> Creditors</li>
-                <li data-target="pdf-download"><i>📥</i> PDF Download</li>
-                <li id="logout-btn"><i>🚪</i> Logout</li>
-            </ul>
-        </div>
+    <div class="main-content">
 
-        <div class="main-content">
-            <!-- Dashboard Info -->
-            <div id="dashboard-info" class="content-section active">
-                <div class="content-header">
-                    <h1>Dashboard</h1>
-                    <div class="search-bar">
-                        <input type="text" id="search-input" placeholder="Search transactions...">
-                        <button id="search-btn">Search</button>
-                    </div>
-                </div>
-
-                <div class="summary-cards">
-                    <div class="summary-card">
-                        <h3>Cash Balance</h3>
-                        <div class="amount cash">₹<span id="cash-balance">0.00</span></div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Bank Balance</h3>
-                        <div class="amount bank">₹<span id="bank-balance">0.00</span></div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>eSewa Balance</h3>
-                        <div class="amount esewa">₹<span id="esewa-balance">0.00</span></div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Total Debtors</h3>
-                        <div class="amount debtors">₹<span id="debtors-total">0.00</span></div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Total Creditors</h3>
-                        <div class="amount creditors">₹<span id="creditors-total">0.00</span></div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header"><h3>Recent Transactions</h3></div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Account</th>
-                                    <th>Details</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recent-transactions">
-                                <tr><td colspan="5" style="text-align:center;">No recent transactions</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+        <!-- Dashboard Info -->
+        <div id="dashboard-info" class="content-section active">
+            <div class="content-header">
+                <h1>Dashboard</h1>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Search transactions...">
+                    <button id="search-btn">Search</button>
                 </div>
             </div>
 
-            <!-- New Transaction -->
-            <div id="new-transaction" class="content-section">
-                <div class="card">
-                    <div class="card-header"><h3>New Transaction</h3></div>
-                    <form id="transaction-form">
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label for="account-name">Account Name</label>
-                                <input type="text" id="account-name" required placeholder="e.g., Pranish">
-                            </div>
-                            <div class="form-col">
-                                <label for "details">Details</label>
-                                <input type="text" id="details" required placeholder="Transaction details">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label for="payment-type">Payment Type</label>
-                                <select id="payment-type" required>
-                                    <option value="">Select Payment Type</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="bank">Bank</option>
-                                    <option value="esewa">eSewa</option>
-                                </select>
-                            </div>
-                            <div class="form-col">
-                                <label for="transaction-type">Transaction Type</label>
-                                <select id="transaction-type" required>
-                                    <option value="">Select Type</option>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label for="amount">Amount (₹)</label>
-                                <input type="number" id="amount" required min="0" step="0.01">
-                            </div>
-                            <div class="form-col">
-                                <label for="date">Date</label>
-                                <input type="date" id="date" required>
-                            </div>
-                        </div>
-                        <button type="submit">Save Transaction</button>
-                    </form>
-                </div>
+            <div class="summary-cards">
+                <div class="summary-card"><h3>Cash Balance</h3><div class="amount cash">₹<span id="cash-balance">0.00</span></div></div>
+                <div class="summary-card"><h3>Bank Balance</h3><div class="amount bank">₹<span id="bank-balance">0.00</span></div></div>
+                <div class="summary-card"><h3>eSewa Balance</h3><div class="amount esewa">₹<span id="esewa-balance">0.00</span></div></div>
+                <div class="summary-card"><h3>Total Debtors</h3><div class="amount debtors">₹<span id="debtors-total">0.00</span></div></div>
+                <div class="summary-card"><h3>Total Creditors</h3><div class="amount creditors">₹<span id="creditors-total">0.00</span></div></div>
             </div>
 
-            <!-- Journal -->
-            <div id="journal" class="content-section">
-                <div class="card">
-                    <div class="card-header"><h3>Journal</h3></div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Account</th>
-                                    <th>Details</th>
-                                    <th>Payment Type</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="journal-entries">
-                                <tr><td colspan="7" style="text-align:center;">No journal entries yet</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ledger -->
-            <div id="ledger" class="content-section">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Ledger</h3>
-                        <select id="ledger-account-select"><option value="">Select Account</option></select>
-                    </div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Details</th>
-                                    <th>Payment Type</th>
-                                    <th>Income</th>
-                                    <th>Expense</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ledger-entries">
-                                <tr><td colspan="6" style="text-align:center;">Select an account to view ledger</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Debtors -->
-            <div id="debtors" class="content-section">
-                <div class="card">
-                    <div class="card-header"><h3>Debtors</h3></div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr><th>Account Name</th><th>Total Amount</th><th>Last Transaction</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody id="debtors-entries">
-                                <tr><td colspan="4" style="text-align:center;">No debtors data available</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Creditors -->
-            <div id="creditors" class="content-section">
-                <div class="card">
-                    <div class="card-header"><h3>Creditors</h3></div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr><th>Account Name</th><th>Total Amount</th><th>Last Transaction</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody id="creditors-entries">
-                                <tr><td colspan="4" style="text-align:center;">No creditors data available</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PDF Download -->
-            <div id="pdf-download" class="content-section">
-                <div class="card">
-                    <div class="card-header"><h3>PDF Downloads</h3></div>
-                    <div style="display:flex; flex-direction:column; gap:1rem;">
-                        <button id="download-journal-pdf">Download Journal PDF</button>
-                        <button id="download-ledger-pdf">Download Ledger PDF</button>
-                        <button id="download-debtors-pdf">Download Debtors PDF</button>
-                        <button id="download-creditors-pdf">Download Creditors PDF</button>
-                    </div>
+            <div class="card">
+                <div class="card-header"><h3>Recent Transactions</h3></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th><th>Account</th><th>Details</th><th>Type</th><th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-transactions"><tr><td colspan="5" style="text-align:center;">No recent transactions</td></tr></tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
+        <!-- New Transaction -->
+        <div id="new-transaction" class="content-section">
+            <div class="card">
+                <div class="card-header"><h3>New Transaction</h3></div>
+                <form id="transaction-form">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="account-name">Account Name</label>
+                            <input type="text" id="account-name" required placeholder="e.g., Pranish">
+                        </div>
+                        <div class="form-col">
+                            <label for="details">Details</label>
+                            <input type="text" id="details" required placeholder="Transaction details">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label for="payment-type">Payment Type</label>
+                            <select id="payment-type" required>
+                                <option value="">Select Payment Type</option>
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank</option>
+                                <option value="esewa">eSewa</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="transaction-type">Transaction Type</label>
+                            <select id="transaction-type" required>
+                                <option value="">Select Type</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label for="amount">Amount</label>
+                            <input type="number" id="amount" required placeholder="Amount in ₹">
+                        </div>
+                        <div class="form-col">
+                            <label for="date">Date</label>
+                            <input type="date" id="date" required>
+                        </div>
+                    </div>
+                    <button type="submit">Add Transaction</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Journal Table -->
+        <div id="journal" class="content-section">
+            <div class="card">
+                <div class="card-header"><h3>Journal</h3></div>
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Account</th><th>Details</th><th>Payment Type</th><th>Type</th><th>Amount</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="journal-entries"><tr><td colspan="7" style="text-align:center;">No transactions yet</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ledger Table -->
+        <div id="ledger" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Ledger</h3>
+                    <select id="ledger-account">
+                        <option value="">Select Account</option>
+                    </select>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Details</th><th>Payment Type</th><th>Income</th><th>Expense</th><th>Balance</th></tr>
+                    </thead>
+                    <tbody id="ledger-entries"><tr><td colspan="6" style="text-align:center;">Select an account to view ledger</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Debtors -->
+        <div id="debtors" class="content-section">
+            <div class="card">
+                <div class="card-header"><h3>Debtors</h3></div>
+                <table>
+                    <thead><tr><th>Account</th><th>Amount</th></tr></thead>
+                    <tbody id="debtors-table"><tr><td colspan="2" style="text-align:center;">No debtors</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Creditors -->
+        <div id="creditors" class="content-section">
+            <div class="card">
+                <div class="card-header"><h3>Creditors</h3></div>
+                <table>
+                    <thead><tr><th>Account</th><th>Amount</th></tr></thead>
+                    <tbody id="creditors-table"><tr><td colspan="2" style="text-align:center;">No creditors</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PDF Download Placeholder -->
+        <div id="pdf-download" class="content-section">
+            <div class="card">
+                <h3>PDF Download Placeholder</h3>
+                <p>You can integrate jsPDF here to download tables in PDF format.</p>
+            </div>
+        </div>
+
     </div>
+</div>
 
-    <!-- Edit Modal -->
-    <div class="modal" id="edit-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Transaction</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <form id="edit-transaction-form">
-                <input type="hidden" id="edit-id">
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="edit-account-name">Account Name</label>
-                        <input type="text" id="edit-account-name" required>
-                    </div>
-                    <div class="form-col">
-                        <label for="edit-details">Details</label>
-                        <input type="text" id="edit-details" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="edit-payment-type">Payment Type</label>
-                        <select id="edit-payment-type" required>
-                            <option value="cash">Cash</option>
-                            <option value="bank">Bank</option>
-                            <option value="esewa">eSewa</option>
-                        </select>
-                    </div>
-                    <div class="form-col">
-                        <label for="edit-transaction-type">Transaction Type</label>
-                        <select id="edit-transaction-type" required>
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label for="edit-amount">Amount (₹)</label>
-                        <input type="number" id="edit-amount" required min="0" step="0.01">
-                    </div>
-                    <div class="form-col">
-                        <label for="edit-date">Date</label>
-                        <input type="date" id="edit-date" required>
-                    </div>
-                </div>
-                <button type="submit">Update Transaction</button>
-            </form>
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Transaction</h3>
+            <button class="close-modal" id="close-edit">&times;</button>
         </div>
+        <form id="edit-form">
+            <input type="hidden" id="edit-id">
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="edit-account-name">Account Name</label>
+                    <input type="text" id="edit-account-name" required>
+                </div>
+                <div class="form-col">
+                    <label for="edit-details">Details</label>
+                    <input type="text" id="edit-details" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="edit-payment-type">Payment Type</label>
+                    <select id="edit-payment-type" required>
+                        <option value="">Select</option>
+                        <option value="cash">Cash</option>
+                        <option value="bank">Bank</option>
+                        <option value="esewa">eSewa</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label for="edit-transaction-type">Transaction Type</label>
+                    <select id="edit-transaction-type" required>
+                        <option value="">Select</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label for="edit-amount">Amount</label>
+                    <input type="number" id="edit-amount" required>
+                </div>
+                <div class="form-col">
+                    <label for="edit-date">Date</label>
+                    <input type="date" id="edit-date" required>
+                </div>
+            </div>
+            <button type="submit">Save Changes</button>
+        </form>
     </div>
+</div>
 
-    <script>
-        // ------------ Firebase configuration (Realtime Database) ------------
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgScLw0UPPs0t2KYulnCAIcvk6vw6ay18",
-            authDomain: "data-d6493.firebaseapp.com",
-            databaseURL: "https://data-d6493-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "data-d6493",
-            storageBucket: "data-d6493.appspot.com",
-            messagingSenderId: "628882897413",
-            appId: "1:628882897413:web:a2f4bd770457c71a427a6c",
-            measurementId: "G-WE23QDWD33"
-        };
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBgScLw0UPPs0t2KYulnCAIcvk6vw6ay18",
+  authDomain: "data-d6493.firebaseapp.com",
+  databaseURL: "https://data-d6493-default-rtdb.firebaseio.com",
+  projectId: "data-d6493",
+  storageBucket: "data-d6493.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef123456"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(); // Realtime Database
-        const auth = firebase.auth();
+// --- Authentication (demo) ---
+const loginBtn = document.getElementById('login-btn');
+loginBtn.addEventListener('click',()=>{
+    document.getElementById('login-page').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    loadTransactions();
+});
 
-        // DOM Elements
-        const loginPage = document.getElementById('login-page');
-        const dashboard = document.getElementById('dashboard');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const sidebarItems = document.querySelectorAll('.sidebar-menu li');
-        const contentSections = document.querySelectorAll('.content-section');
-        const transactionForm = document.getElementById('transaction-form');
-        const journalEntries = document.getElementById('journal-entries');
-        const ledgerAccountSelect = document.getElementById('ledger-account-select');
-        const ledgerEntries = document.getElementById('ledger-entries');
-        const editModal = document.getElementById('edit-modal');
-        const closeModalBtn = document.querySelector('.close-modal');
-        const editTransactionForm = document.getElementById('edit-transaction-form');
-        const searchInput = document.getElementById('search-input');
-        const searchBtn = document.getElementById('search-btn');
+// --- Sidebar navigation ---
+const menuItems = document.querySelectorAll('.sidebar-menu li[data-target]');
+menuItems.forEach(item=>{
+    item.addEventListener('click',()=>{
+        menuItems.forEach(i=>i.classList.remove('active'));
+        item.classList.add('active');
+        document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
+        document.getElementById(item.dataset.target).classList.add('active');
+        if(item.dataset.target==='ledger') displayLedger();
+    });
+});
+document.getElementById('logout-btn').addEventListener('click',()=>{
+    location.reload();
+});
 
-        // Summary fields
-        const cashBalanceEl = document.getElementById('cash-balance');
-        const bankBalanceEl = document.getElementById('bank-balance');
-        const esewaBalanceEl = document.getElementById('esewa-balance');
-        const debtorsTotalEl = document.getElementById('debtors-total');
-        const creditorsTotalEl = document.getElementById('creditors-total');
+// --- Transaction management ---
+let transactions = [];
 
-        // Global variables
-        let transactions = []; // array of { id: key, ...data }
-        let accounts = [];
-        let currentUser = null;
-        let transactionsListener = null;
+const transactionForm = document.getElementById('transaction-form');
+transactionForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const t = {
+        id: Date.now(),
+        accountName: document.getElementById('account-name').value.trim(),
+        details: document.getElementById('details').value.trim(),
+        paymentType: document.getElementById('payment-type').value,
+        transactionType: document.getElementById('transaction-type').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        date: document.getElementById('date').value
+    };
+    transactions.push(t);
+    saveTransaction(t);
+    transactionForm.reset();
+    loadTransactions();
+});
 
-        // Events
-        loginBtn.addEventListener('click', login);
-        logoutBtn.addEventListener('click', logout);
-        sidebarItems.forEach(item => {
-            if (item.id !== 'logout-btn') {
-                item.addEventListener('click', () => switchContent(item.dataset.target));
-            }
+// --- Save to Firebase ---
+function saveTransaction(t){
+    db.ref('transactions/'+t.id).set(t);
+}
+
+// --- Load transactions ---
+function loadTransactions(){
+    db.ref('transactions').once('value',snap=>{
+        transactions=[];
+        snap.forEach(child=>{
+            transactions.push(child.val());
         });
-        transactionForm.addEventListener('submit', addTransaction);
-        ledgerAccountSelect.addEventListener('change', displayLedger);
-        closeModalBtn.addEventListener('click', () => editModal.style.display = 'none');
-        editTransactionForm.addEventListener('submit', updateTransaction);
-        searchBtn.addEventListener('click', searchTransactions);
+        updateDashboard();
+        updateJournal();
+        updateAccounts();
+        displayLedger();
+        updateDebtorsCreditors();
+    });
+}
 
-        // Set default date to today
-        document.getElementById('date').valueAsDate = new Date();
+// --- Update Dashboard Cards ---
+function updateDashboard(){
+    const cash = transactions.filter(t=>t.paymentType==='cash').reduce((a,b)=>a+(b.transactionType==='income'?b.amount:-b.amount),0);
+    const bank = transactions.filter(t=>t.paymentType==='bank').reduce((a,b)=>a+(b.transactionType==='income'?b.amount:-b.amount),0);
+    const esewa = transactions.filter(t=>t.paymentType==='esewa').reduce((a,b)=>a+(b.transactionType==='income'?b.amount:-b.amount),0);
+    const debtors = transactions.filter(t=>t.transactionType==='income').reduce((a,b)=>a+b.amount,0);
+    const creditors = transactions.filter(t=>t.transactionType==='expense').reduce((a,b)=>a+b.amount,0);
 
-        // ---------------- Authentication (Demo) ----------------
-        function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            if (!email || !password) {
-                alert('Please enter both email and password');
-                return;
-            }
+    document.getElementById('cash-balance').textContent = cash.toFixed(2);
+    document.getElementById('bank-balance').textContent = bank.toFixed(2);
+    document.getElementById('esewa-balance').textContent = esewa.toFixed(2);
+    document.getElementById('debtors-total').textContent = debtors.toFixed(2);
+    document.getElementById('creditors-total').textContent = creditors.toFixed(2);
 
-            // Demo login: you can replace with real auth later
-            currentUser = { uid: 'demo-user' };
-            loginPage.style.display = 'none';
-            dashboard.style.display = 'block';
-            loadData(); // start loading from DB for currentUser
-        }
+    const recent = transactions.slice(-5).reverse();
+    const tbody = document.getElementById('recent-transactions');
+    tbody.innerHTML='';
+    if(recent.length===0) tbody.innerHTML='<tr><td colspan="5" style="text-align:center;">No recent transactions</td></tr>';
+    else recent.forEach(t=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${t.date}</td><td>${t.accountName}</td><td>${t.details}</td><td>${t.transactionType}</td><td>₹${t.amount.toFixed(2)}</td>`;
+        tbody.appendChild(tr);
+    });
+}
 
-        function logout() {
-            currentUser = null;
-            dashboard.style.display = 'none';
-            loginPage.style.display = 'flex';
-            transactions = [];
-            accounts = [];
-            detachListener();
-            updateJournal();
-            updateAccounts();
-            updateSummary();
-            updateRecentTransactions();
-        }
+// --- Journal ---
+function updateJournal(){
+    const tbody = document.getElementById('journal-entries');
+    tbody.innerHTML='';
+    if(transactions.length===0) tbody.innerHTML='<tr><td colspan="7" style="text-align:center;">No transactions yet</td></tr>';
+    else transactions.forEach(t=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${t.date}</td><td>${t.accountName}</td><td>${t.details}</td>
+            <td>${t.paymentType}</td><td>${t.transactionType}</td><td>₹${t.amount.toFixed(2)}</td>
+            <td class="action-buttons">
+                <button class="btn-edit" onclick="openEditModal(${t.id})">Edit</button>
+                <button class="btn-delete" onclick="deleteTransaction(${t.id})">Delete</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+}
 
-        // ----------------- Content switch -----------------
-        function switchContent(target) {
-            contentSections.forEach(section => section.style.display = 'none');
-            const el = document.getElementById(target);
-            if (el) el.style.display = 'block';
-            sidebarItems.forEach(item => item.classList.remove('active'));
-            const activeBtn = document.querySelector(`[data-target="${target}"]`);
-            if (activeBtn) activeBtn.classList.add('active');
-        }
+// --- Edit Modal ---
+const editModal = document.getElementById('edit-modal');
+document.getElementById('close-edit').addEventListener('click',()=>editModal.style.display='none');
 
-        // ----------------- Realtime DB operations -----------------
+function openEditModal(id){
+    const t = transactions.find(x=>x.id===id);
+    if(!t) return;
+    document.getElementById('edit-id').value = t.id;
+    document.getElementById('edit-account-name').value = t.accountName;
+    document.getElementById('edit-details').value = t.details;
+    document.getElementById('edit-payment-type').value = t.paymentType;
+    document.getElementById('edit-transaction-type').value = t.transactionType;
+    document.getElementById('edit-amount').value = t.amount;
+    document.getElementById('edit-date').value = t.date;
+    editModal.style.display='flex';
+}
 
-        // Attach listener to user's transactions path
-        function loadData() {
-            if (!currentUser) return;
-            // Detach previous listener if any
-            detachListener();
+document.getElementById('edit-form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const id = parseInt(document.getElementById('edit-id').value);
+    const t = transactions.find(x=>x.id===id);
+    if(!t) return;
+    t.accountName = document.getElementById('edit-account-name').value;
+    t.details = document.getElementById('edit-details').value;
+    t.paymentType = document.getElementById('edit-payment-type').value;
+    t.transactionType = document.getElementById('edit-transaction-type').value;
+    t.amount = parseFloat(document.getElementById('edit-amount').value);
+    t.date = document.getElementById('edit-date').value;
+    db.ref('transactions/'+id).set(t);
+    editModal.style.display='none';
+    loadTransactions();
+});
 
-            const userTransactionsRef = db.ref('transactions').orderByChild('userId').equalTo(currentUser.uid);
-            transactionsListener = userTransactionsRef.on('value', snapshot => {
-                transactions = [];
-                snapshot.forEach(child => {
-                    const item = child.val();
-                    item.id = child.key;
-                    // store dates as ISO or user string (keep as saved)
-                    transactions.push(item);
-                });
+// --- Delete ---
+function deleteTransaction(id){
+    if(confirm('Are you sure to delete?')){
+        db.ref('transactions/'+id).remove();
+        loadTransactions();
+    }
+}
 
-                // sort descending by createdAt (if available) or by date string
-                transactions.sort((a,b) => {
-                    const ta = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.date).getTime();
-                    const tb = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.date).getTime();
-                    return tb - ta;
-                });
+// --- Ledger ---
+const ledgerAccountSelect = document.getElementById('ledger-account');
+ledgerAccountSelect.addEventListener('change', displayLedger);
 
-                updateJournal();
-                updateAccounts();
-                updateSummary();
-                updateRecentTransactions();
-            }, error => {
-                console.error('DB read error:', error);
-                alert('Error loading data: ' + error.message);
-            });
-        }
+function updateAccounts(){
+    const accounts = [...new Set(transactions.map(t=>t.accountName))].filter(Boolean);
+    ledgerAccountSelect.innerHTML='<option value="">Select Account</option>';
+    accounts.forEach(a=>{
+        const opt = document.createElement('option');
+        opt.value=a; opt.textContent=a;
+        ledgerAccountSelect.appendChild(opt);
+    });
+}
 
-        function detachListener() {
-            if (transactionsListener && currentUser) {
-                // Cannot directly detach on a query listener returned previously,
-                // so re-create same query and call off()
-                const userTransactionsRef = db.ref('transactions').orderByChild('userId').equalTo(currentUser.uid);
-                userTransactionsRef.off('value');
-                transactionsListener = null;
-            }
-        }
+function displayLedger(){
+    const account = ledgerAccountSelect.value;
+    const tbody = document.getElementById('ledger-entries');
+    tbody.innerHTML='';
+    if(!account){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;">Select an account to view ledger</td></tr>'; return; }
+    let balance = 0;
+    const list = transactions.filter(t=>t.accountName===account);
+    if(list.length===0){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;">No transactions for this account</td></tr>'; return; }
+    list.forEach(t=>{
+        if(t.transactionType==='income') balance+=t.amount; else balance-=t.amount;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${t.date}</td><td>${t.details}</td><td>${t.paymentType}</td>
+            <td>${t.transactionType==='income'?`₹${t.amount.toFixed(2)}`:''}</td>
+            <td>${t.transactionType==='expense'?`₹${t.amount.toFixed(2)}`:''}</td>
+            <td>₹${balance.toFixed(2)}</td>`;
+        tbody.appendChild(tr);
+    });
+}
 
-        // Add transaction to Realtime DB
-        function addTransaction(e) {
-            e.preventDefault();
-            if (!currentUser) {
-                alert('Please login first');
-                return;
-            }
+// --- Debtors & Creditors ---
+function updateDebtorsCreditors(){
+    const debtorsTable = document.getElementById('debtors-table');
+    const creditorsTable = document.getElementById('creditors-table');
+    const debtorsList = transactions.filter(t=>t.transactionType==='income');
+    const creditorsList = transactions.filter(t=>t.transactionType==='expense');
+    debtorsTable.innerHTML='';
+    creditorsTable.innerHTML='';
+    if(debtorsList.length===0) debtorsTable.innerHTML='<tr><td colspan="2" style="text-align:center;">No debtors</td></tr>';
+    else debtorsList.forEach(t=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${t.accountName}</td><td>₹${t.amount.toFixed(2)}</td>`; debtorsTable.appendChild(tr); });
+    if(creditorsList.length===0) creditorsTable.innerHTML='<tr><td colspan="2" style="text-align:center;">No creditors</td></tr>';
+    else creditorsList.forEach(t=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${t.accountName}</td><td>₹${t.amount.toFixed(2)}</td>`; creditorsTable.appendChild(tr); });
+}
+</script>
 
-            const transaction = {
-                accountName: document.getElementById('account-name').value.trim(),
-                details: document.getElementById('details').value.trim(),
-                paymentType: document.getElementById('payment-type').value,
-                transactionType: document.getElementById('transaction-type').value,
-                amount: parseFloat(document.getElementById('amount').value) || 0,
-                date: document.getElementById('date').value,
-                userId: currentUser.uid,
-                createdAt: new Date().toISOString()
-            };
-
-            // Basic validation
-            if (!transaction.accountName || !transaction.paymentType || !transaction.transactionType || !transaction.date) {
-                alert('Please fill required fields');
-                return;
-            }
-
-            // Push to DB
-            const newRef = db.ref('transactions').push();
-            newRef.set(transaction)
-                .then(() => {
-                    alert('Transaction added successfully!');
-                    transactionForm.reset();
-                    document.getElementById('date').valueAsDate = new Date();
-                    // loadData will update automatically via listener
-                })
-                .catch(error => {
-                    console.error('Add error:', error);
-                    alert('Error adding transaction: ' + error.message);
-                });
-        }
-
-        // Update transaction in DB
-        function updateTransaction(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            if (!id) return;
-
-            const updatedTransaction = {
-                accountName: document.getElementById('edit-account-name').value.trim(),
-                details: document.getElementById('edit-details').value.trim(),
-                paymentType: document.getElementById('edit-payment-type').value,
-                transactionType: document.getElementById('edit-transaction-type').value,
-                amount: parseFloat(document.getElementById('edit-amount').value) || 0,
-                date: document.getElementById('edit-date').value,
-                // keep updatedAt
-                updatedAt: new Date().toISOString()
-            };
-
-            db.ref('transactions/' + id).update(updatedTransaction)
-                .then(() => {
-                    alert('Transaction updated successfully!');
-                    editModal.style.display = 'none';
-                    // listener will refresh data
-                })
-                .catch(error => {
-                    console.error('Update error:', error);
-                    alert('Error updating transaction: ' + error.message);
-                });
-        }
-
-        // Delete transaction from DB
-        function deleteTransaction(id) {
-            if (!confirm('Are you sure you want to delete this transaction?')) return;
-            db.ref('transactions/' + id).remove()
-                .then(() => {
-                    alert('Transaction deleted successfully!');
-                    // listener updates UI
-                })
-                .catch(error => {
-                    console.error('Delete error:', error);
-                    alert('Error deleting transaction: ' + error.message);
-                });
-        }
-
-        // ----------------- UI update functions -----------------
-        function updateJournal() {
-            journalEntries.innerHTML = '';
-            if (transactions.length === 0) {
-                journalEntries.innerHTML = '<tr><td colspan="7" style="text-align:center;">No journal entries yet</td></tr>';
-                return;
-            }
-
-            transactions.forEach(transaction => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDate(transaction.date)}</td>
-                    <td>${escapeHtml(transaction.accountName)}</td>
-                    <td>${escapeHtml(transaction.details || '')}</td>
-                    <td>${escapeHtml(transaction.paymentType)}</td>
-                    <td>${escapeHtml(transaction.transactionType)}</td>
-                    <td>₹${(transaction.amount || 0).toFixed(2)}</td>
-                    <td class="action-buttons">
-                        <button class="btn-edit" data-id="${transaction.id}">Edit</button>
-                        <button class="btn-delete" data-id="${transaction.id}">Delete</button>
-                    </td>
-                `;
-                journalEntries.appendChild(row);
-            });
-
-            // Add listeners to new buttons
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', () => openEditModal(btn.dataset.id));
-            });
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', () => deleteTransaction(btn.dataset.id));
-            });
-        }
-
-        function updateRecentTransactions() {
-            const recentTransactions = document.getElementById('recent-transactions');
-            recentTransactions.innerHTML = '';
-            if (transactions.length === 0) {
-                recentTransactions.innerHTML = '<tr><td colspan="5" style="text-align:center;">No recent transactions</td></tr>';
-                return;
-            }
-
-            const recent = transactions.slice(0, 5);
-            recent.forEach(transaction => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDate(transaction.date)}</td>
-                    <td>${escapeHtml(transaction.accountName)}</td>
-                    <td>${escapeHtml(transaction.details || '')}</td>
-                    <td>${escapeHtml(transaction.transactionType)}</td>
-                    <td>₹${(transaction.amount || 0).toFixed(2)}</td>
-                `;
-                recentTransactions.appendChild(row);
-            });
-        }
-
-        function updateAccounts() {
-            accounts = [...new Set(transactions.map(t => t.accountName))].filter(Boolean);
-            ledgerAccountSelect.innerHTML = '<option value="">Select Account</option>';
-            accounts.forEach(account => {
-                const option = document.createElement('option');
-                option.value = account;
-                option.textContent = account;
-                ledgerAccountSelect.appendChild(option);
-            });
-        }
-
-        function updateSummary() {
-            let cashBalance = 0, bankBalance = 0, esewaBalance = 0, debtorsTotal = 0, creditorsTotal = 0;
-            transactions.forEach(transaction => {
-                const amount = transaction.transactionType === 'income' ? (transaction.amount || 0) : -(transaction.amount || 0);
-                switch (transaction.paymentType) {
-                    case 'cash': cashBalance += amount; break;
-                    case 'bank': bankBalance += amount; break;
-                    case 'esewa': esewaBalance += amount; break;
-                }
-                if (transaction.transactionType === 'income') debtorsTotal += (transaction.amount || 0);
-                else creditorsTotal += (transaction.amount || 0);
-            });
-
-            cashBalanceEl.textContent = cashBalance.toFixed(2);
-            bankBalanceEl.textContent = bankBalance.toFixed(2);
-            esewaBalanceEl.textContent = esewaBalance.toFixed(2);
-            debtorsTotalEl.textContent = debtorsTotal.toFixed(2);
-            creditorsTotalEl.textContent = creditorsTotal.toFixed(2);
-        }
-
-        function displayLedger() {
-            const account = ledgerAccountSelect.value;
-            if (!account) {
-                ledgerEntries.innerHTML = '<tr><td colspan="6" style="text-align:center;">Select an account to view ledger</td></tr>';
-                return;
-            }
-            const accountTransactions = transactions.filter(t => t.accountName === account);
-            if (accountTransactions.length === 0) {
-                ledgerEntries.innerHTML = '<tr><td colspan="6" style="text-align:center;">No transactions found for this account</td></tr>';
-                return;
-            }
-            ledgerEntries.innerHTML = '';
-            let balance = 0;
-            accountTransactions.forEach(transaction => {
-                const income = transaction.transactionType === 'income' ? (transaction.amount || 0) : 0;
-                const expense = transaction.transactionType === 'expense' ? (transaction.amount || 0) : 0;
-                balance += income - expense;
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDate(transaction.date)}</td>
-                    <td>${escapeHtml(transaction.details || '')}</td>
-                    <td>${escapeHtml(transaction.paymentType)}</td>
-                    <td>${income > 0 ? '₹' + income.toFixed(2) : ''}</td>
-                    <td>${expense > 0 ? '₹' + expense.toFixed(2) : ''}</td>
-                    <td>₹${balance.toFixed(2)}</td>
-                `;
-                ledgerEntries.appendChild(row);
-            });
-        }
-
-        function openEditModal(id) {
-            const transaction = transactions.find(t => t.id === id);
-            if (!transaction) return;
-            document.getElementById('edit-id').value = transaction.id;
-            document.getElementById('edit-account-name').value = transaction.accountName;
-            document.getElementById('edit-details').value = transaction.details || '';
-            document.getElementById('edit-payment-type').value = transaction.paymentType || '';
-            document.getElementById('edit-transaction-type').value = transaction.transactionType || '';
-            document.getElementById('edit-amount').value = transaction.amount || 0;
-            document.getElementById('edit-date').value = transaction.date || '';
-            editModal.style.display = 'flex';
-        }
-
-        function searchTransactions() {
-            const searchTerm = (searchInput.value || '').toLowerCase();
-            if (!searchTerm) {
-                updateJournal();
-                return;
-            }
-            const filtered = transactions.filter(transaction =>
-                (transaction.accountName || '').toLowerCase().includes(searchTerm) ||
-                (transaction.details || '').toLowerCase().includes(searchTerm) ||
-                (transaction.paymentType || '').toLowerCase().includes(searchTerm) ||
-                (transaction.transactionType || '').toLowerCase().includes(searchTerm) ||
-                (transaction.amount || '').toString().includes(searchTerm) ||
-                (transaction.date || '').includes(searchTerm)
-            );
-
-            journalEntries.innerHTML = '';
-            if (filtered.length === 0) {
-                journalEntries.innerHTML = '<tr><td colspan="7" style="text-align:center;">No matching transactions found</td></tr>';
-                return;
-            }
-            filtered.forEach(transaction => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDate(transaction.date)}</td>
-                    <td>${escapeHtml(transaction.accountName)}</td>
-                    <td>${escapeHtml(transaction.details || '')}</td>
-                    <td>${escapeHtml(transaction.paymentType)}</td>
-                    <td>${escapeHtml(transaction.transactionType)}</td>
-                    <td>₹${(transaction.amount || 0).toFixed(2)}</td>
-                    <td class="action-buttons">
-                        <button class="btn-edit" data-id="${transaction.id}">Edit</button>
-                        <button class="btn-delete" data-id="${transaction.id}">Delete</button>
-                    </td>
-                `;
-                journalEntries.appendChild(row);
-            });
-
-            document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
-            document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', () => deleteTransaction(btn.dataset.id)));
-        }
-
-        // Simple helper for date formatting
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            try {
-                const d = new Date(dateString);
-                const options = { year:'numeric', month:'short', day:'numeric' };
-                return d.toLocaleDateString(undefined, options);
-            } catch (e) {
-                return dateString;
-            }
-        }
-
-        // Basic escaping to avoid HTML injection from DB fields
-        function escapeHtml(str) {
-            if (!str && str !== 0) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
-        // --------------- PDF placeholders ---------------
-        document.getElementById('download-journal-pdf').addEventListener('click', () => {
-            alert('Journal PDF download functionality would be implemented here');
-        });
-        document.getElementById('download-ledger-pdf').addEventListener('click', () => {
-            alert('Ledger PDF download functionality would be implemented here');
-        });
-        document.getElementById('download-debtors-pdf').addEventListener('click', () => {
-            alert('Debtors PDF download functionality would be implemented here');
-        });
-        document.getElementById('download-creditors-pdf').addEventListener('click', () => {
-            alert('Creditors PDF download functionality would be implemented here');
-        });
-
-        // Clean up when closing modal by clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target === editModal) editModal.style.display = 'none';
-        });
-
-        // On initial load: nothing shown until login
-    </script>
 </body>
 </html>
