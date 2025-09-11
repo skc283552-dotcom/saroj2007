@@ -89,6 +89,27 @@ input, select { padding:6px; margin:4px; width:150px; }
   <button onclick="showSection('dashboard')">⬅ Back</button>
 </section>
 
+<!-- ✅ Edit Form Section -->
+<section id="editTransaction">
+  <h2>Edit Transaction</h2>
+  <input type="hidden" id="editId">
+  <input type="text" id="editName" placeholder="Name">
+  <input type="number" id="editAmount" placeholder="Amount">
+  <select id="editType">
+    <option value="Cash">Cash</option>
+    <option value="Bank">Bank</option>
+    <option value="eSewa">eSewa</option>
+  </select>
+  <select id="editCategory">
+    <option value="Income">Income</option>
+    <option value="Expense">Expense</option>
+  </select>
+  <input type="text" id="editDesc" placeholder="Description">
+  <input type="date" id="editDate">
+  <button class="save" onclick="updateTransaction()">Update</button>
+  <button onclick="showSection('ledger')">⬅ Back</button>
+</section>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
@@ -115,11 +136,14 @@ function addTransaction(){
   const type=document.getElementById('ttype').value;
   const category=document.getElementById('ttCategory').value;
   const desc=document.getElementById('tdesc').value;
-  const date=document.getElementById('tdate').value || new Date().toLocaleDateString();
+  const date=document.getElementById('tdate').value || new Date().toISOString().slice(0,10);
   if(!name || !amount){ alert('Fill all fields'); return; }
   const newRef=db.ref('transactions').push();
   newRef.set({id:newRef.key,name,amount,type,category,desc,date});
-  document.getElementById('tname').value=''; document.getElementById('tamount').value=''; document.getElementById('tdesc').value=''; document.getElementById('tdate').value='';
+  document.getElementById('tname').value=''; 
+  document.getElementById('tamount').value=''; 
+  document.getElementById('tdesc').value=''; 
+  document.getElementById('tdate').value='';
 }
 
 // Real-time Data Render
@@ -193,23 +217,51 @@ function renderAll(data){
   html+="</table>"; document.getElementById('allData').innerHTML=html;
 }
 
-// Delete
-function deleteTransaction(id){ if(confirm('Delete?')) db.ref('transactions/'+id).remove(); }
+// ✅ Delete (fixed)
+function deleteTransaction(id){
+  if(confirm('Delete this transaction?')){
+    db.ref('transactions/'+id).remove()
+    .then(()=> alert("Transaction deleted ✅"))
+    .catch(err => alert("Error deleting: " + err.message));
+  }
+}
 
-// Edit
+// ✅ Edit - Load form
 function editTransaction(id){
   db.ref('transactions/'+id).once('value',snap=>{
-    const t=snap.val();
-    const name=prompt("Edit Name", t.name);
-    const amount=parseFloat(prompt("Edit Amount", t.amount));
-    const type=prompt("Edit Type (Cash/Bank/eSewa)", t.type);
-    const category=prompt("Edit Category (Income/Expense)", t.category);
-    const desc=prompt("Edit Description", t.desc);
-    const date=prompt("Edit Date (YYYY-MM-DD)", t.date);
-    if(name && !isNaN(amount) && type && desc && category && date){
-      db.ref('transactions/'+id).update({name, amount, type, desc, date, category});
-    }
+    const t = snap.val();
+    document.getElementById("editId").value = id;
+    document.getElementById("editName").value = t.name;
+    document.getElementById("editAmount").value = t.amount;
+    document.getElementById("editType").value = t.type;
+    document.getElementById("editCategory").value = t.category;
+    document.getElementById("editDesc").value = t.desc;
+    document.getElementById("editDate").value = t.date;
+    showSection('editTransaction');
   });
+}
+
+// ✅ Update Transaction
+function updateTransaction(){
+  const id = document.getElementById("editId").value;
+  const updated = {
+    name: document.getElementById("editName").value,
+    amount: parseFloat(document.getElementById("editAmount").value),
+    type: document.getElementById("editType").value,
+    category: document.getElementById("editCategory").value,
+    desc: document.getElementById("editDesc").value,
+    date: document.getElementById("editDate").value
+  };
+  if(!updated.name || isNaN(updated.amount)){
+    alert("Please fill all fields correctly");
+    return;
+  }
+  db.ref("transactions/"+id).update(updated)
+  .then(()=> {
+    alert("Transaction updated ✅");
+    showSection('ledger');
+  })
+  .catch(err=> alert("Update failed: " + err.message));
 }
 
 // Search Ledger
@@ -236,32 +288,18 @@ function searchLedgerFn(){
   });
 }
 
-/* ---------- PDF generation: table format using autoTable ---------- */
+/* ---------- PDF generation ---------- */
 function downloadPDF(){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'pt', 'a4'); // portrait, points, A4
+  const doc = new jsPDF('p', 'pt', 'a4');
   const title = "My Accounting Transactions";
   const leftMargin = 40;
   const topMargin = 60;
-
-  // columns definition
   const head = [['Date', 'Name', 'Amount', 'Type', 'Category', 'Description', 'Running Balance']];
-
-  // fetch data once from firebase and build rows
   db.ref('transactions').once('value', snap => {
     const data = snap.val() || {};
-    // sort by date if dates are consistent (attempt). If date strings vary, you may want to store ISO dates.
     const entries = Object.values(data);
-
-    // compute running balances per row (by chronological order)
-    // We'll compute cumulative totals across Cash/Bank/eSewa and show total running balance
-    // Sort entries by date if possible (YYYY-MM-DD). If not, keep insertion order.
-    entries.sort((a,b)=>{
-      const da = new Date(a.date).getTime() || 0;
-      const dbt = new Date(b.date).getTime() || 0;
-      return da - dbt;
-    });
-
+    entries.sort((a,b)=> new Date(a.date) - new Date(b.date));
     let balances = { Cash:0, Bank:0, eSewa:0 };
     const body = entries.map(t => {
       const amt = (t.category === 'Income' ? Number(t.amount) : -Number(t.amount));
@@ -277,12 +315,8 @@ function downloadPDF(){
         Number(running).toFixed(2)
       ];
     });
-
-    // Add title
     doc.setFontSize(14);
     doc.text(title, leftMargin, topMargin - 10);
-
-    // Use autoTable to create table
     doc.autoTable({
       head: head,
       body: body,
@@ -290,31 +324,15 @@ function downloadPDF(){
       margin: { left: leftMargin, right: 40 },
       styles: { fontSize: 10, cellPadding: 6 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: 'center' },
-      didDrawPage: function (data) {
-        // header on each page
-        doc.setFontSize(10);
-        const page = doc.internal.getNumberOfPages();
-        doc.text(`Generated: ${new Date().toLocaleString()}`, leftMargin, 20);
-        doc.text(`Page ${page}`, doc.internal.pageSize.getWidth() - 80, 20);
-      },
-      // columns can auto-wrap description if long
       columnStyles: {
-        5: { cellWidth: 150 }, // description column wider
-        2: { halign: 'right' }, // amount right aligned
-        6: { halign: 'right' }  // running balance right aligned
+        5: { cellWidth: 150 },
+        2: { halign: 'right' },
+        6: { halign: 'right' }
       }
     });
-
-    // save
     doc.save('transactions_table.pdf');
   });
 }
-
-/* Optional helpers if you want separate PDF downloads (ledger/journal) later:
-   You can implement similar functions that filter entries by name or type
-   and then call doc.autoTable with the filtered rows.
-*/
-
 </script>
 </body>
 </html>
