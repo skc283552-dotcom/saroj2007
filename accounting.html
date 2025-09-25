@@ -106,6 +106,46 @@ input, select { padding:6px; margin:4px; width:150px; }
 
 .debtors-actions .edit { color: #2980b9; }
 .debtors-actions .delete { color: #e74c3c; }
+
+/* Enhanced Debtors Management Styles */
+.debtors-management {
+  width: 100%;
+}
+
+.debtors-management input, .debtors-management select {
+  margin: 5px;
+  padding: 8px;
+  width: 180px;
+}
+
+.debtors-management button {
+  margin: 5px;
+}
+
+.debtors-management table {
+  margin-top: 20px;
+}
+
+.debtors-management th {
+  background: #3498db;
+  color: white;
+  padding: 10px;
+}
+
+.debtors-management td {
+  padding: 8px;
+}
+
+.debtors-management .pdf-options {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.debtors-management .pdf-options button {
+  margin: 5px;
+}
 </style>
 </head>
 <body>
@@ -202,51 +242,60 @@ input, select { padding:6px; margin:4px; width:150px; }
 
 <!-- Debtors System -->
 <section id="debtorsSystem">
-  <h2><i class="fas fa-users"></i> Debtors Account System</h2>
+  <h2><i class="fas fa-users"></i> Debtors Management System</h2>
   
-  <div class="debtors-container">
-    <div class="debtors-sidebar">
-      <h3><i class="fas fa-bars"></i> Menu</h3>
-      <button onclick="showDebtorsSection('addDebtor')"><i class="fas fa-user-plus"></i> Add Transaction</button>
-      <button onclick="showDebtorsSection('listDebtors')"><i class="fas fa-list"></i> All Transactions</button>
-      <button onclick="downloadDebtorsPDF('overall')"><i class="fas fa-file-pdf"></i> PDF (All)</button>
-      <button onclick="filterDebtorsByAccount()"><i class="fas fa-filter"></i> PDF by Account</button>
-      <button onclick="filterDebtorsByType()"><i class="fas fa-filter"></i> PDF by Type</button>
+  <div class="debtors-management">
+    <!-- Debtors Management Section -->
+    <div id="debtorsManagementSection">
+      <h3>Debtors Management</h3>
+      <input type="text" id="debtorName" placeholder="Debtor Name">
+      <input type="text" id="debtorPhone" placeholder="Phone">
+      <button class="save" onclick="addDebtor()"><i class="fa fa-plus"></i> Add Debtor</button>
+      <div id="debtorList"></div>
     </div>
-
-    <div class="debtors-content">
-      <div id="addDebtor" class="debtors-section">
-        <h2><i class="fas fa-plus-circle"></i> Add Debtor Transaction</h2>
-        <input type="text" id="accountName" placeholder="Account Name">
-        <input type="text" id="description" placeholder="Description">
-        <input type="number" id="amount" placeholder="Amount">
-        <select id="type">
-          <option value="Income">Income</option>
-          <option value="Expense">Expense</option>
-        </select>
-        <button onclick="addDebtorTransaction()">Add</button>
+    
+    <!-- Transactions per Debtor Section -->
+    <div id="transactionsPerDebtorSection" style="display:none; margin-top: 30px;">
+      <h3>Transactions per Debtor</h3>
+      <select id="selectDebtor" onchange="loadDebtorTransactions()"></select><br>
+      <input type="text" id="txnDesc" placeholder="Description">
+      <input type="number" id="txnAmount" placeholder="Amount">
+      <select id="txnType">
+        <option value="Income">Income</option>
+        <option value="Expense">Expense</option>
+      </select>
+      <select id="txnPayment">
+        <option value="Cash">Cash</option>
+        <option value="Bank">Bank</option>
+        <option value="eSewa">eSewa</option>
+        <option value="Mobile Banking">Mobile Banking</option>
+      </select>
+      <input type="date" id="txnDate">
+      <button class="save" onclick="addDebtorTransaction()"><i class="fa fa-plus"></i> Add Transaction</button>
+      <br><input type="text" id="searchTxn" placeholder="Search by description" onkeyup="loadDebtorTransactions()">
+      <div id="debtorTxnList"></div>
+    </div>
+    
+    <!-- PDF Reports Section -->
+    <div id="pdfReportsSection" style="display:none; margin-top: 30px;">
+      <h3>PDF Reports</h3>
+      <div class="pdf-options">
+        <select id="pdfDebtor"></select>
+        <button onclick="downloadDebtorPDF()"><i class="fa fa-file-pdf"></i> Debtor PDF</button>
+        <button onclick="downloadAllDebtorsPDF()"><i class="fa fa-file-pdf"></i> All Transactions</button>
+        <button onclick="downloadTypePDF('Income')"><i class="fa fa-file-pdf"></i> Income Only</button>
+        <button onclick="downloadTypePDF('Expense')"><i class="fa fa-file-pdf"></i> Expense Only</button>
       </div>
-
-      <div id="listDebtors" class="debtors-section" style="display:none;">
-        <h2><i class="fas fa-table"></i> Debtor Transactions List</h2>
-        <table id="debtorTransactionTable" class="debtors-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Account</th>
-              <th>Description</th>
-              <th>Amount</th>
-              <th>Type</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    </div>
+    
+    <!-- Navigation Buttons -->
+    <div style="margin-top: 20px;">
+      <button onclick="showDebtorsSection('management')">📋 Debtors</button>
+      <button onclick="showDebtorsSection('transactions')">💰 Transactions</button>
+      <button onclick="showDebtorsSection('reports')">📑 PDF Reports</button>
+      <button onclick="showSection('dashboard')">⬅ Back to Dashboard</button>
     </div>
   </div>
-  
-  <button onclick="showSection('dashboard')">⬅ Back to Dashboard</button>
 </section>
 
 <script>
@@ -275,11 +324,13 @@ function showSection(id){
     
     // Initialize debtors system if shown
     if(id === 'debtorsSystem') {
-      showDebtorsSection('addDebtor');
-      loadDebtorTransactions();
+      showDebtorsSection('management');
+      loadDebtors();
     }
   }
 }
+
+// ========== ORIGINAL ACCOUNTING FUNCTIONS ==========
 
 // Add Transaction
 function addTransaction(){
@@ -524,147 +575,147 @@ function downloadPDF(type='all'){
   });
 }
 
-// ========== DEBTORS SYSTEM FUNCTIONS ==========
-
-let debtorTransactions = [];
+// ========== DEBTORS MANAGEMENT FUNCTIONS ==========
 
 function showDebtorsSection(section) {
-  document.getElementById('addDebtor').style.display = (section === 'addDebtor') ? 'block' : 'none';
-  document.getElementById('listDebtors').style.display = (section === 'listDebtors') ? 'block' : 'none';
+  document.getElementById('debtorsManagementSection').style.display = (section === 'management') ? 'block' : 'none';
+  document.getElementById('transactionsPerDebtorSection').style.display = (section === 'transactions') ? 'block' : 'none';
+  document.getElementById('pdfReportsSection').style.display = (section === 'reports') ? 'block' : 'none';
 }
 
-function loadDebtorTransactions() {
-  db.ref('debtorTransactions').on('value', snapshot => {
-    const data = snapshot.val() || {};
-    debtorTransactions = Object.values(data);
-    renderDebtorTable();
-  });
+function addDebtor(){
+  const name=document.getElementById('debtorName').value;
+  const phone=document.getElementById('debtorPhone').value;
+  if(!name){alert('Enter debtor name'); return;}
+  const ref=db.ref('debtors').push();
+  ref.set({name, phone});
+  document.getElementById('debtorName').value='';
+  document.getElementById('debtorPhone').value='';
 }
 
-function addDebtorTransaction() {
-  let account = document.getElementById('accountName').value;
-  let desc = document.getElementById('description').value;
-  let amt = document.getElementById('amount').value;
-  let type = document.getElementById('type').value;
-  let date = new Date().toLocaleDateString();
-
-  if(account && desc && amt) {
-    const newRef = db.ref('debtorTransactions').push();
-    newRef.set({
-      id: newRef.key,
-      date,
-      account,
-      desc,
-      amt,
-      type
-    });
+function loadDebtors(){
+  db.ref('debtors').on('value', snap=>{
+    const data=snap.val()||{};
+    let html='<table><tr><th>Name</th><th>Phone</th><th>Action</th></tr>';
+    let debtorSelect='<option value="">Select Debtor</option>';
+    let pdfDebtorSelect='<option value="">Select Debtor</option>';
     
-    document.getElementById('accountName').value = '';
-    document.getElementById('description').value = '';
-    document.getElementById('amount').value = '';
-    alert("Debtor Transaction Added!");
-  } else {
-    alert("Please fill all fields");
+    for(let id in data){
+      html+=`<tr><td>${data[id].name}</td><td>${data[id].phone||''}</td>
+              <td><button class='delete' onclick="deleteDebtor('${id}')"><i class='fa fa-trash'></i></button></td></tr>`;
+      debtorSelect+=`<option value='${id}'>${data[id].name}</option>`;
+      pdfDebtorSelect+=`<option value='${id}'>${data[id].name}</option>`;
+    }
+    html+='</table>';
+    document.getElementById('debtorList').innerHTML=html;
+    document.getElementById('selectDebtor').innerHTML=debtorSelect;
+    document.getElementById('pdfDebtor').innerHTML=pdfDebtorSelect;
+  });
+}
+
+function deleteDebtor(id){
+  if(confirm('Delete this debtor and all transactions?')){
+    db.ref('debtors/'+id).remove();
   }
 }
 
-function renderDebtorTable() {
-  let tbody = document.querySelector('#debtorTransactionTable tbody');
-  tbody.innerHTML = '';
-  debtorTransactions.forEach((t, i) => {
-    let row = `<tr>
-      <td>${t.date}</td>
-      <td>${t.account}</td>
-      <td>${t.desc}</td>
-      <td>${t.amt}</td>
-      <td>${t.type}</td>
-      <td class='debtors-actions'>
-        <button class='edit' onclick='editDebtorTransaction("${t.id}")'><i class="fas fa-edit"></i></button>
-        <button class='delete' onclick='deleteDebtorTransaction("${t.id}")'><i class="fas fa-trash"></i></button>
-      </td>
-    </tr>`;
-    tbody.innerHTML += row;
+function addDebtorTransaction(){
+  const debtorId=document.getElementById('selectDebtor').value;
+  if(!debtorId){alert('Select debtor'); return;}
+  const desc=document.getElementById('txnDesc').value;
+  const amount=parseFloat(document.getElementById('txnAmount').value);
+  const type=document.getElementById('txnType').value;
+  const payment=document.getElementById('txnPayment').value;
+  const date=document.getElementById('txnDate').value||new Date().toISOString().slice(0,10);
+  if(!desc || !amount){alert('Fill all fields'); return;}
+  const ref=db.ref('debtors/'+debtorId+'/transactions').push();
+  ref.set({desc, amount, type, payment, date});
+  document.getElementById('txnDesc').value='';
+  document.getElementById('txnAmount').value='';
+  document.getElementById('txnDate').value='';
+}
+
+function loadDebtorTransactions(){
+  const debtorId=document.getElementById('selectDebtor').value;
+  const search=document.getElementById('searchTxn').value.toLowerCase();
+  if(!debtorId){document.getElementById('debtorTxnList').innerHTML=''; return;}
+  db.ref('debtors/'+debtorId+'/transactions').once('value', snap=>{
+    const data=snap.val()||{};
+    let html='<table><tr><th>Date</th><th>Description</th><th>Amount</th><th>Type</th><th>Payment</th><th>Action</th></tr>';
+    for(let id in data){
+      if(data[id].desc.toLowerCase().includes(search)){
+        html+=`<tr>
+          <td>${data[id].date}</td>
+          <td contenteditable='true' onBlur="updateTxn('${debtorId}','${id}','desc',this.innerText)">${data[id].desc}</td>
+          <td contenteditable='true' onBlur="updateTxn('${debtorId}','${id}','amount',this.innerText)">${data[id].amount}</td>
+          <td contenteditable='true' onBlur="updateTxn('${debtorId}','${id}','type',this.innerText)">${data[id].type}</td>
+          <td contenteditable='true' onBlur="updateTxn('${debtorId}','${id}','payment',this.innerText)">${data[id].payment||''}</td>
+          <td><button class='delete' onclick="deleteDebtorTxn('${debtorId}','${id}')"><i class='fa fa-trash'></i></button></td>
+        </tr>`;
+      }
+    }
+    html+='</table>';
+    document.getElementById('debtorTxnList').innerHTML=html;
   });
 }
 
-function editDebtorTransaction(id) {
-  db.ref('debtorTransactions/' + id).once('value', snap => {
-    const t = snap.val();
-    document.getElementById('accountName').value = t.account;
-    document.getElementById('description').value = t.desc;
-    document.getElementById('amount').value = t.amt;
-    document.getElementById('type').value = t.type;
-    deleteDebtorTransaction(id);
-    showDebtorsSection('addDebtor');
-  });
+function updateTxn(debtorId, txnId, field, value){
+  db.ref(`debtors/${debtorId}/transactions/${txnId}/${field}`).set(value);
 }
 
-function deleteDebtorTransaction(id) {
-  if(confirm('Delete this debtor transaction?')) {
-    db.ref('debtorTransactions/' + id).remove()
-    .then(() => alert("Debtor Transaction deleted ✅"))
-    .catch(err => alert("Error deleting: " + err.message));
+function deleteDebtorTxn(debtorId, txnId){
+  if(confirm('Delete this transaction?')){
+    db.ref('debtors/'+debtorId+'/transactions/'+txnId).remove().then(()=>loadDebtorTransactions());
   }
 }
 
-function downloadDebtorsPDF(filter) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let filtered = [...debtorTransactions];
-  let title = "Debtors Transactions Report";
-
-  if(filter === 'overall') {
-    title += " (All Accounts)";
-  }
-
-  doc.text(title, 14, 15);
-  doc.text("Date: " + new Date().toLocaleDateString(), 14, 25);
-
-  doc.autoTable({
-    startY: 35,
-    head: [['Date','Account','Description','Amount','Type']],
-    body: filtered.map(t => [t.date, t.account, t.desc, t.amt, t.type])
+// PDF from reports section
+function downloadDebtorPDF(){
+  const debtorId=document.getElementById('pdfDebtor').value;
+  if(!debtorId){alert('Select a debtor for PDF'); return;}
+  db.ref('debtors/'+debtorId+'/transactions').once('value', snap=>{
+    generateDebtorPDF(Object.values(snap.val()||{}), 'Debtor Transactions');
   });
-
-  doc.save(`Debtors_Report_${new Date().toLocaleDateString()}.pdf`);
 }
 
-function filterDebtorsByAccount() {
-  let name = prompt("Enter Account Name:");
-  if(!name) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let filtered = debtorTransactions.filter(t => t.account.toLowerCase() === name.toLowerCase());
-
-  doc.text(`Debtors Report for ${name}`, 14, 15);
-  doc.text("Date: " + new Date().toLocaleDateString(), 14, 25);
-
-  doc.autoTable({
-    startY: 35,
-    head: [['Date','Account','Description','Amount','Type']],
-    body: filtered.map(t => [t.date, t.account, t.desc, t.amt, t.type])
+function downloadAllDebtorsPDF(){
+  db.ref('debtors').once('value', snap=>{
+    let allTxns=[];
+    const data=snap.val()||{};
+    for(let d in data){ if(data[d].transactions){ allTxns.push(...Object.values(data[d].transactions)); } }
+    generateDebtorPDF(allTxns,'All Debtor Transactions');
   });
-
-  doc.save(`Debtors_Report_${name}_${new Date().toLocaleDateString()}.pdf`);
 }
 
-function filterDebtorsByType() {
-  let type = prompt("Enter Type (Income/Expense):");
-  if(!type) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let filtered = debtorTransactions.filter(t => t.type.toLowerCase() === type.toLowerCase());
-
-  doc.text(`Debtors Report (${type})`, 14, 15);
-  doc.text("Date: " + new Date().toLocaleDateString(), 14, 25);
-
-  doc.autoTable({
-    startY: 35,
-    head: [['Date','Account','Description','Amount','Type']],
-    body: filtered.map(t => [t.date, t.account, t.desc, t.amt, t.type])
+function downloadTypePDF(type){
+  db.ref('debtors').once('value', snap=>{
+    let txns=[];
+    const data=snap.val()||{};
+    for(let d in data){ if(data[d].transactions){ txns.push(...Object.values(data[d].transactions).filter(t=>t.type===type)); } }
+    generateDebtorPDF(txns, type+' Transactions');
   });
+}
 
-  doc.save(`Debtors_Report_${type}_${new Date().toLocaleDateString()}.pdf`);
+function generateDebtorPDF(entries,title){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p','pt','a4');
+  let body=[]; let balance=0;
+  entries.forEach(t=>{
+    const amt = t.type==='Income'? parseFloat(t.amount) : -parseFloat(t.amount);
+    balance += amt;
+    body.push([t.date,t.desc,t.amount,t.type,t.payment||'',balance.toFixed(2)]);
+  });
+  doc.setFontSize(14);
+  doc.text(title+' Report', 40, 50);
+  doc.autoTable({
+    head:[['Date','Description','Amount','Type','Payment','Running Balance']],
+    body:body,
+    startY:70,
+    styles:{fontSize:10,cellPadding:6},
+    headStyles:{fillColor:[52,152,219],textColor:255,halign:'center'},
+    columnStyles:{5:{halign:'right'}}
+  });
+  doc.save(title.replace(' ','_')+'.pdf');
 }
 </script>
 
