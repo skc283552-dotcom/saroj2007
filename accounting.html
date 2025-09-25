@@ -9,6 +9,7 @@
 <!-- jsPDF and jsPDF-AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f9; }
@@ -28,6 +29,83 @@ button { padding:6px 12px; margin:2px; border:none; border-radius:6px; cursor:po
 .balanceBox { display:flex; gap:20px; justify-content:center; margin:20px; }
 .balanceCard { background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; width:150px; }
 input, select { padding:6px; margin:4px; width:150px; }
+
+/* Debtors System Styles */
+.debtors-container {
+  display: flex;
+  margin-top: 20px;
+}
+
+.debtors-sidebar {
+  width: 220px;
+  background: #34495e;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-right: 20px;
+}
+
+.debtors-sidebar h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.debtors-sidebar button {
+  display: block;
+  width: 90%;
+  margin: 10px auto;
+  padding: 10px;
+  background: #1abc9c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.debtors-sidebar button:hover {
+  background: #16a085;
+}
+
+.debtors-content {
+  flex: 1;
+}
+
+.debtors-section {
+  display: none;
+}
+
+.debtors-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.debtors-table th, .debtors-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.debtors-table th {
+  background: #1abc9c;
+  color: white;
+}
+
+.debtors-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 0 5px;
+}
+
+.debtors-actions .edit { color: #2980b9; }
+.debtors-actions .delete { color: #e74c3c; }
 </style>
 </head>
 <body>
@@ -39,6 +117,7 @@ input, select { padding:6px; margin:4px; width:150px; }
   <div class="icon" onclick="showSection('ledger')"><span>📒</span>Ledger</div>
   <div class="icon" onclick="showSection('journal')"><span>📝</span>Journal</div>
   <div class="icon" onclick="showSection('allTransactions')"><span>📂</span>All Transactions</div>
+  <div class="icon" onclick="showSection('debtorsSystem')"><span>👥</span>Debtors System</div>
   <div class="icon" onclick="downloadPDF('all')"><span>📑</span>Download PDF</div>
 </div>
 
@@ -121,6 +200,55 @@ input, select { padding:6px; margin:4px; width:150px; }
   <button onclick="showSection('ledger')">⬅ Back</button>
 </section>
 
+<!-- Debtors System -->
+<section id="debtorsSystem">
+  <h2><i class="fas fa-users"></i> Debtors Account System</h2>
+  
+  <div class="debtors-container">
+    <div class="debtors-sidebar">
+      <h3><i class="fas fa-bars"></i> Menu</h3>
+      <button onclick="showDebtorsSection('addDebtor')"><i class="fas fa-user-plus"></i> Add Transaction</button>
+      <button onclick="showDebtorsSection('listDebtors')"><i class="fas fa-list"></i> All Transactions</button>
+      <button onclick="downloadDebtorsPDF('overall')"><i class="fas fa-file-pdf"></i> PDF (All)</button>
+      <button onclick="filterDebtorsByAccount()"><i class="fas fa-filter"></i> PDF by Account</button>
+      <button onclick="filterDebtorsByType()"><i class="fas fa-filter"></i> PDF by Type</button>
+    </div>
+
+    <div class="debtors-content">
+      <div id="addDebtor" class="debtors-section">
+        <h2><i class="fas fa-plus-circle"></i> Add Debtor Transaction</h2>
+        <input type="text" id="accountName" placeholder="Account Name">
+        <input type="text" id="description" placeholder="Description">
+        <input type="number" id="amount" placeholder="Amount">
+        <select id="type">
+          <option value="Income">Income</option>
+          <option value="Expense">Expense</option>
+        </select>
+        <button onclick="addDebtorTransaction()">Add</button>
+      </div>
+
+      <div id="listDebtors" class="debtors-section" style="display:none;">
+        <h2><i class="fas fa-table"></i> Debtor Transactions List</h2>
+        <table id="debtorTransactionTable" class="debtors-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Type</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <button onclick="showSection('dashboard')">⬅ Back to Dashboard</button>
+</section>
+
 <script>
 // Firebase config
 const firebaseConfig = {
@@ -138,8 +266,19 @@ const db = firebase.database();
 
 function showSection(id){
   document.querySelectorAll('section').forEach(s=>s.style.display='none');
-  if(id==='dashboard'){ document.getElementById('dashboard').style.display='flex'; }
-  else{ document.getElementById('dashboard').style.display='none'; document.getElementById(id).style.display='block'; }
+  if(id==='dashboard'){ 
+    document.getElementById('dashboard').style.display='flex'; 
+  }
+  else{ 
+    document.getElementById('dashboard').style.display='none'; 
+    document.getElementById(id).style.display='block'; 
+    
+    // Initialize debtors system if shown
+    if(id === 'debtorsSystem') {
+      showDebtorsSection('addDebtor');
+      loadDebtorTransactions();
+    }
+  }
 }
 
 // Add Transaction
@@ -383,6 +522,149 @@ function downloadPDF(type='all'){
 
     doc.save(type==='all'?'transactions_table.pdf':'ledger_report.pdf');
   });
+}
+
+// ========== DEBTORS SYSTEM FUNCTIONS ==========
+
+let debtorTransactions = [];
+
+function showDebtorsSection(section) {
+  document.getElementById('addDebtor').style.display = (section === 'addDebtor') ? 'block' : 'none';
+  document.getElementById('listDebtors').style.display = (section === 'listDebtors') ? 'block' : 'none';
+}
+
+function loadDebtorTransactions() {
+  db.ref('debtorTransactions').on('value', snapshot => {
+    const data = snapshot.val() || {};
+    debtorTransactions = Object.values(data);
+    renderDebtorTable();
+  });
+}
+
+function addDebtorTransaction() {
+  let account = document.getElementById('accountName').value;
+  let desc = document.getElementById('description').value;
+  let amt = document.getElementById('amount').value;
+  let type = document.getElementById('type').value;
+  let date = new Date().toLocaleDateString();
+
+  if(account && desc && amt) {
+    const newRef = db.ref('debtorTransactions').push();
+    newRef.set({
+      id: newRef.key,
+      date,
+      account,
+      desc,
+      amt,
+      type
+    });
+    
+    document.getElementById('accountName').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('amount').value = '';
+    alert("Debtor Transaction Added!");
+  } else {
+    alert("Please fill all fields");
+  }
+}
+
+function renderDebtorTable() {
+  let tbody = document.querySelector('#debtorTransactionTable tbody');
+  tbody.innerHTML = '';
+  debtorTransactions.forEach((t, i) => {
+    let row = `<tr>
+      <td>${t.date}</td>
+      <td>${t.account}</td>
+      <td>${t.desc}</td>
+      <td>${t.amt}</td>
+      <td>${t.type}</td>
+      <td class='debtors-actions'>
+        <button class='edit' onclick='editDebtorTransaction("${t.id}")'><i class="fas fa-edit"></i></button>
+        <button class='delete' onclick='deleteDebtorTransaction("${t.id}")'><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+function editDebtorTransaction(id) {
+  db.ref('debtorTransactions/' + id).once('value', snap => {
+    const t = snap.val();
+    document.getElementById('accountName').value = t.account;
+    document.getElementById('description').value = t.desc;
+    document.getElementById('amount').value = t.amt;
+    document.getElementById('type').value = t.type;
+    deleteDebtorTransaction(id);
+    showDebtorsSection('addDebtor');
+  });
+}
+
+function deleteDebtorTransaction(id) {
+  if(confirm('Delete this debtor transaction?')) {
+    db.ref('debtorTransactions/' + id).remove()
+    .then(() => alert("Debtor Transaction deleted ✅"))
+    .catch(err => alert("Error deleting: " + err.message));
+  }
+}
+
+function downloadDebtorsPDF(filter) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let filtered = [...debtorTransactions];
+  let title = "Debtors Transactions Report";
+
+  if(filter === 'overall') {
+    title += " (All Accounts)";
+  }
+
+  doc.text(title, 14, 15);
+  doc.text("Date: " + new Date().toLocaleDateString(), 14, 25);
+
+  doc.autoTable({
+    startY: 35,
+    head: [['Date','Account','Description','Amount','Type']],
+    body: filtered.map(t => [t.date, t.account, t.desc, t.amt, t.type])
+  });
+
+  doc.save(`Debtors_Report_${new Date().toLocaleDateString()}.pdf`);
+}
+
+function filterDebtorsByAccount() {
+  let name = prompt("Enter Account Name:");
+  if(!name) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let filtered = debtorTransactions.filter(t => t.account.toLowerCase() === name.toLowerCase());
+
+  doc.text(`Debtors Report for ${name}`, 14, 15);
+  doc.text("Date: " + new Date().toLocaleDateString(), 14, 25);
+
+  doc.autoTable({
+    startY: 35,
+    head: [['Date','Account','Description','Amount','Type']],
+    body: filtered.map(t => [t.date, t.account, t.desc, t.amt, t.type])
+  });
+
+  doc.save(`Debtors_Report_${name}_${new Date().toLocaleDateString()}.pdf`);
+}
+
+function filterDebtorsByType() {
+  let type = prompt("Enter Type (Income/Expense):");
+  if(!type) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let filtered = debtorTransactions.filter(t => t.type.toLowerCase() === type.toLowerCase());
+
+  doc.text(`Debtors Report (${type})`, 14, 15);
+  doc.text("Date: " + new Date().toLocaleDateString(), 14, 25);
+
+  doc.autoTable({
+    startY: 35,
+    head: [['Date','Account','Description','Amount','Type']],
+    body: filtered.map(t => [t.date, t.account, t.desc, t.amt, t.type])
+  });
+
+  doc.save(`Debtors_Report_${type}_${new Date().toLocaleDateString()}.pdf`);
 }
 </script>
 
