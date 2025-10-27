@@ -1,16 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Accounting </title>
+<title>My Accounting Pro</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<!-- jsPDF and jsPDF-AutoTable -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f9; }
 header { background:#2c3e50; color:#fff; text-align:center; padding:15px; font-size:24px; font-weight:bold; }
@@ -29,6 +25,7 @@ button { padding:6px 12px; margin:2px; border:none; border-radius:6px; cursor:po
 .balanceBox { display:flex; gap:20px; justify-content:center; margin:20px; }
 .balanceCard { background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; width:150px; }
 input, select { padding:6px; margin:4px; width:150px; }
+.accountList button { margin:3px; background:#3498db; color:white; }
 </style>
 </head>
 <body>
@@ -53,7 +50,8 @@ input, select { padding:6px; margin:4px; width:150px; }
 <!-- Add Transaction -->
 <section id="addTransaction">
   <h2>Add Transaction</h2>
-  <input type="text" id="tname" placeholder="Name">
+  <input list="namesList" id="tname" placeholder="Name">
+  <datalist id="namesList"></datalist>
   <input type="number" id="tamount" placeholder="Amount">
   <select id="ttype">
     <option value="Cash">Cash</option>
@@ -75,14 +73,11 @@ input, select { padding:6px; margin:4px; width:150px; }
   <h2>Ledger</h2>
   <input type="text" id="searchLedger" placeholder="Search by Name">
   <input type="date" id="searchLedgerDate">
-  <select id="ledgerAccount">
-    <option value="">All Accounts</option>
-    <option value="Cash">Cash</option>
-    <option value="Bank">Bank</option>
-    <option value="eSewa">eSewa</option>
-  </select>
-  <button onclick="searchLedgerFn()">Search</button>
-  <button onclick="downloadPDF('ledger')">Download PDF</button>
+  <button onclick="filterLedger()">Search</button>
+  <button onclick="downloadLedgerPDF()">Download PDF</button>
+  <h3>Accounts</h3>
+  <div id="accountList" class="accountList"></div>
+  <h3>Transactions</h3>
   <div id="ledgerData"></div>
   <button onclick="showSection('dashboard')">⬅ Back</button>
 </section>
@@ -101,30 +96,8 @@ input, select { padding:6px; margin:4px; width:150px; }
   <button onclick="showSection('dashboard')">⬅ Back</button>
 </section>
 
-<!-- Edit Transaction -->
-<section id="editTransaction">
-  <h2>Edit Transaction</h2>
-  <input type="hidden" id="editId">
-  <input type="text" id="editName" placeholder="Name">
-  <input type="number" id="editAmount" placeholder="Amount">
-  <select id="editType">
-    <option value="Cash">Cash</option>
-    <option value="Bank">Bank</option>
-    <option value="eSewa">eSewa</option>
-  </select>
-  <select id="editCategory">
-    <option value="Income">Income</option>
-    <option value="Expense">Expense</option>
-  </select>
-  <input type="text" id="editDesc" placeholder="Description">
-  <input type="date" id="editDate">
-  <button class="save" onclick="updateTransaction()">Update</button>
-  <button onclick="showSection('ledger')">⬅ Back</button>
-</section>
-
 <script>
 // Firebase config
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
   authDomain: "personaldashboard-a6738.firebaseapp.com",
@@ -138,11 +111,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+let ledgerData = {};
+let selectedAccount = "";
+
+// Show sections
 function showSection(id){
   document.querySelectorAll('section').forEach(s=>s.style.display='none');
   if(id==='dashboard'){ document.getElementById('dashboard').style.display='flex'; }
   else{ document.getElementById('dashboard').style.display='none'; document.getElementById(id).style.display='block'; }
 }
+
+// Load all transactions in real-time
+db.ref('transactions').on('value', snap=>{
+  ledgerData = snap.val()||{};
+  updateNamesList();
+  renderAccounts();
+  renderJournal();
+  renderAll();
+  if(selectedAccount) showTransactions(selectedAccount);
+  updateBalances();
+});
 
 // Add Transaction
 function addTransaction(){
@@ -161,230 +149,108 @@ function addTransaction(){
   document.getElementById('tdate').value='';
 }
 
-// Real-time Data Render
-db.ref('transactions').on('value', snapshot=>{
-  const data=snapshot.val()||{};
-  renderLedger(data);
-  renderJournal(data);
-  renderAll(data);
-});
-
-// Calculate balances
-function calculateBalances(data){
-  let balances={Cash:0,Bank:0,eSewa:0};
-  for(let id in data){
-    const t=data[id];
-    const amt=(t.category==='Income'? t.amount : -t.amount);
-    balances[t.type]+=amt;
-  }
-  balances.Total = (balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
-  return balances;
+// Auto-suggest account names
+function updateNamesList(){
+  let names = Object.values(ledgerData).map(t=>t.name);
+  let unique = [...new Set(names)];
+  let list = document.getElementById('namesList');
+  list.innerHTML = '';
+  unique.forEach(n=>{ let opt=document.createElement('option'); opt.value=n; list.appendChild(opt); });
 }
 
-function renderLedger(data){
-  let html="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th><th>Action</th></tr>";
-  let balances={Cash:0,Bank:0,eSewa:0};
-  for(let id in data){
-    const t=data[id];
-    const amt=(t.category==='Income'? t.amount : -t.amount);
-    balances[t.type]+=amt;
-    const totalBalance=(balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
-    html+=`<tr>
-      <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
-      <td>
-        <button class='edit' onclick="editTransaction('${id}')">Edit</button>
-        <button class='delete' onclick="deleteTransaction('${id}')">Delete</button>
-      </td>
-    </tr>`;
-  }
-  html+="</table>"; document.getElementById('ledgerData').innerHTML=html;
-  const b=calculateBalances(data);
-  document.getElementById('cashBalance').innerText=b.Cash;
-  document.getElementById('bankBalance').innerText=b.Bank;
-  document.getElementById('esewaBalance').innerText=b.eSewa;
-  document.getElementById('totalBalance').innerText=b.Total;
+// Ledger accounts
+function renderAccounts(){
+  let accs = Object.values(ledgerData).map(t=>t.name);
+  let unique = [...new Set(accs)];
+  let html = '';
+  unique.forEach(n=>{
+    html+=`<button onclick="showTransactions('${n}')">${n}</button>`;
+  });
+  document.getElementById('accountList').innerHTML=html;
+}
+
+// Show transactions of selected account
+function showTransactions(name){
+  selectedAccount = name;
+  let html="<table><tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Category</th><th>Description</th></tr>";
+  Object.values(ledgerData).forEach(t=>{
+    if(t.name===name){
+      html+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.amount}</td><td>${t.type}</td><td>${t.category}</td><td>${t.desc}</td></tr>`;
+    }
+  });
+  html+="</table>";
+  document.getElementById('ledgerData').innerHTML=html;
+}
+
+// Filter Ledger
+function filterLedger(){
+  let name=document.getElementById('searchLedger').value;
+  let date=document.getElementById('searchLedgerDate').value;
+  let html="<table><tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Category</th><th>Description</th></tr>";
+  Object.values(ledgerData).forEach(t=>{
+    if((!name || t.name.includes(name)) && (!date || t.date===date)){
+      html+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.amount}</td><td>${t.type}</td><td>${t.category}</td><td>${t.desc}</td></tr>`;
+    }
+  });
+  html+="</table>";
+  document.getElementById('ledgerData').innerHTML=html;
 }
 
 // Render Journal
-function renderJournal(data){
-  let html="<table><tr><th>Date</th><th>Name</th><th>Category</th><th>Type</th><th>Description</th><th>Amount</th></tr>";
-  for(let id in data){
-    const t=data[id];
-    html+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.amount}</td></tr>`;
-  }
-  html+="</table>"; document.getElementById('journalData').innerHTML=html;
+function renderJournal(){
+  let html="<table><tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Category</th><th>Description</th></tr>";
+  Object.values(ledgerData).sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(t=>{
+    html+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.amount}</td><td>${t.type}</td><td>${t.category}</td><td>${t.desc}</td></tr>`;
+  });
+  html+="</table>";
+  document.getElementById('journalData').innerHTML=html;
 }
 
 // Render All Transactions
-function renderAll(data){
-  let html="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th><th>Action</th></tr>";
-  let balances={Cash:0,Bank:0,eSewa:0};
-  for(let id in data){
-    const t=data[id];
-    const amt=(t.category==='Income'? t.amount : -t.amount);
-    balances[t.type]+=amt;
-    const totalBalance=(balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
-    html+=`<tr>
-      <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
-      <td>
-        <button class='edit' onclick="editTransaction('${id}')">Edit</button>
-        <button class='delete' onclick="deleteTransaction('${id}')">Delete</button>
-      </td>
-    </tr>`;
-  }
-  html+="</table>"; document.getElementById('allData').innerHTML=html;
-}
-
-// Delete Transaction
-function deleteTransaction(id){
-  if(confirm('Delete this transaction?')){
-    db.ref('transactions/'+id).remove()
-    .then(()=> alert("Transaction deleted ✅"))
-    .catch(err => alert("Error deleting: " + err.message));
-  }
-}
-
-// Edit Transaction
-function editTransaction(id){
-  db.ref('transactions/'+id).once('value',snap=>{
-    const t = snap.val();
-    document.getElementById("editId").value = id;
-    document.getElementById("editName").value = t.name;
-    document.getElementById("editAmount").value = t.amount;
-    document.getElementById("editType").value = t.type;
-    document.getElementById("editCategory").value = t.category;
-    document.getElementById("editDesc").value = t.desc;
-    document.getElementById("editDate").value = t.date;
-    showSection('editTransaction');
+function renderAll(){
+  let html="<table><tr><th>Date</th><th>Name</th><th>Amount</th><th>Type</th><th>Category</th><th>Description</th></tr>";
+  Object.values(ledgerData).forEach(t=>{
+    html+=`<tr><td>${t.date}</td><td>${t.name}</td><td>${t.amount}</td><td>${t.type}</td><td>${t.category}</td><td>${t.desc}</td></tr>`;
   });
+  html+="</table>";
+  document.getElementById('allData').innerHTML=html;
 }
 
-// Update Transaction
-function updateTransaction(){
-  const id = document.getElementById("editId").value;
-  const updated = {
-    name: document.getElementById("editName").value,
-    amount: parseFloat(document.getElementById("editAmount").value),
-    type: document.getElementById("editType").value,
-    category: document.getElementById("editCategory").value,
-    desc: document.getElementById("editDesc").value,
-    date: document.getElementById("editDate").value
-  };
-  if(!updated.name || isNaN(updated.amount)){
-    alert("Please fill all fields correctly");
-    return;
-  }
-  db.ref("transactions/"+id).update(updated)
-  .then(()=> { alert("Transaction updated ✅"); showSection('ledger'); })
-  .catch(err=> alert("Update failed: " + err.message));
-}
-
-// Search Ledger & update balances dynamically
-function searchLedgerFn(){
-  const name=document.getElementById('searchLedger').value.toLowerCase();
-  const date=document.getElementById('searchLedgerDate').value;
-  const accountFilter=document.getElementById('ledgerAccount').value;
-  
-  db.ref('transactions').once('value',snap=>{
-    const data=snap.val()||{};
-    let html="<table><tr><th>Name</th><th>Amount</th><th>Category</th><th>Type</th><th>Description</th><th>Date</th><th>Balance</th></tr>";
-    let balances={Cash:0,Bank:0,eSewa:0};
-    for(let id in data){
-      const t=data[id];
-      if(accountFilter && t.type!==accountFilter) continue;
-      if(!name || t.name.toLowerCase().includes(name)){
-        if(!date || t.date===date){
-          const amt=(t.category==='Income'? t.amount : -t.amount);
-          balances[t.type]+=amt;
-          const totalBalance=(balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
-          html+=`<tr>
-            <td>${t.name}</td><td>${t.amount}</td><td>${t.category}</td><td>${t.type}</td><td>${t.desc}</td><td>${t.date}</td><td>${totalBalance}</td>
-          </tr>`;
-        }
-      }
-    }
-    html+="</table>";
-    document.getElementById('ledgerData').innerHTML=html;
-    const b = calculateBalancesFiltered(data, name, date, accountFilter);
-    document.getElementById('cashBalance').innerText = b.Cash;
-    document.getElementById('bankBalance').innerText = b.Bank;
-    document.getElementById('esewaBalance').innerText = b.eSewa;
-    document.getElementById('totalBalance').innerText = b.Total;
+// Update balances
+function updateBalances(){
+  let cash=0, bank=0, esewa=0;
+  Object.values(ledgerData).forEach(t=>{
+    let amt = (t.category==='Income'? t.amount : -t.amount);
+    if(t.type==='Cash') cash+=amt;
+    else if(t.type==='Bank') bank+=amt;
+    else if(t.type==='eSewa') esewa+=amt;
   });
+  document.getElementById('cashBalance').innerText=cash;
+  document.getElementById('bankBalance').innerText=bank;
+  document.getElementById('esewaBalance').innerText=esewa;
+  document.getElementById('totalBalance').innerText=cash+bank+esewa;
 }
 
-// Filtered balances
-function calculateBalancesFiltered(data, name='', date='', accountFilter=''){
-  let balances={Cash:0,Bank:0,eSewa:0};
-  for(let id in data){
-    const t=data[id];
-    if(accountFilter && t.type!==accountFilter) continue;
-    if(name && !t.name.toLowerCase().includes(name)) continue;
-    if(date && t.date!==date) continue;
-    const amt = (t.category==='Income'? t.amount : -t.amount);
-    balances[t.type]+=amt;
-  }
-  balances.Total = (balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
-  return balances;
-}
-
-// PDF download (all or filtered ledger)
-function downloadPDF(type='all'){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'pt', 'a4');
-  const leftMargin = 40;
-  const topMargin = 60;
-  const head = [['Date', 'Name', 'Amount', 'Type', 'Category', 'Description', 'Running Balance']];
-  
-  db.ref('transactions').once('value', snap => {
-    const data = snap.val() || {};
-    let entries = Object.values(data);
-    let title = "All Transactions";
-
-    if(type==='ledger'){
-      const accountFilter = document.getElementById('ledgerAccount').value;
-      const nameFilter = document.getElementById('searchLedger').value.toLowerCase();
-      const dateFilter = document.getElementById('searchLedgerDate').value;
-      title = `Ledger Report - ${accountFilter || "All Accounts"}`;
-      entries = entries.filter(t=>{
-        if(accountFilter && t.type!==accountFilter) return false;
-        if(nameFilter && !t.name.toLowerCase().includes(nameFilter)) return false;
-        if(dateFilter && t.date!==dateFilter) return false;
-        return true;
-      });
+// Download Ledger PDF
+function downloadLedgerPDF(){
+  let { jsPDF } = window.jspdf;
+  let doc = new jsPDF('p','pt','a4');
+  let body = [];
+  let remarks = prompt("Enter remarks for PDF:","");
+  Object.values(ledgerData).forEach(t=>{
+    if(!selectedAccount || t.name===selectedAccount){
+      body.push([t.date,t.name,t.amount,t.type,t.category,t.desc]);
     }
-
-    entries.sort((a,b)=> new Date(a.date) - new Date(b.date));
-    let balances = { Cash:0, Bank:0, eSewa:0 };
-    const body = entries.map(t => {
-      const amt = (t.category === 'Income' ? Number(t.amount) : -Number(t.amount));
-      balances[t.type] = (balances[t.type] || 0) + amt;
-      const running = (balances.Cash||0)+(balances.Bank||0)+(balances.eSewa||0);
-      return [
-        t.date, t.name, Number(t.amount).toFixed(2), t.type, t.category, t.desc, Number(running).toFixed(2)
-      ];
-    });
-
-    // PDF title & summary
-    doc.setFontSize(14);
-    doc.text(title, leftMargin, topMargin - 10);
-    if(type==='ledger'){
-      doc.setFontSize(12);
-      doc.text(`Cash: ${balances.Cash.toFixed(2)} | Bank: ${balances.Bank.toFixed(2)} | eSewa: ${balances.eSewa.toFixed(2)} | Total: ${(balances.Cash+balances.Bank+balances.eSewa).toFixed(2)}`, leftMargin, topMargin-30);
-    }
-
-    doc.autoTable({
-      head: head,
-      body: body,
-      startY: topMargin + 10,
-      margin: { left: leftMargin, right: 40 },
-      styles: { fontSize: 10, cellPadding: 6 },
-      headStyles: { fillColor: [41,128,185], textColor: 255, halign: 'center' },
-      columnStyles: { 5:{cellWidth:150}, 2:{halign:'right'}, 6:{halign:'right'} }
-    });
-
-    doc.save(type==='all'?'transactions_table.pdf':'ledger_report.pdf');
   });
+  doc.autoTable({
+    head:[["Date","Name","Amount","Type","Category","Description"]],
+    body:body,
+    startY:60,
+    styles:{ fontSize:10, cellPadding:5 },
+    headStyles:{ fillColor:[41,128,185], textColor:255 }
+  });
+  if(remarks) doc.text("Remarks: "+remarks,40,40);
+  doc.save(selectedAccount?`Ledger_${selectedAccount}.pdf`:'Ledger.pdf');
 }
 </script>
 
