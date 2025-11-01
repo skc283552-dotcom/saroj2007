@@ -176,6 +176,7 @@ th{background:#f8fbff;color:var(--muted);position:sticky;top:0}
   </div>
 </div>
 
+
 <script>
 // ============ Firebase config ============
 const firebaseConfig = {
@@ -209,28 +210,25 @@ function showSectionKeepDashboard(sectionId){
   if(sectionId){ document.getElementById(sectionId).style.display = 'block'; window.scrollTo({top: 0, behavior:'smooth'}); }
 }
 
-// dashboard tile wiring
-document.querySelectorAll('.dashboard .tile').forEach(t => {
-  t.addEventListener('click', () => {
-    const target = t.dataset.target;
-    if(!target) return;
-    showSectionKeepDashboard(target);
-    // small hooks
-    if(target === 'ledgerSection') populateLedgerAccounts();
-    if(target === 'journalSection') renderJournal();
-    if(target === 'allSection') renderAllTransactions();
-    if(target === 'debtorsSection') renderDebtors();
-    if(target === 'creditorsSection') renderCreditors();
-  });
+// dashboard click (delegation for icon/text)
+document.getElementById('dashboard').addEventListener('click', e => {
+  const tile = e.target.closest('.tile');
+  if(!tile) return;
+  const target = tile.dataset.target;
+  if(!target) return;
+  showSectionKeepDashboard(target);
+
+  if(target === 'ledgerSection') populateLedgerAccounts();
+  if(target === 'journalSection') renderJournal();
+  if(target === 'allSection') renderAllTransactions();
+  if(target === 'debtorsSection') renderDebtors();
+  if(target === 'creditorsSection') renderCreditors();
 });
 
 // back buttons
-document.getElementById('btnBackFromAdd').addEventListener('click', ()=> showSectionKeepDashboard(null));
-document.getElementById('btnBackFromLedger').addEventListener('click', ()=> showSectionKeepDashboard(null));
-document.getElementById('btnBackFromJournal').addEventListener('click', ()=> showSectionKeepDashboard(null));
-document.getElementById('btnBackFromAll').addEventListener('click', ()=> showSectionKeepDashboard(null));
-document.getElementById('btnBackFromDebtors').addEventListener('click', ()=> showSectionKeepDashboard(null));
-document.getElementById('btnBackFromCreditors').addEventListener('click', ()=> showSectionKeepDashboard(null));
+['btnBackFromAdd','btnBackFromLedger','btnBackFromJournal','btnBackFromAll','btnBackFromDebtors','btnBackFromCreditors'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', ()=> showSectionKeepDashboard(null));
+});
 
 // download / delete all tiles
 document.getElementById('downloadAllPdfTile').addEventListener('click', ()=> downloadAllTransactionsPDF());
@@ -259,7 +257,13 @@ document.getElementById('btnSaveTx').addEventListener('click', () => {
   if(!name || !amount) return alert('Please enter name and amount');
   const ref = db.ref('transactions').push();
   ref.set({ id: ref.key, name, amount, payment, category, date, desc })
-    .then(()=>{ document.getElementById('inputName').value=''; document.getElementById('inputAmount').value=''; document.getElementById('inputDate').value=''; document.getElementById('inputDesc').value=''; showSectionKeepDashboard('journalSection'); })
+    .then(()=>{ 
+      document.getElementById('inputName').value=''; 
+      document.getElementById('inputAmount').value=''; 
+      document.getElementById('inputDate').value=''; 
+      document.getElementById('inputDesc').value=''; 
+      showSectionKeepDashboard('journalSection'); 
+    })
     .catch(e=> alert('Save failed: '+e.message));
 });
 
@@ -281,6 +285,8 @@ function openEditModal(id){
 }
 
 modalCancelBtn.addEventListener('click', ()=> { modalBackdrop.style.display = 'none'; editingId = null; });
+modalBackdrop.addEventListener('click', e => { if(e.target===modalBackdrop){ modalBackdrop.style.display='none'; editingId=null; } });
+
 modalSaveBtn.addEventListener('click', ()=>{
   if(!editingId) return;
   const payload = {
@@ -292,53 +298,75 @@ modalSaveBtn.addEventListener('click', ()=>{
     desc: (document.getElementById('modalDesc').value||'').trim()
   };
   if(!payload.name || !payload.amount) return alert('Name and amount required');
-  db.ref('transactions/' + editingId).update(payload).then(()=>{ modalBackdrop.style.display = 'none'; editingId = null; }).catch(e=> alert('Update failed: '+e.message));
+  db.ref('transactions/' + editingId).update(payload)
+    .then(()=>{
+      modalBackdrop.style.display='none';
+      editingId=null;
+      updateAllViews(); // instant refresh all views including ledger
+    })
+    .catch(e=> alert('Update failed: '+e.message));
 });
 
 // ============ Delete transaction ============
 function deleteTransaction(id){
   if(!confirm('Delete this transaction?')) return;
-  db.ref('transactions/' + id).remove().catch(e=> alert('Delete failed: '+e.message));
+  db.ref('transactions/' + id).remove()
+    .then(()=> updateAllViews())
+    .catch(e=> alert('Delete failed: '+e.message));
 }
 
 // ============ Renderers ============
 function updateAllViews(){
-  updateNameDatalist(); renderJournal(); renderAllTransactions(); populateLedgerAccounts(); updateBalances(); renderDebtors(); renderCreditors();
+  updateNameDatalist();
+  renderJournal();
+  renderAllTransactions();
+  populateLedgerAccounts();
+  updateBalances();
+  renderDebtors();
+  renderCreditors();
+  if(currentLedgerAccount) renderLedger(currentLedgerAccount); // refresh ledger running balance instantly
 }
 
+// ====== Journal & All Transactions ======
 function renderJournal(){
   const q = (document.getElementById('journalSearch')?.value || '').toLowerCase();
-  const rows = Object.values(TRANSACTIONS).filter(t=> { if(!q) return true; return (t.name||'').toLowerCase().includes(q) || (t.desc||'').toLowerCase().includes(q); }).sort((a,b)=> new Date(b.date) - new Date(a.date));
-  const wrap = document.getElementById('journalTable'); if(rows.length===0){ wrap.innerHTML = '<div class="small">No transactions</div>'; return; }
-  let html = `<table><thead><tr><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>Payment</th><th>Action</th></tr></thead><tbody>`;
+  const rows = Object.values(TRANSACTIONS).filter(t=> !q || (t.name||'').toLowerCase().includes(q) || (t.desc||'').toLowerCase().includes(q)).sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const wrap = document.getElementById('journalTable');
+  if(rows.length===0){ wrap.innerHTML='<div class="small">No transactions</div>'; return; }
+  let html=`<table><thead><tr><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>Payment</th><th>Action</th></tr></thead><tbody>`;
   rows.forEach(r => {
     html += `<tr><td>${esc(r.date)}</td><td>${esc(r.name)}</td><td>${esc(r.desc)}</td><td style="text-align:right">${formatNumber(r.amount)}</td><td>${esc(r.category)}</td><td>${esc(r.payment)}</td><td class="actions"><button class="edit" onclick="openEditModal('${r.id}')">Edit</button><button class="del" onclick="deleteTransaction('${r.id}')">Delete</button></td></tr>`;
   });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
+  html+='</tbody></table>'; wrap.innerHTML=html;
 }
 
 function renderAllTransactions(){
   const q = (document.getElementById('allSearch')?.value || '').toLowerCase();
   const dateFilter = document.getElementById('allDate')?.value;
-  const rows = Object.values(TRANSACTIONS).filter(t=> { if(q && !(t.name||'').toLowerCase().includes(q) && !(t.desc||'').toLowerCase().includes(q)) return false; if(dateFilter && t.date !== dateFilter) return false; return true; }).sort((a,b)=> new Date(b.date) - new Date(a.date));
-  const wrap = document.getElementById('allTable'); if(rows.length===0){ wrap.innerHTML = '<div class="small">No transactions</div>'; return; }
-  let html = `<table><thead><tr><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>Payment</th><th>Action</th></tr></thead><tbody>`;
-  rows.forEach(r => {
-    html += `<tr><td>${esc(r.date)}</td><td>${esc(r.name)}</td><td>${esc(r.desc)}</td><td style="text-align:right">${formatNumber(r.amount)}</td><td>${esc(r.category)}</td><td>${esc(r.payment)}</td><td class="actions"><button class="edit" onclick="openEditModal('${r.id}')">Edit</button><button class="del" onclick="deleteTransaction('${r.id}')">Delete</button></td></tr>`;
+  const rows = Object.values(TRANSACTIONS).filter(t=>{
+    if(q && !(t.name||'').toLowerCase().includes(q) && !(t.desc||'').toLowerCase().includes(q)) return false;
+    if(dateFilter && t.date!==dateFilter) return false;
+    return true;
+  }).sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const wrap = document.getElementById('allTable');
+  if(rows.length===0){ wrap.innerHTML='<div class="small">No transactions</div>'; return; }
+  let running=0; let html=`<table><thead><tr><th>Date</th><th>Account</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>Payment</th><th style="text-align:right">Running</th><th>Action</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const amt = r.category==='Income'? Number(r.amount): -Number(r.amount);
+    running+=amt;
+    html+=`<tr><td>${esc(r.date)}</td><td>${esc(r.name)}</td><td>${esc(r.desc)}</td><td style="text-align:right">${formatNumber(r.amount)}</td><td>${esc(r.category)}</td><td>${esc(r.payment)}</td><td style="text-align:right">${formatNumber(running)}</td><td class="actions"><button class="edit" onclick="openEditModal('${r.id}')">Edit</button><button class="del" onclick="deleteTransaction('${r.id}')">Delete</button></td></tr>`;
   });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
+  html+='</tbody></table>'; wrap.innerHTML=html;
 }
 
 // ============ Ledger ============
 function populateLedgerAccounts(){
-  const select = document.getElementById('ledgerAccount'); select.innerHTML = '<option value="">-- Select account --</option>';
-  const accounts = [...new Set(Object.values(TRANSACTIONS).map(t => t.name))].sort();
-  accounts.forEach(a => { const opt = document.createElement('option'); opt.value = a; opt.textContent = a; select.appendChild(opt); });
+  const select = document.getElementById('ledgerAccount'); select.innerHTML='<option value="">-- Select account --</option>';
+  const accounts = [...new Set(Object.values(TRANSACTIONS).map(t=>t.name))].sort();
+  accounts.forEach(a=>{ const opt=document.createElement('option'); opt.value=a; opt.textContent=a; select.appendChild(opt); });
 }
 
-document.getElementById('btnOpenLedger').addEventListener('click', ()=> {
+document.getElementById('btnOpenLedger').addEventListener('click', ()=>{
   const account = document.getElementById('ledgerAccount').value;
   if(!account) return alert('Select an account');
   currentLedgerAccount = account;
@@ -348,123 +376,54 @@ document.getElementById('btnOpenLedger').addEventListener('click', ()=> {
 
 function renderLedger(account){
   const dateFilter = document.getElementById('ledgerDate').value;
-  const rows = Object.values(TRANSACTIONS).filter(t => t.name === account && (!dateFilter || t.date === dateFilter)).sort((a,b)=> new Date(a.date) - new Date(b.date));
+  const rows = Object.values(TRANSACTIONS).filter(t=> t.name===account && (!dateFilter || t.date===dateFilter)).sort((a,b)=> new Date(a.date)-new Date(b.date));
   const wrap = document.getElementById('ledgerContent');
-  if(rows.length===0){ wrap.innerHTML = '<div class="small">No transactions for this account</div>'; return; }
-  let running = 0; let html = `<table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>Payment</th><th style="text-align:right">Running</th><th>Action</th></tr></thead><tbody>`;
-  rows.forEach(r => {
-    const amt = r.category === 'Income' ? Number(r.amount) : -Number(r.amount);
-    running += amt;
-    html += `<tr><td>${esc(r.date)}</td><td>${esc(r.desc)}</td><td style="text-align:right">${formatNumber(r.amount)}</td><td>${esc(r.category)}</td><td>${esc(r.payment)}</td><td style="text-align:right">${formatNumber(running)}</td><td class="actions"><button class="edit" onclick="openEditModal('${r.id}')">Edit</button><button class="del" onclick="deleteTransaction('${r.id}')">Delete</button></td></tr>`;
+  if(rows.length===0){ wrap.innerHTML='<div class="small">No transactions for this account</div>'; return; }
+  let running=0; let html=`<table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>Payment</th><th style="text-align:right">Running</th><th>Action</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const amt = r.category==='Income'? Number(r.amount): -Number(r.amount);
+    running+=amt;
+    html+=`<tr><td>${esc(r.date)}</td><td>${esc(r.desc)}</td><td style="text-align:right">${formatNumber(r.amount)}</td><td>${esc(r.category)}</td><td>${esc(r.payment)}</td><td style="text-align:right">${formatNumber(running)}</td><td class="actions"><button class="edit" onclick="openEditModal('${r.id}')">Edit</button><button class="del" onclick="deleteTransaction('${r.id}')">Delete</button></td></tr>`;
   });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
+  html+='</tbody></table>'; wrap.innerHTML=html;
 }
 
-// Ledger PDF per account
-document.getElementById('btnLedgerPDF').addEventListener('click', () => downloadLedgerPDF());
-function downloadLedgerPDF(){
-  const account = document.getElementById('ledgerAccount').value || currentLedgerAccount;
-  if(!account) return alert('Select/open an account first');
-  const remarks = (document.getElementById('pdfRemarks').value||'').trim();
-  const { jsPDF } = window.jspdf; const doc = new jsPDF('p','pt','a4'); const left=40, top=60;
-  const title = `Ledger — ${account} (Accounting till ${new Date().toLocaleDateString()})`;
-  const head = [['Date','Description','Amount','Category','Payment','Running']];
-  db.ref('transactions').once('value', snap => {
-    const data = snap.val() || {};
-    const rows = Object.values(data).filter(t => t.name === account).sort((a,b)=> new Date(a.date) - new Date(b.date));
-    if(rows.length===0) return alert('No transactions for this account');
-    let running = 0;
-    const body = rows.map(r => { const amt = r.category === 'Income' ? Number(r.amount) : -Number(r.amount); running += amt; return [r.date, r.desc || '', Number(r.amount).toFixed(2), r.category || '', r.payment || '', running.toFixed(2)]; });
-    doc.setFontSize(14); doc.text(title,left,top-10); if(remarks) doc.setFontSize(11).text('Remarks: '+remarks,left,top+6);
-    doc.autoTable({ head, body, startY: top + (remarks ? 30 : 10), margin:{left,right:40}, styles:{fontSize:10,cellPadding:6}, headStyles:{fillColor:[37,99,235],textColor:255} });
-    doc.save(`Ledger_${account.replaceAll(' ','_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-  });
-}
-
-// ============ All transactions PDF ============
-document.getElementById('btnAllPDF').addEventListener('click', ()=> downloadAllTransactionsPDF());
-function downloadAllTransactionsPDF(){
-  const remarks = (document.getElementById('pdfRemarks').value || '').trim();
-  const { jsPDF } = window.jspdf; const doc = new jsPDF('p','pt','a4'); const left=40, top=60;
-  const title = `All Transactions (Accounting till ${new Date().toLocaleDateString()})`;
-  const head = [['Date','Name','Description','Category','Payment','Amount','Running']];
-  db.ref('transactions').once('value', snap => {
-    const data = snap.val() || {}; const rows = Object.values(data).sort((a,b)=> new Date(a.date) - new Date(b.date));
-    let running = 0;
-    const body = rows.map(r => { const amt = r.category === 'Income' ? Number(r.amount) : -Number(r.amount); running += amt; return [r.date, r.name, r.desc || '', r.category || '', r.payment || '', Number(r.amount).toFixed(2), running.toFixed(2)]; });
-    if(body.length === 0) return alert('No transactions to export');
-    doc.setFontSize(14); doc.text(title,left,top-10); if(remarks) doc.setFontSize(11).text('Remarks: '+remarks,left,top+6);
-    doc.autoTable({ head, body, startY: top + (remarks ? 30 : 10), margin:{left,right:40}, styles:{fontSize:10,cellPadding:6}, headStyles:{fillColor:[37,99,235],textColor:255} });
-    doc.save(`AllTransactions_${new Date().toISOString().slice(0,10)}.pdf`);
-  });
-}
-
-// ============ Debtors & Creditors ============
-document.getElementById('btnAddDebtor').addEventListener('click', ()=> {
-  const name = (document.getElementById('debtorAddName').value||'').trim();
-  const amount = Number(document.getElementById('debtorAddAmount').value || 0);
-  const date = document.getElementById('debtorAddDate').value || isoToday();
-  if(!name || !amount) return alert('Enter debtor name and amount');
-  const ref = db.ref('debtors').push(); ref.set({ id: ref.key, name, amount, date }).then(()=> { document.getElementById('debtorAddName').value=''; document.getElementById('debtorAddAmount').value=''; document.getElementById('debtorAddDate').value=''; });
-});
-
+// ============ Debtors / Creditors ============
 function renderDebtors(){
-  const wrap = document.getElementById('debtorsList'); const rows = Object.values(DEBTORS || {});
-  if(rows.length===0){ wrap.innerHTML = '<div class="small">No debtors</div>'; return; }
-  let html = `<table><thead><tr><th>Name</th><th style="text-align:right">Amount</th><th>Date</th></tr></thead><tbody>`;
-  rows.forEach(d => html += `<tr><td>${esc(d.name)}</td><td style="text-align:right">${formatNumber(d.amount)}</td><td>${esc(d.date)}</td></tr>`);
-  html += '</tbody></table>'; wrap.innerHTML = html;
+  const wrap = document.getElementById('debtorsTable');
+  const rows = Object.values(DEBTORS);
+  if(rows.length===0){ wrap.innerHTML='<div class="small">No debtors</div>'; return; }
+  let html=`<table><thead><tr><th>Name</th><th style="text-align:right">Amount</th></tr></thead><tbody>`;
+  rows.forEach(r=> html+=`<tr><td>${esc(r.name)}</td><td style="text-align:right">${formatNumber(r.amount)}</td></tr>`); html+='</tbody></table>'; wrap.innerHTML=html;
 }
-
-document.getElementById('btnAddCreditor').addEventListener('click', ()=> {
-  const name = (document.getElementById('creditorAddName').value||'').trim();
-  const amount = Number(document.getElementById('creditorAddAmount').value || 0);
-  const date = document.getElementById('creditorAddDate').value || isoToday();
-  if(!name || !amount) return alert('Enter creditor name and amount');
-  const ref = db.ref('creditors').push(); ref.set({ id: ref.key, name, amount, date }).then(()=> { document.getElementById('creditorAddName').value=''; document.getElementById('creditorAddAmount').value=''; document.getElementById('creditorAddDate').value=''; });
-});
 
 function renderCreditors(){
-  const wrap = document.getElementById('creditorsList'); const rows = Object.values(CREDITORS || {});
-  if(rows.length===0){ wrap.innerHTML = '<div class="small">No creditors</div>'; return; }
-  let html = `<table><thead><tr><th>Name</th><th style="text-align:right">Amount</th><th>Date</th></tr></thead><tbody>`;
-  rows.forEach(d => html += `<tr><td>${esc(d.name)}</td><td style="text-align:right">${formatNumber(d.amount)}</td><td>${esc(d.date)}</td></tr>`);
-  html += '</tbody></table>'; wrap.innerHTML = html;
+  const wrap = document.getElementById('creditorsTable');
+  const rows = Object.values(CREDITORS);
+  if(rows.length===0){ wrap.innerHTML='<div class="small">No creditors</div>'; return; }
+  let html=`<table><thead><tr><th>Name</th><th style="text-align:right">Amount</th></tr></thead><tbody>`;
+  rows.forEach(r=> html+=`<tr><td>${esc(r.name)}</td><td style="text-align:right">${formatNumber(r.amount)}</td></tr>`); html+='</tbody></table>'; wrap.innerHTML=html;
 }
 
 // ============ Balances ============
 function updateBalances(){
-  const b = { Cash:0, Bank:0, eSewa:0 };
-  Object.values(TRANSACTIONS || {}).forEach(t => {
-    const amt = t.category === 'Income' ? Number(t.amount) : -Number(t.amount);
-    b[t.payment] = (b[t.payment] || 0) + amt;
-  });
-  const total = (b.Cash||0) + (b.Bank||0) + (b.eSewa||0);
-  document.getElementById('balCash').innerText = formatNumber(b.Cash);
-  document.getElementById('balBank').innerText = formatNumber(b.Bank);
-  document.getElementById('balEsewa').innerText = formatNumber(b.eSewa);
-  document.getElementById('balTotal').innerText = formatNumber(total);
+  const totalIncome = Object.values(TRANSACTIONS).filter(t=>t.category==='Income').reduce((a,b)=>a+Number(b.amount),0);
+  const totalExpense = Object.values(TRANSACTIONS).filter(t=>t.category!=='Income').reduce((a,b)=>a+Number(b.amount),0);
+  document.getElementById('balanceIncome').textContent = formatNumber(totalIncome);
+  document.getElementById('balanceExpense').textContent = formatNumber(totalExpense);
+  document.getElementById('balanceNet').textContent = formatNumber(totalIncome-totalExpense);
 }
 
-// ============ Delete All Data ============
+// ============ Delete All ============
 function deleteAllData(){
-  if(!confirm('Delete ALL data? This will remove transactions, debtors, creditors.')) return;
-  const updates = { '/transactions': null, '/debtors': null, '/creditors': null };
-  db.ref().update(updates).then(()=> alert('All data deleted')).catch(e=> alert('Delete failed: '+e.message));
+  if(!confirm('Delete ALL transactions?')) return;
+  db.ref('transactions').remove().then(()=> updateAllViews()).catch(e=> alert('Delete all failed: '+e.message));
 }
-
-// ============ Debounced search handlers ============
-let debounceTimer;
-['journalSearch','allSearch','ledgerSearch'].forEach(id=>{
-  const el = document.getElementById(id); if(!el) return;
-  el.addEventListener('input', ()=> { clearTimeout(debounceTimer); debounceTimer = setTimeout(()=> { if(id==='journalSearch') renderJournal(); if(id==='allSearch') renderAllTransactions(); if(id==='ledgerSearch') populateLedgerAccounts(); }, 150); });
-});
 
 // ============ Initial UI ============
 showSectionKeepDashboard(null);
 updateAllViews();
-
 </script>
+
 </body>
 </html>
