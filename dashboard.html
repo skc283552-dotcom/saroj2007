@@ -1,146 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Personal Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Professional Dashboard</title>
+
+<!-- Google Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+
 <style>
-body {
-  font-family: 'Roboto', sans-serif;
-  margin:0; padding:0;
-  background: #f0f2f5;
-}
-header {
-  background: #4e73df;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-#searchBar {
-  width: 80%;
-  max-width: 400px;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  margin-top: 10px;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 20px;
-  padding: 30px;
-}
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
-}
-.card img {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 10px;
-}
-.card span {
-  display:block;
-  font-weight: bold;
-  color: #333;
-}
+    body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #1e3c72, #2a5298, #6a93cb);
+        min-height: 100vh;
+        color: #fff;
+    }
+
+    .header {
+        text-align: center;
+        padding: 30px 10px;
+        font-size: 32px;
+        font-weight: 700;
+        text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    .container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+        padding: 40px;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(12px);
+        border-radius: 18px;
+        padding: 30px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.35s ease;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    }
+
+    .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.35);
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    .icon {
+        font-size: 55px;
+        margin-bottom: 12px;
+        color: #ffffff;
+        text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    .title {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 6px;
+    }
+
+    .desc {
+        font-size: 14px;
+        opacity: 0.9;
+    }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>My Personal Dashboard</h1>
-  <input type="text" id="searchBar" placeholder="Search module...">
-</header>
+<div class="header">My Professional Dashboard</div>
 
-<div class="grid" id="dashboardGrid">
-  <div class="card" onclick="openModule('accounting.html')">
-    <img src="https://img.icons8.com/fluency/48/000000/money-bag.png"/>
-    <span>Personal Accounting</span>
-  </div>
-  <div class="card" onclick="openModule('accounting.html')">
-    <img src="https://img.icons8.com/color/48/000000/accounting.png"/>
-    <span>Accounting Software</span>
-  </div>
-    <div class="card" onclick="openModule('cv.html')">
-    <img src="https://img.icons8.com/color/48/000000/resume.png"/>
-    <span>CV</span>
-  </div>
-  <div class="card" onclick="openModule('birthday.html')">
-    <img src="https://img.icons8.com/color/48/000000/birthday-cake.png"/>
-    <span>Birthday Reminder</span>
-  </div>
-  <div class="card" onclick="openModule('phonebook.html')">
-    <img src="https://img.icons8.com/color/48/000000/contacts.png"/>
-    <span>Phone Book</span>
-  </div>
-  <div class="card" onclick="openModule('todo.html')">
-    <img src="https://img.icons8.com/color/48/000000/todo-list.png"/>
-    <span>To-Do List</span>
-  </div>
-  <div class="card" onclick="openModule('calculator.html')">
-    <img src="https://img.icons8.com/color/48/000000/calculator.png"/>
-    <span>Calculator</span>
-  </div>
-  <div class="card" onclick="openModule('favorites.html')">
-    <img src="https://img.icons8.com/color/48/000000/star--v1.png"/>
-    <span>My Favorites</span>
-  </div>
-  <div class="card" onclick="openModule('cv.html')">
-    <img src="https://img.icons8.com/color/48/000000/resume.png"/>
-    <span>CV</span>
-  </div>
+<div class="container">
+
+    <div class="card" onclick="openPage('my-accounting.html')">
+        <span class="material-symbols-rounded icon">account_balance_wallet</span>
+        <div class="title">My Accounting</div>
+        <div class="desc">Track daily accounts and expenses</div>
+    </div>
+
+    <div class="card" onclick="openPage('accounting-software.html')">
+        <span class="material-symbols-rounded icon">monitoring</span>
+        <div class="title">Accounting Software</div>
+        <div class="desc">Detailed reports & business tools</div>
+    </div>
+
+    <div class="card" onclick="openPage('saving.html')">
+        <span class="material-symbols-rounded icon">savings</span>
+        <div class="title">Saving</div>
+        <div class="desc">Manage savings and goals</div>
+    </div>
+
+    <div class="card" onclick="openPage('phone-book.html')">
+        <span class="material-symbols-rounded icon">contacts</span>
+        <div class="title">Phone Book</div>
+        <div class="desc">Store contact information</div>
+    </div>
+
+    <div class="card" onclick="openPage('cv.html')">
+        <span class="material-symbols-rounded icon">badge</span>
+        <div class="title">CV</div>
+        <div class="desc">View and update your profile</div>
+    </div>
+
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDEwEKdRLKBbsw9GS_V3j0tzRlv4XjOHaA",
-  authDomain: "personaldashboard-a6738.firebaseapp.com",
-  databaseURL: "https://personaldashboard-a6738-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "personaldashboard-a6738",
-  storageBucket: "personaldashboard-a6738.appspot.com",
-  messagingSenderId: "936129174674",
-  appId: "1:936129174674:web:71dcc2cb9c590a3f361a4b",
-  measurementId: "G-85JJGPJ7K4"
-};
-firebase.initializeApp(firebaseConfig);
-
-const searchBar = document.getElementById('searchBar');
-const cards = document.querySelectorAll('.card');
-
-function filterCards() {
-  const query = searchBar.value.toLowerCase();
-  cards.forEach(card => {
-    const text = card.innerText.toLowerCase();
-    card.style.display = text.includes(query) ? 'block' : 'none';
-  });
-}
-
-// Trigger search while typing
-searchBar.addEventListener('input', filterCards);
-
-// Trigger search when pressing Enter
-searchBar.addEventListener('keypress', function(event) {
-  if(event.key === 'Enter') {
-    filterCards();
-  }
-});
-
-function openModule(url){
-  window.location.href = url;
+function openPage(page) {
+    window.location.href = page;
 }
 </script>
 
