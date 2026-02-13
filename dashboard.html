@@ -1,118 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
 <title>Professional Dashboard</title>
-
-<!-- Google Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body {
-        margin: 0;
-        font-family: 'Poppins', sans-serif;
-        background: linear-gradient(135deg, #1e3c72, #2a5298, #6a93cb);
-        min-height: 100vh;
-        color: #fff;
-    }
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#1e3c72,#2a5298);
+    color:white;
+    text-align:center;
+}
 
-    .header {
-        text-align: center;
-        padding: 30px 10px;
-        font-size: 32px;
-        font-weight: 700;
-        text-shadow: 0 3px 8px rgba(0,0,0,0.4);
-    }
+h1{
+    padding:20px;
+}
 
-    .container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 25px;
-        padding: 40px;
-    }
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:20px;
+    padding:40px;
+}
 
-    .card {
-        background: rgba(255, 255, 255, 0.22);
-        backdrop-filter: blur(12px);
-        border-radius: 18px;
-        padding: 30px 20px;
-        text-align: center;
-        cursor: pointer;
-        transition: 0.35s ease;
-        color: white;
-        border: 1px solid rgba(255,255,255,0.3);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-    }
+.card{
+    background:white;
+    color:#333;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.2);
+    cursor:pointer;
+    transition:0.3s;
+}
 
-    .card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.35);
-        background: rgba(255, 255, 255, 0.35);
-    }
+.card:hover{
+    transform:translateY(-10px);
+    background:#f4f4f4;
+}
 
-    .icon {
-        font-size: 55px;
-        margin-bottom: 12px;
-        color: #ffffff;
-        text-shadow: 0 3px 8px rgba(0,0,0,0.4);
-    }
+.card i{
+    font-size:40px;
+    margin-bottom:15px;
+    color:#2a5298;
+}
 
-    .title {
-        font-size: 22px;
-        font-weight: bold;
-        margin-bottom: 6px;
-    }
-
-    .desc {
-        font-size: 14px;
-        opacity: 0.9;
-    }
+a{
+    text-decoration:none;
+}
 </style>
 </head>
 <body>
 
-<div class="header">My Professional Dashboard</div>
+<h1>📊 Professional Dashboard</h1>
 
-<div class="container">
+<div class="dashboard">
 
-    <div class="card" onclick="openPage('my-accounting.html')">
-        <span class="material-symbols-rounded icon">account_balance_wallet</span>
-        <div class="title">My Accounting</div>
-        <div class="desc">Track daily accounts and expenses</div>
-    </div>
+<a href="my accounting.html">
+<div class="card">
+<i class="fas fa-user"></i>
+<h3>Personal Accounting</h3>
+</div>
+</a>
 
-    <div class="card" onclick="openPage('accounting-software.html')">
-        <span class="material-symbols-rounded icon">monitoring</span>
-        <div class="title">Accounting Software</div>
-        <div class="desc">Detailed reports & business tools</div>
-    </div>
+<a href="accounting.html">
+<div class="card">
+<i class="fas fa-calculator"></i>
+<h3>Accounting</h3>
+</div>
+</a>
 
-    <div class="card" onclick="openPage('saving.html')">
-        <span class="material-symbols-rounded icon">savings</span>
-        <div class="title">Saving</div>
-        <div class="desc">Manage savings and goals</div>
-    </div>
+<a href="phone book.html">
+<div class="card">
+<i class="fas fa-phone"></i>
+<h3>Phone Book</h3>
+</div>
+</a>
 
-    <div class="card" onclick="openPage('phone-book.html')">
-        <span class="material-symbols-rounded icon">contacts</span>
-        <div class="title">Phone Book</div>
-        <div class="desc">Store contact information</div>
-    </div>
+<a href="birthday.html">
+<div class="card">
+<i class="fas fa-birthday-cake"></i>
+<h3>Birthday</h3>
+</div>
+</a>
 
-    <div class="card" onclick="openPage('cv.html')">
-        <span class="material-symbols-rounded icon">badge</span>
-        <div class="title">CV</div>
-        <div class="desc">View and update your profile</div>
-    </div>
+<a href="calculator.html">
+<div class="card">
+<i class="fas fa-square-root-alt"></i>
+<h3>Calculator</h3>
+</div>
+</a>
+
+<a href="to-do.html">
+<div class="card">
+<i class="fas fa-list"></i>
+<h3>To-Do List</h3>
+</div>
+</a>
 
 </div>
-
-<script>
-function openPage(page) {
-    window.location.href = page;
-}
-</script>
 
 </body>
 </html>
