@@ -29,7 +29,8 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Added ID for PDF download -->
+    <div class="container" id="cv-container">
         <!-- LEFT -->
         <div class="left">
             <img src="3.jpg" alt="Profile Picture" class="profile-img">
@@ -71,12 +72,11 @@
                 <li><a href="https://www.instagram.com/yuvi__khatri?igsh=YmNxY3F6MmQ4cjgy" target="_blank"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="mailto:mail@sarojkc2007.com.np.com"><i class="fas fa-envelope"></i> Mail</a></li>
                 <li><a href="https://linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=saroj-kc-913515378" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
-          <li>
-    <a href="tel:+9779768281946">
-        <i class="fas fa-phone"></i>Contract Number 
-    </a>
-</li>
-
+                <li>
+                    <a href="tel:+9779768281946">
+                        <i class="fas fa-phone"></i>Contract Number 
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -140,22 +140,55 @@
             </div>
         </div>
     </div>
-<!-- Admin Button -->
-<div style="position:fixed; bottom:20px; right:20px; z-index:1000;">
-    <a href="login.html">
-        <button style="
-            padding:10px 15px; 
-            border:none; 
-            border-radius:50px; 
-            background:#0b2e4e; 
-            color:white; 
-            cursor:pointer;
+
+    <!-- Admin Button -->
+    <div style="position:fixed; bottom:20px; right:20px; z-index:1000;">
+        <a href="login.html">
+            <button style="
+                padding:10px 15px; 
+                border:none; 
+                border-radius:50px; 
+                background:#0b2e4e; 
+                color:white; 
+                cursor:pointer;
+                font-weight:700;
+            ">
+                <i class="fas fa-user-shield"></i> Admin
+            </button>
+        </a>
+    </div>
+
+    <!-- Download CV Button -->
+    <div style="position:fixed; bottom:20px; right:120px; z-index:1000;">
+        <button id="download-pdf-btn" style="
+            padding:10px 15px;
+            border:none;
+            border-radius:50px;
+            background:#ff3b3b;
+            color:white;
             font-weight:700;
+            cursor:pointer;
+            transition:0.3s;
         ">
-            <i class="fas fa-user-shield"></i> Admin
+            📄 Download CV
         </button>
-    </a>
-</div>
+    </div>
+
+    <!-- html2pdf library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+    document.getElementById("download-pdf-btn").addEventListener("click", function(){
+        var element = document.getElementById("cv-container"); // Use this ID
+        var opt = {
+            margin:       0.2,
+            filename:     'Saroj_CV.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    });
+    </script>
+
 </body>
-</html> 
-                
+</html>
