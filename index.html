@@ -176,19 +176,20 @@
 
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script>
-    document.getElementById("download-pdf-btn").addEventListener("click", function(){
-        var element = document.getElementById("cv-container");
-        var opt = {
-            margin:       [0.4, 0.4, 0.4, 0.4],
-            filename:     'Saroj_CV.pdf',
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 3, letterRendering: true, useCORS: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
-    });
-    </script>
+ <script>
+document.getElementById("download-pdf-btn").addEventListener("click", function(){
+    var element = document.getElementById("cv-container");
+    var opt = {
+        margin:       0.2,
+        filename:     'Saroj_CV.pdf',
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { scale: 2, letterRendering: true, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // prevent automatic splitting
+    };
+    html2pdf().set(opt).from(element).save();
+});
+</script>
 
 </body>
 </html>
