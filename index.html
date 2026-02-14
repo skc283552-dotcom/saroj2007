@@ -29,7 +29,7 @@
     </style>
 </head>
 <body>
-    <!-- Added ID for PDF download -->
+    <!-- CV Container for PDF -->
     <div class="container" id="cv-container">
         <!-- LEFT -->
         <div class="left">
@@ -178,12 +178,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
     document.getElementById("download-pdf-btn").addEventListener("click", function(){
-        var element = document.getElementById("cv-container"); // Use this ID
+        var element = document.getElementById("cv-container");
         var opt = {
-            margin:       0.2,
+            margin:       [0.4, 0.4, 0.4, 0.4],
             filename:     'Saroj_CV.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
+            image:        { type: 'jpeg', quality: 1 },
+            html2canvas:  { scale: 3, letterRendering: true, useCORS: true },
             jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().set(opt).from(element).save();
