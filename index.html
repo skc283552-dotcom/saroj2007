@@ -176,20 +176,29 @@
 
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
- <script>
+<script>
 document.getElementById("download-pdf-btn").addEventListener("click", function(){
-    var element = document.getElementById("cv-container");
+    var element = document.getElementById("cv-container"); // Make sure your main CV wrapper has this ID
     var opt = {
         margin:       0.2,
         filename:     'Saroj_CV.pdf',
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 2, letterRendering: true, useCORS: true },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // prevent automatic splitting
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
+        // scale down content to fit single A4
+        var totalPages = pdf.internal.getNumberOfPages();
+        if(totalPages > 1){
+            for (var i = totalPages; i > 1; i--) {
+                pdf.deletePage(i);
+            }
+        }
+    }).save();
 });
 </script>
+
 
 </body>
 </html>
