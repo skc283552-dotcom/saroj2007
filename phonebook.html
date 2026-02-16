@@ -61,6 +61,11 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database().ref("phonebook");
+<div class="section">
+<h3>Import Contacts (VCF File)</h3>
+<input type="file" id="vcfFile" accept=".vcf">
+<button onclick="importVCF()">Import VCF</button>
+</div>
 
 // Add Contact
 function addContact(){
@@ -130,6 +135,44 @@ function searchContacts(){
     displayContacts(filtered);
   });
 }
+  function importVCF(){
+  const fileInput = document.getElementById("vcfFile");
+  const file = fileInput.files[0];
+
+  if(!file){
+    alert("Please select a VCF file.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const text = e.target.result;
+    const contacts = text.split("END:VCARD");
+
+    contacts.forEach(contact => {
+      const nameMatch = contact.match(/FN:(.*)/);
+      const phoneMatch = contact.match(/TEL[^:]*:(.*)/);
+
+      if(nameMatch && phoneMatch){
+        const name = nameMatch[1].trim();
+        const phone = phoneMatch[1].trim();
+
+        const id = Date.now() + Math.random();
+        db.child(id).set({
+          name: name,
+          phone: phone,
+          photo: "https://via.placeholder.com/50"
+        });
+      }
+    });
+
+    alert("Contacts Imported Successfully!");
+    fileInput.value="";
+  };
+
+  reader.readAsText(file);
+}
+
 </script>
 </body>
 </html>
