@@ -1,145 +1,680 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saroj KC - CV</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { margin:0; font-family: 'Roboto', sans-serif; background: #f5f5f5; }
-        .container { display: flex; max-width: 1000px; margin: 40px auto; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .left { background: #0b2e4e; color:#fff; width:35%; padding:40px 20px; text-align:center; }
-        .profile-img { width:150px; height:150px; border-radius:50%; border:4px solid #fff; object-fit:cover; margin-bottom:20px; }
-        .name { font-size:26px; font-weight:700; margin-bottom:5px; }
-        .job-title { font-size:16px; font-weight:300; margin-bottom:20px; }
-        .section-title { text-align:left; font-size:18px; font-weight:700; margin-top:30px; border-bottom:2px solid #fff; padding-bottom:5px; }
-        .info-list, .skills-list, .social-list { list-style:none; padding:0; text-align:left; margin-top:10px; }
-        .info-list li, .skills-list li, .social-list li { padding:5px 0; }
-        .social-list li a { color:white; text-decoration:none; display:flex; align-items:center; gap:8px; }
-        .social-list li a:hover { color:#00aced; }
-        .right { width:65%; padding:40px 30px; }
-        .cv-title { font-size:32px; font-weight:700; color:#0b2e4e; }
-        .cv-section { margin-top:30px; }
-        .cv-section h2 { font-size:22px; color:#0b2e4e; border-bottom:2px solid #0b2e4e; padding-bottom:5px; margin-bottom:15px; }
-        .objective, .experience p { font-size:16px; line-height:1.5; }
-        table { width:100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background: #0b2e4e; color: #fff; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saroj K.C. · student & creative thinker</title>
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts: Inter + Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  <style>
+    /* ---------- RESET & VARIABLES ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: #0b0c10;
+      color: #eaeef2;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* animated gradient background */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 30%, rgba(100, 80, 220, 0.15), transparent 50%),
+                  radial-gradient(circle at 80% 70%, rgba(220, 100, 180, 0.1), transparent 50%);
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 2px, transparent 2px, transparent 8px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    :root {
+      --primary: #a685ff;
+      --primary-glow: #c47aff;
+      --secondary: #5fc3e0;
+      --accent: #ffb86b;
+      --dark-bg: #14161e;
+      --card-bg: rgba(22, 26, 35, 0.8);
+      --text-light: #f0f4fa;
+      --text-muted: #a6b3cc;
+      --border-glow: rgba(160, 130, 255, 0.3);
+      --grad-1: #845ec2;
+      --grad-2: #a178fe;
+      --grad-3: #5fb0d6;
+    }
+
+    /* ---------- TYPOGRAPHY & UTILS ---------- */
+    h1, h2, h3 {
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      line-height: 1.1;
+      font-family: "Playfair Display", serif;
+      font-weight: 700;
+      background: linear-gradient(130deg, #ffffff, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: hueShift 12s infinite alternate;
+    }
+
+    @keyframes hueShift {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(15deg); }
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      margin-bottom: 2.5rem;
+      position: relative;
+      display: inline-block;
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 4px;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .fade-section {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s cubic-bezier(0.2, 0.9, 0.3, 1), transform 0.9s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+    .fade-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ---------- NAVBAR ---------- */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: rgba(12, 14, 22, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.2s;
+      border-bottom: 2px solid transparent;
+      padding-bottom: 4px;
+    }
+    .nav-links a:hover {
+      color: white;
+      border-bottom-color: var(--primary);
+    }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      padding: 4rem 0;
+    }
+    .hero-content {
+      max-width: 800px;
+    }
+    .hero .subhead {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+      margin: 1rem 0 2rem;
+      border-left: 4px solid var(--primary);
+      padding-left: 1.5rem;
+    }
+    .hero .cta-buttons {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 0.9rem 2.2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: white;
+      box-shadow: 0 0 10px transparent;
+    }
+    .btn-primary {
+      background: linear-gradient(145deg, var(--grad-1), var(--grad-2));
+      border: none;
+      color: white;
+      box-shadow: 0 8px 20px -6px var(--primary);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 12px 28px -4px var(--primary-glow);
+      transform: scale(1.05);
+    }
+    .btn-outline:hover {
+      background: rgba(166, 133, 255, 0.1);
+      border-color: var(--primary-glow);
+      box-shadow: 0 0 20px var(--border-glow);
+      transform: translateY(-3px);
+    }
+
+    /* ---------- ABOUT ---------- */
+    .about-grid {
+      display: flex;
+      gap: 4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .about-img {
+      flex: 1 1 240px;
+      max-width: 280px;
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+      background: linear-gradient(145deg, var(--grad-1), var(--grad-3));
+      padding: 8px;
+      animation: morph 10s infinite alternate;
+    }
+    @keyframes morph {
+      0% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+      50% { border-radius: 50% 50% 50% 50% / 40% 60% 40% 60%; }
+      100% { border-radius: 70% 30% 30% 70% / 60% 40% 60% 40%; }
+    }
+    .about-img img {
+      width: 100%;
+      height: auto;
+      border-radius: inherit;
+      display: block;
+      background: #2a2e3a;
+      /* initial avatar with "SK" */
+      content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='45' r='25' fill='%235a6a8a'/%3E%3Ccircle cx='50' cy='105' r='35' fill='%233d4b64'/%3E%3Ctext x='50' y='70' font-size='28' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3ESK%3C/text%3E%3C/svg%3E");
+    }
+    .about-text {
+      flex: 2 1 300px;
+    }
+    .about-text p {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: #d0d9f0;
+    }
+
+    /* ---------- SKILLS TAGS (animated) ---------- */
+    .skills-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 2rem;
+    }
+    .skill-tag {
+      padding: 0.5rem 1.4rem;
+      background: rgba(166, 133, 255, 0.1);
+      border: 1px solid rgba(166, 133, 255, 0.4);
+      border-radius: 60px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      backdrop-filter: blur(4px);
+      transition: 0.2s;
+      animation: float 5s infinite ease-in-out;
+    }
+    .skill-tag:nth-child(odd) { animation-delay: 0.4s; }
+    .skill-tag:nth-child(3n) { animation-delay: 1.2s; }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0px); }
+    }
+    .skill-tag:hover {
+      background: var(--primary);
+      color: #0b0c10;
+      border-color: white;
+      transform: scale(1.1);
+    }
+
+    /* ---------- PORTFOLIO GRID ---------- */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+    .project-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 28px;
+      padding: 1.8rem 1.5rem;
+      transition: all 0.3s;
+      box-shadow: 0 20px 30px -15px black;
+    }
+    .project-card:hover {
+      transform: translateY(-12px) scale(1.02);
+      border-color: var(--primary);
+      box-shadow: 0 28px 40px -15px var(--primary);
+    }
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+    .project-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .project-tags span {
+      background: rgba(95, 195, 224, 0.2);
+      font-size: 0.75rem;
+      padding: 0.2rem 1rem;
+      border-radius: 40px;
+      border: 1px solid var(--secondary);
+    }
+
+    /* ---------- RESUME (timeline style) ---------- */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      border-left: 3px solid var(--primary);
+      padding-left: 2rem;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -9px;
+      top: 8px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--grad-2);
+      box-shadow: 0 0 15px var(--primary);
+    }
+    .timeline-date {
+      min-width: 140px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .timeline-content h3 {
+      margin-bottom: 0.3rem;
+    }
+    .timeline-content p {
+      color: var(--text-muted);
+    }
+
+    /* ---------- CONTACT & FORM ---------- */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin: 3rem 0;
+    }
+    @media (max-width: 700px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .contact-info p {
+      margin: 1.2rem 0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .contact-info i {
+      width: 30px;
+      color: var(--primary);
+      font-size: 1.4rem;
+    }
+    .contact-info a {
+      color: var(--text-light);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--primary);
+    }
+    .contact-info a:hover {
+      color: var(--primary);
+    }
+    .social-links {
+      display: flex;
+      gap: 1.8rem;
+      margin-top: 2rem;
+    }
+    .social-links a {
+      color: var(--text-muted);
+      font-size: 1.8rem;
+      transition: 0.2s;
+    }
+    .social-links a:hover {
+      color: var(--primary);
+      transform: scale(1.2);
+    }
+
+    /* contact form */
+    .contact-form {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      padding: 2rem;
+      border-radius: 32px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(10, 12, 18, 0.7);
+      border: 1px solid rgba(166, 133, 255, 0.3);
+      border-radius: 40px;
+      color: white;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-group textarea {
+      border-radius: 28px;
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+    .btn-form {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(145deg, var(--grad-1), var(--grad-2));
+      border: none;
+      border-radius: 60px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .btn-form:hover {
+      box-shadow: 0 8px 20px var(--primary);
+      transform: scale(1.02);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 3rem;
+    }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 700px) {
+      nav {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .nav-links {
+        gap: 1.2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- CV Container for PDF -->
-    <div class="container" id="cv-container">
-        <!-- LEFT -->
-        <div class="left">
-            <img src="3.jpg" alt="Profile Picture" class="profile-img">
-            <div class="name">Saroj K.C.</div>
-            <div class="job-title">Student | Fresher</div>
-            
-            <div class="section-title">Personal Info</div>
-            <ul class="info-list">
-                <li><strong>DOB:</strong> 21 September 2007</li>
-                <li><strong>Gender:</strong> Male</li>
-                <li><strong>Nationality:</strong> Nepali</li>
-                <li><strong>Marital:</strong> Single</li>
-                <li><strong>Phone:</strong> 9768281946</li>
-                <li><strong>Mail:</strong> <a href="mailto:mail@sarojkc2007.com.np" style="color:white;text-decoration:none;">mail@sarojkc2007.com.np.</a></li>
-                <li><strong> Current Address:</strong> Butwal,Rupandehi</li>
-                <li><strong> Permanent Address:</strong> Nayagau,Gulmi</li>
-            </ul>
-            
-            <div class="section-title">Languages</div>
-            <ul class="skills-list">
-                <li>English</li>
-                <li>Nepali</li>
-                <li>Hindi</li>
-            </ul>
-            
-            <div class="section-title">Skills</div>
-            <ul class="skills-list">
-                <li>Basic Electronics</li>
-                 <li>Basic Computer Knowledge</li>
-                <li>Typing</li>
-                <li>Problem Solving</li>
-                <li>Analytical Thinking</li>
-                <li>Communication</li>
-            </ul>
-            
-            <div class="section-title">Social Links</div>
-            <ul class="social-list">
-                <li><a href="https://www.facebook.com/share/1YtssJzLyQ/" target="_blank"><i class="fab fa-facebook"></i> Facebook</a></li>
-                <li><a href="https://www.instagram.com/yuvi__khatri?igsh=YmNxY3F6MmQ4cjgy" target="_blank"><i class="fab fa-instagram"></i> Instagram</a></li>
-                <li><a href="mailto:mail@sarojkc2007.com.np.com"><i class="fas fa-envelope"></i> Mail</a></li>
-                <li><a href="https://linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=saroj-kc-913515378" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
-                <li>
-                    <a href="tel:+9779768281946">
-                        <i class="fas fa-phone"></i>Contract Number 
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- RIGHT -->
-        <div class="right">
-            <div class="cv-title">Curriculum Vitae</div>
-            
-            <div class="cv-section objective">
-                <h2>Objective</h2>
-                <p>To leverage my technical skills, problem-solving abilities, and passion for learning 
-                to contribute effectively in technology-driven environments while continually 
-                improving my personal and professional growth.</p>
-            </div>
-
-            <div class="cv-section">
-                <h2>Qualification</h2>
-                <table>
-                    <tr>
-                        <th>Level</th>
-                        <th>GPA</th>
-                        <th>Major Subject</th>
-                        <th>Institute</th>
-                        <th>Years(BS)</th>
-                    </tr>
-                   <tr>
-                        <td>Basic Level Exam</td></td>
-                        <td>3.02</td>
-                        <td>Computer</td>
-                        <td>Kalika Manavgyan Secondary School</td>
-                        <td>2079</td>
-                    <tr>
-                        <td>Secondry Education Examination</td>
-                        <td>2.90</td>
-                        <td>Computer</td>
-                        <td>Kalika Manavgyan Secondary School</td>
-                        <td>2077</td>
-                    </tr>
-                    <tr>
-                        <td>School Leaving Certificate Examination</td>
-                        <td>3.21</td>
-                        <td>Computer</td>
-                        <td>Kalika Manavgyan Secondary School</td>
-                        <td>2082</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="cv-section experience">
-                <h2>Experience</h2>
-                <p>Fresher </p>
-            </div>
-
-            <div class="cv-section">
-                <h2>Hobbies</h2>
-                <ul>
-                    <li>Exploring Tech</li>
-                    <li>Cricket</li>
-                    <li>Photography</li>
-                    <li>Reading Books</li>
-                </ul>
-            </div>
-        </div>
+  <nav>
+    <span class="logo">SAROJ K.C. ✦</span>
+    <div class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#resume">Resume</a>
+      <a href="#contact">Contact</a>
     </div>
+  </nav>
+
+  <main>
+    <!-- HERO / HOME -->
+    <section id="home" class="hero container fade-section">
+      <div class="hero-content">
+        <h1>Saroj K.C.<br>creative thinker & student</h1>
+        <div class="subhead">Based in Butwal, Nepal · passionate about technology, cricket, and lifelong learning.</div>
+        <div class="cta-buttons">
+          <a href="#contact" class="btn btn-primary"><i class="fa-regular fa-message"></i> Ask me a question</a>
+          <a href="#projects" class="btn btn-outline">View my work</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT SECTION with skills -->
+    <section id="about" class="container fade-section" style="margin: 4rem auto;">
+      <h2 class="section-title">about me</h2>
+      <div class="about-grid">
+        <div class="about-img">
+          <img alt="Saroj K.C. avatar">
+        </div>
+        <div class="about-text">
+          <p>Hi, I'm Saroj KC, a student passionate about technology, cricket, and lifelong learning. I enjoy exploring new tech, reading to expand my knowledge, and applying curiosity to every project I take on. Always eager to learn and create, I aim to turn ideas into meaningful experiences.</p>
+          <p>Currently exploring basic coding, electronics, and documenting my experiments. I believe every small project is a step toward mastery.</p>
+          <!-- skills cloud -->
+          <div class="skills-cloud">
+            <span class="skill-tag">Basic Coding</span>
+            <span class="skill-tag">Typing</span>
+            <span class="skill-tag">Basic Electronics</span>
+            <span class="skill-tag">Curious Learner</span>
+            <span class="skill-tag">Tech Tinkerer</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS (portfolio) -->
+    <section id="projects" class="container fade-section" style="margin: 6rem auto;">
+      <h2 class="section-title">things i've built</h2>
+      <div class="portfolio-grid">
+        <!-- project 1: Personal Portfolio (this site) -->
+        <div class="project-card">
+          <div class="card-icon"><i class="fa-regular fa-code"></i></div>
+          <h3>Personal Portfolio Website</h3>
+          <p>My own corner of the web – a responsive, animated site showing my bio, skills, and mini-projects. Built with HTML/CSS/JS and lots of curiosity.</p>
+          <div class="project-tags">
+            <span>HTML/CSS</span><span>JavaScript</span><span>responsive</span>
+          </div>
+        </div>
+        <!-- project 2: Gadget/Tech Experiment Log -->
+        <div class="project-card">
+          <div class="card-icon"><i class="fa-regular fa-flask"></i></div>
+          <h3>Gadget / Tech Experiment Log</h3>
+          <p>Documenting small electronics experiments and DIY tech projects as a beginner. From blinking LEDs to simple sensors – learning by doing.</p>
+          <div class="project-tags">
+            <span>electronics</span><span>DIY</span><span>documentation</span>
+          </div>
+        </div>
+        <!-- project 3: maybe we can add a third one (optional) based on interests -->
+        <div class="project-card">
+          <div class="card-icon"><i class="fa-regular fa-cricket"></i></div>
+          <h3>Cricket stats explorer</h3>
+          <p>A little hobby project: analyzing local cricket scores using basic Python (in progress). Shows my love for the game and data.</p>
+          <div class="project-tags">
+            <span>Python</span><span>data</span><span>sports</span>
+          </div>
+        </div>
+        <!-- project 4: reading log (optional) -->
+        <div class="project-card">
+          <div class="card-icon"><i class="fa-regular fa-book-open"></i></div>
+          <h3>Reading notes & reflections</h3>
+          <p>I maintain a log of books I read and key takeaways – a small blog to share insights and recommendations.</p>
+          <div class="project-tags">
+            <span>writing</span><span>learning</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESUME / EDUCATION (since fresher) -->
+    <section id="resume" class="container fade-section" style="margin: 6rem auto;">
+      <h2 class="section-title">education & journey</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date">2082 BS (2025)</div>
+          <div class="timeline-content">
+            <h3>School Leaving Certificate (SLC)</h3>
+            <p>Kalika Manavgyaan Secondary School · GPA 3.21</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">2079 BS (2022)</div>
+          <div class="timeline-content">
+            <h3>Secondary Education Examination (SEE)</h3>
+            <p>Kalika Manavgyaan Secondary School · GPA 2.90</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">2077 BS (2020)</div>
+          <div class="timeline-content">
+            <h3>Basic Level Examination</h3>
+            <p>Kalika Manavgyaan Secondary School · GPA 3.02</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">Ongoing</div>
+          <div class="timeline-content">
+            <h3>Student (Fresher)</h3>
+            <p>Exploring technology, building projects, and learning every day.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT + ASK A QUESTION -->
+    <section id="contact" class="container fade-section" style="margin: 6rem auto;">
+      <h2 class="section-title">ask me a question / contract</h2>
+      <div class="contact-grid">
+        <!-- left: contact info -->
+        <div class="contact-info">
+          <p><i class="fa-regular fa-envelope"></i> <a href="mailto:mail@sarojkc2007.com.np">mail@sarojkc2007.com.np</a></p>
+          <p><i class="fa-regular fa-phone"></i> <a href="tel:+9779768281946">+977 9768281946</a> (Nepal)</p>
+          <p><i class="fa-regular fa-location-dot"></i> Butwal, Nepal</p>
+          <div class="social-links">
+            <a href="https://www.facebook.com/share/1CNQ45neqH/" target="_blank" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://www.linkedin.com/in/saroj-kc-913515378" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="mailto:mail@sarojkc2007.com.np" title="Email"><i class="fa-regular fa-envelope"></i></a>
+            <!-- you can add more if needed -->
+          </div>
+          <p style="margin-top: 2rem; font-style: italic; color: var(--accent);">Open to questions, collaboration, and tech chats. Drop a message!</p>
+        </div>
+
+        <!-- right: contact form (simple, uses mailto) -->
+        <div class="contact-form">
+          <form action="mailto:mail@sarojkc2007.com.np" method="POST" enctype="text/plain">
+            <div class="form-group">
+              <input type="text" name="name" placeholder="your name" required>
+            </div>
+            <div class="form-group">
+              <input type="email" name="email" placeholder="your email" required>
+            </div>
+            <div class="form-group">
+              <textarea name="message" rows="4" placeholder="your question or message..." required></textarea>
+            </div>
+            <button type="submit" class="btn-form"><i class="fa-regular fa-paper-plane"></i> Send message</button>
+          </form>
+          <p style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-muted);">*opens your default email app</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>© 2026 Saroj K.C. — built with curiosity & code</p>
+    </footer>
+  </main>
+
+  <!-- intersection observer for fade sections -->
+  <script>
+    (function() {
+      const sections = document.querySelectorAll('.fade-section');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.2, rootMargin: '0px 0px -20px 0px' });
+      sections.forEach(section => observer.observe(section));
+      // home visible by default
+      document.getElementById('home').classList.add('visible');
+    })();
+  </script>
+
+  <!-- ensure home visible -->
+  <style>
+    #home { opacity: 1; transform: none; }
+  </style>
+
+
 
     <!-- Admin Button -->
     <div style="position:fixed; bottom:20px; right:20px; z-index:1000;">
