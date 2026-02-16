@@ -239,14 +239,13 @@
       50% { border-radius: 50% 50% 50% 50% / 40% 60% 40% 60%; }
       100% { border-radius: 70% 30% 30% 70% / 60% 40% 60% 40%; }
     }
+    /* FIXED IMAGE STYLES: round photo, 200px wide */
     .about-img img {
-      width: 100%;
+      width: 200px;
       height: auto;
-      border-radius: inherit;
+      border-radius: 50%;
       display: block;
-      background: #2a2e3a;
-      /* initial avatar with "SK" */
-      content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='45' r='25' fill='%235a6a8a'/%3E%3Ccircle cx='50' cy='105' r='35' fill='%233d4b64'/%3E%3Ctext x='50' y='70' font-size='28' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3ESK%3C/text%3E%3C/svg%3E");
+      margin: 0 auto; /* center inside the colored frame */
     }
     .about-text {
       flex: 2 1 300px;
@@ -515,7 +514,8 @@
       <h2 class="section-title">about me</h2>
       <div class="about-grid">
         <div class="about-img">
-          <img alt="Saroj K.C. avatar">
+          <!-- FIXED: src points to your photo "1.jpg" (same folder) -->
+          <img src="1.jpg" alt="Saroj K.C. portrait">
         </div>
         <div class="about-text">
           <p>Hi, I'm Saroj KC, a student passionate about technology, cricket, and lifelong learning. I enjoy exploring new tech, reading to expand my knowledge, and applying curiosity to every project I take on. Always eager to learn and create, I aim to turn ideas into meaningful experiences.</p>
@@ -554,7 +554,7 @@
             <span>electronics</span><span>DIY</span><span>documentation</span>
           </div>
         </div>
-        <!-- project 3: maybe we can add a third one (optional) based on interests -->
+        <!-- project 3: Cricket stats explorer -->
         <div class="project-card">
           <div class="card-icon"><i class="fa-regular fa-cricket"></i></div>
           <h3>Cricket stats explorer</h3>
@@ -563,7 +563,7 @@
             <span>Python</span><span>data</span><span>sports</span>
           </div>
         </div>
-        <!-- project 4: reading log (optional) -->
+        <!-- project 4: Reading log -->
         <div class="project-card">
           <div class="card-icon"><i class="fa-regular fa-book-open"></i></div>
           <h3>Reading notes & reflections</h3>
@@ -623,7 +623,6 @@
             <a href="https://www.facebook.com/share/1CNQ45neqH/" target="_blank" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
             <a href="https://www.linkedin.com/in/saroj-kc-913515378" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
             <a href="mailto:mail@sarojkc2007.com.np" title="Email"><i class="fa-regular fa-envelope"></i></a>
-            <!-- you can add more if needed -->
           </div>
           <p style="margin-top: 2rem; font-style: italic; color: var(--accent);">Open to questions, collaboration, and tech chats. Drop a message!</p>
         </div>
@@ -673,6 +672,8 @@
   <style>
     #home { opacity: 1; transform: none; }
   </style>
+</body>
+</html>
 
 
 
