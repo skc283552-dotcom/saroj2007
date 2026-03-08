@@ -1,732 +1,669 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saroj K.C. · student & Creative Thinker</title>
-  <!-- Font Awesome 6 (free) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Google Fonts: Inter + Playfair Display -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-  <style>
-    /* ---------- RESET & VARIABLES ---------- */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinanceOS — Personal Accounting</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    html {
-      scroll-behavior: smooth;
-    }
+  // ──────────────────────────────────────────────
+  // 🔥 REPLACE WITH YOUR FIREBASE CONFIG
+  // ──────────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
 
-    body {
-      font-family: "Inter", sans-serif;
-      background: #0b0c10;
-      color: #eaeef2;
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-    /* animated gradient background */
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 30% 30%, rgba(100, 80, 220, 0.15), transparent 50%),
-                  radial-gradient(circle at 80% 70%, rgba(220, 100, 180, 0.1), transparent 50%);
-      z-index: -2;
-      pointer-events: none;
-    }
+  window._fb = { db, auth, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged };
+</script>
 
-    body::after {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 2px, transparent 2px, transparent 8px);
-      z-index: -1;
-      pointer-events: none;
-    }
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3a;
+    --accent: #00e5a0;
+    --accent2: #ff6b6b;
+    --accent3: #6b8aff;
+    --text: #e8e8f0;
+    --text2: #8888aa;
+    --income: #00e5a0;
+    --expense: #ff6b6b;
+    --saving: #6b8aff;
+    --investment: #ffb347;
+  }
 
-    :root {
-      --primary: #a685ff;
-      --primary-glow: #c47aff;
-      --secondary: #5fc3e0;
-      --accent: #ffb86b;
-      --dark-bg: #14161e;
-      --card-bg: rgba(22, 26, 35, 0.8);
-      --text-light: #f0f4fa;
-      --text-muted: #a6b3cc;
-      --border-glow: rgba(160, 130, 255, 0.3);
-      --grad-1: #845ec2;
-      --grad-2: #a178fe;
-      --grad-3: #5fb0d6;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ---------- TYPOGRAPHY & UTILS ---------- */
-    h1, h2, h3 {
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-    h1 {
-      font-size: clamp(2.5rem, 8vw, 5rem);
-      line-height: 1.1;
-      font-family: "Playfair Display", serif;
-      font-weight: 700;
-      background: linear-gradient(130deg, #ffffff, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      animation: hueShift 12s infinite alternate;
-    }
+  /* AUTH SCREEN */
+  #auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 50%, #0d1f2d 0%, #0a0a0f 70%);
+  }
 
-    @keyframes hueShift {
-      0% { filter: hue-rotate(0deg); }
-      100% { filter: hue-rotate(15deg); }
-    }
+  .auth-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 400px;
+    max-width: 90vw;
+    animation: fadeUp 0.6s ease;
+  }
 
-    .section-title {
-      font-size: 2.2rem;
-      margin-bottom: 2.5rem;
-      position: relative;
-      display: inline-block;
-    }
-    .section-title::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 0;
-      width: 80px;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      border-radius: 4px;
-      box-shadow: 0 0 12px var(--primary-glow);
-    }
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
+  .auth-sub { color: var(--text2); font-size: 13px; margin-bottom: 32px; }
 
-    .fade-section {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.9s cubic-bezier(0.2, 0.9, 0.3, 1), transform 0.9s cubic-bezier(0.2, 0.9, 0.3, 1);
-    }
-    .fade-section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .form-group { margin-bottom: 16px; }
 
-    /* ---------- NAVBAR ---------- */
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.5rem 2rem;
-      background: rgba(12, 14, 22, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
 
-    .logo {
-      font-size: 1.6rem;
-      font-weight: 700;
-      background: linear-gradient(145deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
 
-    .nav-links {
-      display: flex;
-      gap: 2.5rem;
-    }
-    .nav-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-weight: 500;
-      transition: 0.2s;
-      border-bottom: 2px solid transparent;
-      padding-bottom: 4px;
-    }
-    .nav-links a:hover {
-      color: white;
-      border-bottom-color: var(--primary);
-    }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+  }
 
-    /* ---------- HERO ---------- */
-    .hero {
-      min-height: 90vh;
-      display: flex;
-      align-items: center;
-      padding: 4rem 0;
-    }
-    .hero-content {
-      max-width: 800px;
-    }
-    .hero .subhead {
-      font-size: 1.4rem;
-      color: var(--text-muted);
-      margin: 1rem 0 2rem;
-      border-left: 4px solid var(--primary);
-      padding-left: 1.5rem;
-    }
-    .hero .cta-buttons {
-      display: flex;
-      gap: 1.2rem;
-      flex-wrap: wrap;
-    }
-    .btn {
-      padding: 0.9rem 2.2rem;
-      border-radius: 50px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.25s ease;
-      background: transparent;
-      border: 1px solid var(--primary);
-      color: white;
-      box-shadow: 0 0 10px transparent;
-    }
-    .btn-primary {
-      background: linear-gradient(145deg, var(--grad-1), var(--grad-2));
-      border: none;
-      color: white;
-      box-shadow: 0 8px 20px -6px var(--primary);
-    }
-    .btn-primary:hover {
-      box-shadow: 0 12px 28px -4px var(--primary-glow);
-      transform: scale(1.05);
-    }
-    .btn-outline:hover {
-      background: rgba(166, 133, 255, 0.1);
-      border-color: var(--primary-glow);
-      box-shadow: 0 0 20px var(--border-glow);
-      transform: translateY(-3px);
-    }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
 
-    /* ---------- ABOUT ---------- */
-    .about-grid {
-      display: flex;
-      gap: 4rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .about-img {
-      flex: 1 1 240px;
-      max-width: 280px;
-      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-      background: linear-gradient(145deg, var(--grad-1), var(--grad-3));
-      padding: 8px;
-      animation: morph 10s infinite alternate;
-    }
-    @keyframes morph {
-      0% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
-      50% { border-radius: 50% 50% 50% 50% / 40% 60% 40% 60%; }
-      100% { border-radius: 70% 30% 30% 70% / 60% 40% 60% 40%; }
-    }
-    /* FIXED IMAGE STYLES: round photo, 200px wide */
-    .about-img img {
-      width: 200px;
-      height: auto;
-      border-radius: 50%;
-      display: block;
-      margin: 0 auto; /* center inside the colored frame */
-    }
-    .about-text {
-      flex: 2 1 300px;
-    }
-    .about-text p {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      color: #d0d9f0;
-    }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    width: 100%;
+  }
 
-    /* ---------- SKILLS TAGS (animated) ---------- */
-    .skills-cloud {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-      margin-top: 2rem;
-    }
-    .skill-tag {
-      padding: 0.5rem 1.4rem;
-      background: rgba(166, 133, 255, 0.1);
-      border: 1px solid rgba(166, 133, 255, 0.4);
-      border-radius: 60px;
-      font-size: 0.95rem;
-      font-weight: 500;
-      backdrop-filter: blur(4px);
-      transition: 0.2s;
-      animation: float 5s infinite ease-in-out;
-    }
-    .skill-tag:nth-child(odd) { animation-delay: 0.4s; }
-    .skill-tag:nth-child(3n) { animation-delay: 1.2s; }
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-5px); }
-      100% { transform: translateY(0px); }
-    }
-    .skill-tag:hover {
-      background: var(--primary);
-      color: #0b0c10;
-      border-color: white;
-      transform: scale(1.1);
-    }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
 
-    /* ---------- PORTFOLIO GRID ---------- */
-    .portfolio-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin: 3rem 0;
-    }
-    .project-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 28px;
-      padding: 1.8rem 1.5rem;
-      transition: all 0.3s;
-      box-shadow: 0 20px 30px -15px black;
-    }
-    .project-card:hover {
-      transform: translateY(-12px) scale(1.02);
-      border-color: var(--primary);
-      box-shadow: 0 28px 40px -15px var(--primary);
-    }
-    .card-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      color: var(--primary);
-    }
-    .project-card h3 {
-      font-size: 1.5rem;
-      margin-bottom: 0.6rem;
-    }
-    .project-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin: 1rem 0;
-    }
-    .project-tags span {
-      background: rgba(95, 195, 224, 0.2);
-      font-size: 0.75rem;
-      padding: 0.2rem 1rem;
-      border-radius: 40px;
-      border: 1px solid var(--secondary);
-    }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
 
-    /* ---------- RESUME (timeline style) ---------- */
-    .timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-    }
-    .timeline-item {
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-      border-left: 3px solid var(--primary);
-      padding-left: 2rem;
-      position: relative;
-    }
-    .timeline-item::before {
-      content: '';
-      position: absolute;
-      left: -9px;
-      top: 8px;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--grad-2);
-      box-shadow: 0 0 15px var(--primary);
-    }
-    .timeline-date {
-      min-width: 140px;
-      font-weight: 600;
-      color: var(--accent);
-    }
-    .timeline-content h3 {
-      margin-bottom: 0.3rem;
-    }
-    .timeline-content p {
-      color: var(--text-muted);
-    }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ---------- CONTACT & FORM ---------- */
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 3rem;
-      margin: 3rem 0;
-    }
-    @media (max-width: 700px) {
-      .contact-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .contact-info p {
-      margin: 1.2rem 0;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .contact-info i {
-      width: 30px;
-      color: var(--primary);
-      font-size: 1.4rem;
-    }
-    .contact-info a {
-      color: var(--text-light);
-      text-decoration: none;
-      border-bottom: 1px dashed var(--primary);
-    }
-    .contact-info a:hover {
-      color: var(--primary);
-    }
-    .social-links {
-      display: flex;
-      gap: 1.8rem;
-      margin-top: 2rem;
-    }
-    .social-links a {
-      color: var(--text-muted);
-      font-size: 1.8rem;
-      transition: 0.2s;
-    }
-    .social-links a:hover {
-      color: var(--primary);
-      transform: scale(1.2);
-    }
+  .btn-danger {
+    background: var(--expense);
+    color: #fff;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
 
-    /* contact form */
-    .contact-form {
-      background: var(--card-bg);
-      backdrop-filter: blur(8px);
-      padding: 2rem;
-      border-radius: 32px;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    .form-group input,
-    .form-group textarea {
-      width: 100%;
-      padding: 1rem;
-      background: rgba(10, 12, 18, 0.7);
-      border: 1px solid rgba(166, 133, 255, 0.3);
-      border-radius: 40px;
-      color: white;
-      font-family: 'Inter', sans-serif;
-    }
-    .form-group textarea {
-      border-radius: 28px;
-      resize: vertical;
-    }
-    .form-group input:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 12px var(--primary-glow);
-    }
-    .btn-form {
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(145deg, var(--grad-1), var(--grad-2));
-      border: none;
-      border-radius: 60px;
-      font-weight: 600;
-      color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .btn-form:hover {
-      box-shadow: 0 8px 20px var(--primary);
-      transform: scale(1.02);
-    }
+  .btn-sm {
+    padding: 7px 14px;
+    font-size: 12px;
+    border-radius: 7px;
+  }
 
-    footer {
-      text-align: center;
-      padding: 2rem 0;
-      color: var(--text-muted);
-      border-top: 1px solid rgba(255,255,255,0.05);
-      margin-top: 3rem;
-    }
+  .auth-toggle {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text2);
+  }
 
-    /* ---------- RESPONSIVE ---------- */
-    @media (max-width: 700px) {
-      nav {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .nav-links {
-        gap: 1.2rem;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-    }
-  </style>
+  .auth-toggle span {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* APP LAYOUT */
+  #app { display: none; flex-direction: row; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    padding: 0 24px 32px;
+    letter-spacing: -1px;
+  }
+
+  .sidebar-logo span { color: var(--text2); font-size: 11px; display: block; font-weight: 400; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    color: var(--text2);
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,229,160,0.05); }
+  .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-info {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 32px;
+    min-height: 100vh;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp 0.4s ease; }
+
+  /* PAGE HEADER */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .page-subtitle { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+  /* STAT CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+
+  .stat-card:hover { transform: translateY(-2px); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .stat-card.income::before { background: var(--income); }
+  .stat-card.expense::before { background: var(--expense); }
+  .stat-card.balance::before { background: var(--accent3); }
+  .stat-card.saving::before { background: var(--saving); }
+
+  .stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .stat-card.income .stat-value { color: var(--income); }
+  .stat-card.expense .stat-value { color: var(--expense); }
+  .stat-card.balance .stat-value { color: var(--accent3); }
+  .stat-card.saving .stat-value { color: var(--saving); }
+
+  .stat-change { font-size: 11px; color: var(--text2); margin-top: 8px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* TRANSACTION TABLE */
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Syne', sans-serif;
+  }
+
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .badge-income { background: rgba(0,229,160,0.15); color: var(--income); }
+  .badge-expense { background: rgba(255,107,107,0.15); color: var(--expense); }
+  .badge-saving { background: rgba(107,138,255,0.15); color: var(--saving); }
+  .badge-investment { background: rgba(255,179,71,0.15); color: var(--investment); }
+
+  .amount-income { color: var(--income); font-weight: 600; }
+  .amount-expense { color: var(--expense); font-weight: 600; }
+  .amount-saving { color: var(--saving); font-weight: 600; }
+  .amount-investment { color: var(--investment); font-weight: 600; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    width: 480px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 24px;
+  }
+
+  .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar select, .filter-bar input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+
+  .filter-bar select:focus, .filter-bar input:focus { border-color: var(--accent); }
+
+  /* CHARTS */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .sidebar { width: 60px; }
+    .sidebar-logo, .nav-item span, .user-info { display: none; }
+    .nav-item { padding: 16px; justify-content: center; }
+    .main { margin-left: 60px; padding: 20px; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--accent);
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    display: none;
+  }
+
+  .toast.error { border-color: var(--expense); color: var(--expense); }
+  .toast.show { display: block; }
+
+  /* BUDGET PROGRESS */
+  .budget-item { margin-bottom: 16px; }
+  .budget-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+  /* CATEGORY ICONS */
+  .cat-icon { font-size: 20px; }
+
+  /* DEBT CARD */
+  .debt-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .debt-info h4 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .debt-info p { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text2);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text); margin-bottom: 8px; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .demo-notice {
+    background: rgba(107,138,255,0.1);
+    border: 1px solid var(--accent3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--accent3);
+    margin-bottom: 24px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
-  <nav>
-    <span class="logo">SAROJ K.C. ✦</span>
-    <div class="nav-links">
-      <a href="#home">Home</a>
-      <a href="#about">About</a>
-      <a href="#projects">Projects</a>
-      <a href="#resume">Resume</a>
-      <a href="#contact">Contact</a>
+
+<!-- ─── AUTH SCREEN ─── -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">FinanceOS</div>
+    <div class="auth-sub">Personal accounting, reimagined.</div>
+
+    <div id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="••••••••"/>
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="auth-toggle">No account? <span onclick="toggleAuth()">Create one</span> — or <span onclick="demoMode()">Demo Mode</span></div>
+    </div>
+
+    <div id="register-form" style="display:none">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="John Doe"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Min 6 characters"/>
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+      <div class="auth-toggle">Already registered? <span onclick="toggleAuth()">Sign in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN APP ─── -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">FinanceOS <span>Personal Accounting</span></div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="showPage('transactions')"><span class="icon">💳</span><span>Transactions</span></div>
+    <div class="nav-item" onclick="showPage('budget')"><span class="icon">🎯</span><span>Budget</span></div>
+    <div class="nav-item" onclick="showPage('debts')"><span class="icon">🏦</span><span>Debts & Loans</span></div>
+    <div class="nav-item" onclick="showPage('reports')"><span class="icon">📈</span><span>Reports</span></div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="icon">⚙️</span><span>Settings</span></div>
+    <div class="sidebar-bottom">
+      <div class="user-info" id="user-email-display">user@email.com</div>
+      <button class="btn btn-ghost btn-sm" style="width:100%" onclick="doLogout()">Sign Out</button>
     </div>
   </nav>
 
-  <main>
-    <!-- HERO / HOME -->
-    <section id="home" class="hero container fade-section">
-      <div class="hero-content">
-        <h1>Saroj K.C.<br>creative thinker & student</h1>
-        <div class="subhead">Based in Butwal, Nepal · Passionate about technology and lifelong learning.</div>
-        <div class="cta-buttons">
-          <a href="#contact" class="btn btn-primary"><i class="fa-regular fa-message"></i> Ask me a question</a>
-          <a href="#projects" class="btn btn-outline">View my work</a>
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle" id="dash-date">Loading...</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add-transaction')">+ Add Transaction</button>
+      </div>
+      <div id="demo-notice" class="demo-notice" style="display:none">
+        🔒 <strong>Demo Mode</strong> — Data is stored locally. To persist data, connect your Firebase project in the code.
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card income">
+          <div class="stat-label">Total Income</div>
+          <div class="stat-value" id="stat-income">$0</div>
+          <div class="stat-change" id="stat-income-count">0 transactions</div>
+        </div>
+        <div class="stat-card expense">
+          <div class="stat-label">Total Expenses</div>
+          <div class="stat-value" id="stat-expense">$0</div>
+          <div class="stat-change" id="stat-expense-count">0 transactions</div>
+        </div>
+        <div class="stat-card balance">
+          <div class="stat-label">Net Balance</div>
+          <div class="stat-value" id="stat-balance">$0</div>
+          <div class="stat-change">income − expenses</div>
+        </div>
+        <div class="stat-card saving">
+          <div class="stat-label">Total Savings</div>
+          <div class="stat-value" id="stat-savings">$0</div>
+          <div class="stat-change" id="stat-savings-count">0 entries</div>
         </div>
       </div>
-    </section>
-
-    <!-- ABOUT SECTION with skills -->
-    <section id="about" class="container fade-section" style="margin: 4rem auto;">
-      <h2 class="section-title">About me</h2>
-      <div class="about-grid">
-        <div class="about-img">
-          <!-- FIXED: src points to your photo "1.jpg" (same folder) -->
-          <img src="1.jpg" alt="Saroj K.C. portrait">
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-title">Income vs Expenses</div>
+          <canvas id="chart-overview" height="200"></canvas>
         </div>
-        <div class="about-text">
-          <p>Hi, I'm Saroj KC, a student passionate about technology and lifelong learning. I enjoy exploring new tech, reading to expand my knowledge, and applying curiosity to every project I take on. Always eager to learn and create, I aim to turn ideas into meaningful experiences.</p>
-          <p>Currently Exploring basic coding, electronics, and documenting my experiments. I believe every small project is a step toward mastery.</p>
-          <!-- skills cloud -->
-          <div class="skills-cloud">
-            <span class="skill-tag">Basic Coding</span>
-            <span class="skill-tag">Typing</span>
-            <span class="skill-tag">Basic Electronics</span>
-            <span class="skill-tag">Curious Learner</span>
-            <span class="skill-tag"> Critical Tinkerer</span>
-            <spanclass="skill.tag">Tech Learner</span>
-          </div>
+        <div class="card">
+          <div class="card-title">Spending by Category</div>
+          <canvas id="chart-category" height="200"></canvas>
         </div>
       </div>
-    </section>
-
-    <!-- PROJECTS (portfolio) -->
-    <section id="projects" class="container fade-section" style="margin: 6rem auto;">
-      <h2 class="section-title">things i've built</h2>
-      <div class="portfolio-grid">
-        <!-- project 1: Personal Portfolio (this site) -->
-        <div class="project-card">
-          <div class="card-icon"><i class="fa-regular fa-code"></i></div>
-          <h3>Personal Portfolio Website</h3>
-          <p>My own corner of the web – a responsive, animated site showing my bio, skills, and mini-projects. Built with HTML/CSS/JS and lots of curiosity.</p>
-          <div class="project-tags">
-            <span>HTML/CSS</span><span>JavaScript</span><span>responsive</span>
-          </div>
-        </div>
-        <!-- project 2: Gadget/Tech Experiment Log -->
-        <div class="project-card">
-          <div class="card-icon"><i class="fa-regular fa-flask"></i></div>
-          <h3>Gadget / Tech Experiment Log</h3>
-          <p>Documenting small electronics experiments and DIY tech projects as a beginner. From blinking LEDs to simple sensors – learning by doing.</p>
-          <div class="project-tags">
-            <span>electronics</span><span>DIY</span><span>documentation</span>
-          </div>
-        </div>
-        <!-- project 3: Cricket stats explorer -->
-        <div class="project-card">
-          <div class="card-icon"><i class="fa-regular fa-cricket"></i></div>
-          <h3>Cricket stats explorer</h3>
-          <p>A little hobby project: analyzing local cricket scores using basic Python (in progress). Shows my love for the game and data.</p>
-          <div class="project-tags">
-            <span>Python</span><span>data</span><span>sports</span>
-          </div>
-        </div>
-        <!-- project 4: Reading log -->
-        <div class="project-card">
-          <div class="card-icon"><i class="fa-regular fa-book-open"></i></div>
-          <h3>Reading notes & reflections</h3>
-          <p>I maintain a log of books I read and key takeaways – a small blog to share insights and recommendations.</p>
-          <div class="project-tags">
-            <span>writing</span><span>learning</span>
-          </div>
+      <div class="card">
+        <div class="card-title">Recent Transactions <span style="font-size:13px;color:var(--text2);font-weight:400" id="recent-count"></span></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th></tr>
+            </thead>
+            <tbody id="recent-tbody"></tbody>
+          </table>
         </div>
       </div>
-    </section>
-
-    <!-- RESUME / EDUCATION (since fresher) -->
-    <section id="resume" class="container fade-section" style="margin: 6rem auto;">
-      <h2 class="section-title">education & journey</h2>
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="timeline-date">2082 BS (2025)</div>
-          <div class="timeline-content">
-  <title>Saroj K.C. · student & reative thinker</title>
-            <h3>School Leaving Certificate Examination (SLCE)</h3>
-            <p>Kalika Manavgyaan Secondary School · GPA 3.21</p>
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-date">2079 BS (2022)</div>
-          <div class="timeline-content">
-            <h3>Secondary Education Examination (SEE)</h3>
-            <p>Kalika Manavgyaan Secondary School · GPA 2.90</p>
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-date">2077 BS (2020)</div>
-          <div class="timeline-content">
-            <h3>Basic Level Examination(BLE)</h3>
-            <p>Kalika Manavgyaan Secondary School · GPA 3.02</p>
-          </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-date">Ongoing</div>
-          <div class="timeline-content">
-            <h3>Student BBS First Year</h3>
-            <p>Exploring technology, building projects, and learning every day.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CONTACT + ASK A QUESTION -->
-    <section id="contact" class="container fade-section" style="margin: 6rem auto;">
-      <h2 class="section-title">ask me a question / contract</h2>
-      <div class="contact-grid">
-        <!-- left: contact info -->
-        <div class="contact-info">
-          <p><i class="fa-regular fa-envelope"></i> <a href="mailto:mail@sarojkc2007.com.np">mail@sarojkc2007.com.np</a></p>
-          <p><i class="fa-regular fa-phone"></i> <a href="tel:+9779768281946">+977 9768281946</a> (Nepal)</p>
-          <p><i class="fa-regular fa-location-dot"></i> Butwal, Nepal</p>
-          <div class="social-links">
-            <a href="https://www.facebook.com/share/1CNQ45neqH/" target="_blank" title="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a href="https://www.linkedin.com/in/saroj-kc-913515378" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
-            <a href="mailto:mail@sarojkc2007.com.np" title="Email"><i class="fa-regular fa-envelope"></i></a>
-          </div>
-          <p style="margin-top: 2rem; font-style: italic; color: var(--accent);">Open to questions, collaboration, and tech chats. Drop a message!</p>
-        </div>
-
-        <!-- right: contact form (simple, uses mailto) -->
-        <div class="contact-form">
-          <form action="mailto:mail@sarojkc2007.com.np" method="POST" enctype="text/plain">
-            <div class="form-group">
-              <input type="text" name="name" placeholder="your name" required>
-            </div>
-            <div class="form-group">
-              <input type="email" name="email" placeholder="your email" required>
-            </div>
-            <div class="form-group">
-              <textarea name="message" rows="4" placeholder="your question or message..." required></textarea>
-            </div>
-            <button type="submit" class="btn-form"><i class="fa-regular fa-paper-plane"></i> Send message</button>
-          </form>
-          <p style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-muted);">*opens your default email app</p>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <p>© 2026 Saroj K.C. — built with curiosity & code</p>
-    </footer>
-  </main>
-
-  <!-- intersection observer for fade sections -->
-  <script>
-    (function() {
-      const sections = document.querySelectorAll('.fade-section');
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      }, { threshold: 0.2, rootMargin: '0px 0px -20px 0px' });
-      sections.forEach(section => observer.observe(section));
-      // home visible by default
-      document.getElementById('home').classList.add('visible');
-    })();
-  </script>
-
-  <!-- ensure home visible -->
-  <style>
-    #home { opacity: 1; transform: none; }
-  </style>
-</body>
-</html>
-
-
-
-    <!-- Admin Button -->
-    <div style="position:fixed; bottom:20px; right:20px; z-index:1000;">
-        <a href="login.html">
-            <button style="
-                padding:10px 15px; 
-                border:none; 
-                border-radius:50px; 
-                background:#0b2e4e; 
-                color:white; 
-                cursor:pointer;
-                font-weight:700;
-            ">
-                <i class="fas fa-user-shield"></i> Admin
-            </button>
-        </a>
     </div>
 
-    <!-- Download CV Button -->
-    <div style="position:fixed; bottom:20px; right:120px; z-index:1000;">
-        <button id="download-pdf-btn" style="
-            padding:10px 15px;
-            border:none;
-            border-radius:50px;
-            background:#ff3b3b;
-            color:white;
-            font-weight:700;
-            cursor:pointer;
-            transition:0.3s;
-        ">
-            📄 Download CV
-        </button>
-    </div>
-
-    <!-- html2pdf library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script>
-    document.getElementById("download-pdf-btn").addEventListener("click", function(){
-        var element = document.getElementById("cv-container");
-        var opt = {
-            margin:       [0.4, 0.4, 0.4, 0.4],
-            filename:     'Saroj_CV.pdf',
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 3, letterRendering: true, useCORS: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
-    });
-    </script>
-
-</body>
-</html>
+    <!-- TRANSACTIONS PAGE -->
+    <div class="page" id="page-transactions">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Transactions</div>
+          <div class="page-subtitle">All your financial movements</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost" onclick="downloadPDF()">⬇ PDF</button>
+          <button class="btn btn-primary" onclick="openModal('add-transaction')">+ Add</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <select id="filter-type" onchange="renderTransactions()">
+          <option value="">All Types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+          <option value="saving">Saving</option>
+          <option value="investment">Investment</option>
+        </select>
+        <select id="filter-cat" onchange="renderTransactions()">
+          <option value="">All Categories</option>
+        </select>
+        <select id="filter-month" onchange="renderTransactions()">
+          <option value="">All Months</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Search..." oninput="renderTransactions()" style="flex:1;min-width:140px"/>
+      </div>
+      <div class="c
