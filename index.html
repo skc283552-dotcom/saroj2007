@@ -655,10 +655,10 @@ async function saveEdit(){
 async function delTx(id){
   if(!confirm('Delete this transaction?'))return;
   await fbdelete('transations',id);
-  txs=txs.filter(function(x){return x.id !==id;});
+  txs=txs.filter(function(x){return x.id!==id;});
   lsSave();
-  showToast('delete','tinfo');
-  fastrefresh();
+  showToast('Deleted','tinfo');
+  fastRefresh();
   renderLedger();
 }
 async function delAllTx(){
