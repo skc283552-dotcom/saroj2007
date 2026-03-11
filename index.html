@@ -654,8 +654,12 @@ async function saveEdit(){
 }
 async function delTx(id){
   if(!confirm('Delete this transaction?'))return;
-  txs=txs.filter(function(x){return x.id!==id;});lsSave();showToast('Deleted','tinfo');fastRefresh();renderLedger();
-  fbDelete('transactions',id);
+  await fbdelete('transations',id);
+  txs=txs.filter(function(x){return x.id !==id;});
+  lsSave();
+  showToast('delete','tinfo');
+  fastrefresh();
+  renderLedger();
 }
 async function delAllTx(){
   if(!confirm('Delete ALL '+txs.length+' transactions?'))return;
