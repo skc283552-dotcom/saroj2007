@@ -670,21 +670,15 @@ async function delTx(id){
   fastRefresh();
   renderLedger();
   if(!isDemo && _FB && _uid) {
-    try {
-      await fbDelete('transactions', id);
-    } catch(e) {
-      console.error('Firebase delete error:', e);
-    }
-  }
+    await fbDelete('transactions', id);
+   }
 }
 async function delAllTx(){
   if(!confirm('Delete ALL ' + txs.length + ' transactions?')) return;
   showSave(true);
   if(!isDemo && _FB && _uid) {
-    try {
-      await Promise.all(txs.map(t => fbDelete('transactions', t.id)));
-    } catch(e) {
-      console.error('Firebase bulk delete error:', e);
+for (var t of txs){
+  await fbDelete('transation',t.id);
     }
   }
   txs = [];
@@ -816,12 +810,7 @@ async function delBill(id){
   renderBills();
   checkAlerts();
   if(!isDemo && _FB && _uid) {
-    try {
-      await fbDelete('bills', id);
-    } catch(e) {
-      console.error('Firebase delete error:', e);
-    }
-  }
+   }
 }
 async function markBillPaid(id){
   await fbUpdate('bills',id,{status:'paid'});var i=bills.findIndex(function(x){return x.id===id;});if(i>=0)bills[i].status='paid';lsSave();showToast('Marked paid ✓','tok');renderBills();checkAlerts();
@@ -887,12 +876,9 @@ async function delDebt(id){
   renderStats();
   checkAlerts();
   if(!isDemo && _FB && _uid) {
-    try {
+    
       await fbDelete('debts', id);
-    } catch(e) {
-      console.error('Firebase delete error:', e);
-    }
-  }
+
 }
 function renderDebts(){
   var dT=debts.filter(function(d){return d.type==='debtor';}).reduce(function(a,d){return a+(Number(d.amount)-Number(d.paid||0));},0);
@@ -941,11 +927,9 @@ async function delBudget(id){
   renderBudget();
   checkAlerts();
   if(!isDemo && _FB && _uid) {
-    try {
+    
       await fbDelete('budgets', id);
-    } catch(e) {
-      console.error('Firebase delete error:', e);
-    }
+   
   }
 }
 function renderBudget(){
@@ -983,11 +967,9 @@ async function delGoal(id){
   showToast('Deleted', 'tinfo');
   renderGoals();
   if(!isDemo && _FB && _uid) {
-    try {
+
       await fbDelete('goals', id);
-    } catch(e) {
-      console.error('Firebase delete error:', e);
-    }
+   
   }
 }
 function renderGoals(){
@@ -1027,11 +1009,9 @@ async function delInv(id){
   renderInvestments();
   renderStats();
   if(!isDemo && _FB && _uid) {
-    try {
+  
       await fbDelete('investments', id);
-    } catch(e) {
-      console.error('Firebase delete error:', e);
-    }
+   
   }
 }
 function renderInvestments(){
