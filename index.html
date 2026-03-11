@@ -443,7 +443,17 @@ function saveSett(){sett.name=document.getElementById('s-name').value||sett.name
 function loadSett(){try{var s=JSON.parse(localStorage.getItem('skc4s')||'{}');sett=Object.assign(sett,s);var sn=document.getElementById('s-name');var sc=document.getElementById('s-cur');if(sn)sn.value=sett.name;if(sc)sc.value=sett.cur;}catch(e){}}
 async function fbSave(col,data){if(isDemo||!_FB||!_uid)return null;try{var r=await _FB.db.ref('users/'+_uid+'/'+col).push(Object.assign({},data,{_at:new Date().toISOString()}));return r.key;}catch(e){console.error('fbSave:',e);return null;}}
 async function fbUpdate(col,id,data){if(isDemo||!_FB||!_uid)return;try{await _FB.db.ref('users/'+_uid+'/'+col+'/'+id).update(data);}catch(e){console.error('fbUpdate:',e);}}
-async function fbDelete(col,id){if(isDemo||!_FB||!_uid)return;try{await _FB.db.ref('users/'+_uid+'/'+col+'/'+id).remove();}catch(e){console.error('fbDelete:',e);}}
+async function fbDelete(col, id) {
+  if (isDemo || !_FB || !_uid) return null;
+  try {
+    await _FB.db.ref('users/' + _uid + '/' + col + '/' + id).remove();
+    return true;
+  } catch (e) {
+    console.error('fbDelete error:', e);
+    showToast('Failed to delete from cloud', 'terr');
+    return null;
+  }
+}
 async function loadFromFirebase(){
   if(!_FB||!_uid)return;
   try{
@@ -653,18 +663,36 @@ async function saveEdit(){
   fbUpdate('transactions',id,upd);
 }
 async function delTx(id){
-  if(!confirm('Delete this transaction?'))return;
-  await fbdelete('transations',id);
-  txs=txs.filter(function(x){return x.id!==id;});
+  if(!confirm('Delete this transaction?')) return;
+  txs = txs.filter(function(x){ return x.id !== id; });
   lsSave();
-  showToast('Deleted','tinfo');
+  showToast('Deleted', 'tinfo');
   fastRefresh();
   renderLedger();
+  if(!isDemo && _FB && _uid) {
+    try {
+      await fbDelete('transactions', id);
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
+  }
 }
 async function delAllTx(){
-  if(!confirm('Delete ALL '+txs.length+' transactions?'))return;
-  showSave(true);if(!isDemo&&_FB&&_uid){for(var t of txs)await fbDelete('transactions',t.id);}
-  txs=[];lsSave();showSave(false);showToast('All cleared','tinfo');fastRefresh();renderLedger();
+  if(!confirm('Delete ALL ' + txs.length + ' transactions?')) return;
+  showSave(true);
+  if(!isDemo && _FB && _uid) {
+    try {
+      await Promise.all(txs.map(t => fbDelete('transactions', t.id)));
+    } catch(e) {
+      console.error('Firebase bulk delete error:', e);
+    }
+  }
+  txs = [];
+  lsSave();
+  showSave(false);
+  showToast('All cleared', 'tinfo');
+  fastRefresh();
+  renderLedger();
 }
 function fastRefresh(){renderBalance();renderStats();renderTodayStats();renderRecent();updateCharts();checkAlerts();}
 function fullRefresh(){fastRefresh();renderLedger();renderJournal();renderBudget();renderGoals();renderBills();renderDebts();renderInvestments();renderReports();}
@@ -781,8 +809,19 @@ async function saveBill(){
   lsSave();closeM('m-bill');showToast('Bill saved ✓','tok');renderBills();checkAlerts();
 }
 async function delBill(id){
-  if(!confirm('Delete bill?'))return;
-  await fbDelete('bills',id);bills=bills.filter(function(x){return x.id!==id;});lsSave();showToast('Deleted','tinfo');renderBills();checkAlerts();
+  if(!confirm('Delete bill?')) return;
+  bills = bills.filter(function(x){ return x.id !== id; });
+  lsSave();
+  showToast('Deleted', 'tinfo');
+  renderBills();
+  checkAlerts();
+  if(!isDemo && _FB && _uid) {
+    try {
+      await fbDelete('bills', id);
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
+  }
 }
 async function markBillPaid(id){
   await fbUpdate('bills',id,{status:'paid'});var i=bills.findIndex(function(x){return x.id===id;});if(i>=0)bills[i].status='paid';lsSave();showToast('Marked paid ✓','tok');renderBills();checkAlerts();
@@ -840,8 +879,20 @@ async function quickPay(id){
   lsSave();showSave(false);showToast('Payment recorded ✓','tok');renderDebts();renderStats();checkAlerts();
 }
 async function delDebt(id){
-  if(!confirm('Delete this entry?'))return;
-  await fbDelete('debts',id);debts=debts.filter(function(x){return x.id!==id;});lsSave();showToast('Deleted','tinfo');renderDebts();renderStats();checkAlerts();
+  if(!confirm('Delete this entry?')) return;
+  debts = debts.filter(function(x){ return x.id !== id; });
+  lsSave();
+  showToast('Deleted', 'tinfo');
+  renderDebts();
+  renderStats();
+  checkAlerts();
+  if(!isDemo && _FB && _uid) {
+    try {
+      await fbDelete('debts', id);
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
+  }
 }
 function renderDebts(){
   var dT=debts.filter(function(d){return d.type==='debtor';}).reduce(function(a,d){return a+(Number(d.amount)-Number(d.paid||0));},0);
@@ -883,8 +934,19 @@ async function saveBudget(){
   lsSave();showSave(false);closeM('m-budget');showToast('Budget saved ✓','tok');renderBudget();checkAlerts();
 }
 async function delBudget(id){
-  if(!confirm('Delete budget?'))return;
-  await fbDelete('budgets',id);budgets=budgets.filter(function(x){return x.id!==id;});lsSave();showToast('Deleted','tinfo');renderBudget();checkAlerts();
+  if(!confirm('Delete budget?')) return;
+  budgets = budgets.filter(function(x){ return x.id !== id; });
+  lsSave();
+  showToast('Deleted', 'tinfo');
+  renderBudget();
+  checkAlerts();
+  if(!isDemo && _FB && _uid) {
+    try {
+      await fbDelete('budgets', id);
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
+  }
 }
 function renderBudget(){
   var mon=document.getElementById('bud-mon').value||thisMonth();
@@ -915,8 +977,18 @@ async function saveGoal(){
   lsSave();showSave(false);closeM('m-goal');showToast('Goal saved ✓','tok');renderGoals();
 }
 async function delGoal(id){
-  if(!confirm('Delete goal?'))return;
-  await fbDelete('goals',id);goals=goals.filter(function(x){return x.id!==id;});lsSave();showToast('Deleted','tinfo');renderGoals();
+  if(!confirm('Delete goal?')) return;
+  goals = goals.filter(function(x){ return x.id !== id; });
+  lsSave();
+  showToast('Deleted', 'tinfo');
+  renderGoals();
+  if(!isDemo && _FB && _uid) {
+    try {
+      await fbDelete('goals', id);
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
+  }
 }
 function renderGoals(){
   var el=document.getElementById('goals-list');if(!el)return;
@@ -948,8 +1020,19 @@ function editInv(id){
   openM('m-invest');
 }
 async function delInv(id){
-  if(!confirm('Delete investment?'))return;
-  await fbDelete('investments',id);investments=investments.filter(function(x){return x.id!==id;});lsSave();showToast('Deleted','tinfo');renderInvestments();renderStats();
+  if(!confirm('Delete investment?')) return;
+  investments = investments.filter(function(x){ return x.id !== id; });
+  lsSave();
+  showToast('Deleted', 'tinfo');
+  renderInvestments();
+  renderStats();
+  if(!isDemo && _FB && _uid) {
+    try {
+      await fbDelete('investments', id);
+    } catch(e) {
+      console.error('Firebase delete error:', e);
+    }
+  }
 }
 function renderInvestments(){
   var tb=document.getElementById('inv-tb');if(!tb)return;
