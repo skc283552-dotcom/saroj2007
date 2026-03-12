@@ -1,0 +1,27 @@
+{
+  "name": "SKC Finance Accounting",
+  "short_name": "SKC Finance",
+  "description": "Personal Finance & Accounting by Saroj K.C.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0b0b",
+  "theme_color": "#c9a84c",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "en"
+}
