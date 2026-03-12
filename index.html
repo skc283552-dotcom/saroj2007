@@ -452,7 +452,7 @@ async function loadFromFirebase(){
         var snap=await _FB.db.ref('users/'+_uid+'/'+col).once('value');
         var val=snap.val();
         if(!val)return[];
-        return Object.keys(val).map(function(k){return Object.assign({id:k},val[k]);});
+    var obj=object.assign({},val[k]);obj.id=k;return obj;
       }catch(e){return[];}
     };
     var res=await Promise.all([g('transactions'),g('bills'),g('debts'),g('budgets'),g('investments'),g('goals')]);
