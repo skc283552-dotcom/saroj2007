@@ -1069,7 +1069,7 @@ async function generatePDF(){
     doc.setTextColor(136,136,136);doc.setFontSize(7.5);doc.setFont('helvetica','normal');
     doc.text(list.length+' transactions  |  Period: '+(from||'All')+' to '+(to||'All'),18,y+17);
     y+=30;
-    var hdrs=['Date','Account','Type','Method','Amount'];var widths=[24,50,18,24,30];var x=14;
+    var hdrs=['Date','Account','Type','Method','Amount','Remarks'];var widths=[22,42,16,20,28,36];var x=14;
     doc.setFillColor(30,22,0);doc.rect(14,y-5,180,10,'F');
     doc.setTextColor(201,168,76);doc.setFontSize(8);doc.setFont('helvetica','bold');
     hdrs.forEach(function(h,i){doc.text(h,x+2,y);x+=widths[i];});y+=6;
@@ -1089,7 +1089,7 @@ async function generatePDF(){
       var x=14;
       if(t.type==='income')doc.setTextColor(82,201,122);else doc.setTextColor(224,82,82);
       doc.setFont('helvetica','normal');
-      [t.date,t.account.substring(0,22),t.type,t.payment,(t.type==='income'?'+':'-')+'Rs.'+Number(t.amount).toLocaleString()].forEach(function(v,i){doc.text(String(v||''),x+2,y);x+=widths[i];});
+      [t.date,t.account.substring(0,20),t.type,t.payment,(t.type==='income'?'+':'-')+'Rs.'+Number(t.amount).toLocaleString(),(t.remarks||'').substring(0,22)].forEach(function(v,i){doc.text(String(v||''),x+2,y);x+=widths[i];});
       y+=6;
     });
     doc.setDrawColor(201,168,76);doc.setLineWidth(0.3);doc.line(14,285,196,285);
