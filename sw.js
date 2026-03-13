@@ -1,4 +1,4 @@
-const CACHE = 'skc-finance-v3';
+const CACHE = 'skc-finance-v4';
 const ASSETS = [
   './index.html',
   './manifest.json',
