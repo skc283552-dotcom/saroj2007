@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AccuBooks — Professional Accounting</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --navy2: #1b2d3f;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --cream: #f5f0e8;
+    --white: #ffffff;
+    --slate: #8899aa;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --info: #3498db;
+    --border: rgba(201,168,76,0.2);
+    --shadow: 0 8px 32px rgba(0,0,0,0.35);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ── DASHBOARD ── */
+  #dashboard {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b2d3f 60%, #0d1b2a 100%);
+  }
+  .dash-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,27,42,0.8);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .dash-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--gold); letter-spacing: 1px; }
+  .dash-logo span { color: var(--cream); font-size: 0.85rem; display: block; font-family: 'DM Sans'; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; }
+  .dash-user { display: flex; align-items: center; gap: 12px; }
+  .dash-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--navy); font-size: 1rem; }
+  .dash-greeting { font-size: 0.85rem; color: var(--slate); }
+  .logout-btn { background: transparent; border: 1px solid var(--border); color: var(--slate); padding: 7px 16px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans'; font-size: 0.8rem; transition: all 0.2s; }
+  .logout-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .dash-hero {
+    padding: 48px 32px 24px;
+    display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  }
+  .dash-hero-text h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--white); line-height: 1.2; }
+  .dash-hero-text h1 span { color: var(--gold); }
+  .dash-hero-text p { color: var(--slate); margin-top: 8px; font-size: 0.9rem; }
+  .today-badge { background: rgba(201,168,76,0.12); border: 1px solid var(--border); color: var(--gold); padding: 8px 18px; border-radius: 24px; font-size: 0.8rem; letter-spacing: 0.5px; margin-left: auto; }
+
+  /* Summary Cards */
+  .summary-row { display: flex; gap: 16px; padding: 0 32px 32px; flex-wrap: wrap; }
+  .sum-card {
+    flex: 1; min-width: 140px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .sum-card:hover { transform: translateY(-3px); }
+  .sum-card::before { content:''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gold); }
+  .sum-card.green::before { background: var(--success); }
+  .sum-card.red::before { background: var(--danger); }
+  .sum-card.blue::before { background: var(--info); }
+  .sum-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; color: var(--slate); }
+  .sum-value { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--white); margin-top: 6px; }
+  .sum-sub { font-size: 0.75rem; color: var(--slate); margin-top: 4px; }
+
+  /* Main Grid */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+    padding: 0 32px 32px;
+  }
+  .dash-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    text-align: center;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .dash-btn::after {
+    content:''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), transparent);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .dash-btn:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+  .dash-btn:hover::after { opacity: 1; }
+  .dash-btn .btn-icon { font-size: 2rem; }
+  .dash-btn .btn-label { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--cream); }
+  .dash-btn .btn-desc { font-size: 0.72rem; color: var(--slate); }
+  .dash-btn.primary { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .dash-btn.primary .btn-label { color: var(--gold); }
+
+  /* Recent Transactions */
+  .recent-section { padding: 0 32px 48px; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--gold); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content:''; flex: 1; height: 1px; background: var(--border); }
+  .txn-table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: rgba(201,168,76,0.08); }
+  th { padding: 12px 16px; text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold); font-weight: 600; }
+  td { padding: 12px 16px; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.04); }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+  .badge-cash { background: rgba(46,204,113,0.15); color: #2ecc71; }
+  .badge-bank { background: rgba(52,152,219,0.15); color: #3498db; }
+  .badge-esewa { background: rgba(149,67,178,0.15); color: #a855f7; }
+  .badge-income { background: rgba(46,204,113,0.12); color: #2ecc71; }
+  .badge-expense { background: rgba(231,76,60,0.12); color: #e74c3c; }
+  .action-btns { display: flex; gap: 6px; }
+  .icon-btn { background: transparent; border: 1px solid var(--border); color: var(--slate); width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+  .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .icon-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── INNER PAGES ── */
+  .inner-page {
+    background: linear-gradient(135deg, #0d1b2a 0%, #1b2d3f 100%);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+  .inner-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,27,42,0.9);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .back-btn { background: transparent; border: 1px solid var(--border); color: var(--slate); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+  .back-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .inner-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--gold); }
+  .inner-content { padding: 32px; max-width: 900px; margin: 0 auto; }
+
+  /* Forms */
+  .form-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+  }
+  .form-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
+  .form-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 7px; }
+  .form-group.full { flex: 100%; }
+  label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold); font-weight: 600; }
+  input, select, textarea {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+  select option { background: var(--navy2); color: var(--cream); }
+  textarea { resize: vertical; min-height: 80px; }
+  .sub-options {
+    display: none; background: rgba(52,152,219,0.06);
+    border: 1px solid rgba(52,152,219,0.2);
+    border-radius: 10px; padding: 16px;
+    margin-top: -10px; margin-bottom: 20px;
+  }
+  .sub-options.visible { display: flex; gap: 14px; flex-wrap: wrap; }
+  .radio-card { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .radio-card input[type=radio] { width: auto; cursor: pointer; accent-color: var(--gold); }
+  .radio-card span { font-size: 0.88rem; color: var(--cream); }
+
+  .submit-btn {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy);
+    border: none;
+    padding: 13px 32px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+  }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.4); }
+  .cancel-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--slate); padding: 13px 24px; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cancel-btn:hover { border-color: var(--slate); color: var(--cream); }
+  .btn-row { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+
+  /* Ledger */
+  .ledger-tabs { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--slate);
+    padding: 9px 20px; border-radius: 8px;
+    cursor: pointer; font-family: 'DM Sans'; font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: rgba(201,168,76,0.12); border-color: var(--gold); color: var(--gold); }
+  .filter-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+  .filter-row .form-group { min-width: 150px; flex: 1; }
+  .search-input { position: relative; }
+  .search-input input { padding-left: 36px; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--slate); font-size: 0.85rem; pointer-events: none; }
+
+  /* PDF Page */
+  .pdf-section { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+  .pdf-section-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold); margin-bottom: 20px; }
+  .checkboxes { display: flex; gap: 16px; flex-wrap: wrap; }
+  .checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; }
+  .checkbox-item input[type=checkbox] { width: auto; accent-color: var(--gold); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    z-index: 999; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--navy2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px;
+    max-width: 520px; width: 100%;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--gold); margin-bottom: 20px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--navy2); border: 1px solid var(--border);
+    border-left: 4px solid var(--success);
+    color: var(--cream); padding: 14px 20px; border-radius: 10px;
+    font-size: 0.85rem; z-index: 9999;
+    transform: translateX(200%); transition: transform 0.3s ease;
+    max-width: 320px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.error { border-left-color: var(--danger); }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 3px; }
+
+  /* Loading Spinner */
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty State */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--slate); }
+  .empty-state .big-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* Amount colors */
+  .amount-credit { color: #2ecc71; font-weight: 600; }
+  .amount-debit { color: #e74c3c; font-weight: 600; }
+
+  /* Mobile responsive */
+  @media (max-width: 600px) {
+    .dash-header { padding: 16px; }
+    .dash-hero { padding: 24px 16px 16px; }
+    .summary-row { padding: 0 16px 20px; }
+    .dash-grid { padding: 0 16px 24px; grid-template-columns: repeat(2, 1fr); }
+    .recent-section { padding: 0 16px 40px; }
+    .inner-header { padding: 16px; }
+    .inner-content { padding: 16px; }
+    .form-card { padding: 20px; }
+    .dash-logo span { display: none; }
+  }
+
+  /* Journal specific */
+  .journal-entry-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .journal-entry-card:hover { border-color: rgba(201,168,76,0.4); }
+  .journal-date { font-size: 0.75rem; color: var(--slate); margin-bottom: 8px; }
+  .journal-txn { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .journal-txn:last-child { border-bottom: none; }
+  .debit-label { color: var(--info); font-size: 0.8rem; padding-left: 20px; }
+  .credit-label { color: var(--gold); font-size: 0.8rem; padding-left: 40px; }
+
+  /* Personal Accounting */
+  .pa-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .pa-stat { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .pa-stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--slate); }
+  .pa-stat-value { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div id="dashboard" class="page active">
+  <div class="dash-header">
+    <div class="dash-logo">AccuBooks
+      <span>Professional Accounting</span>
+    </div>
+    <div class="dash-user">
+      <div class="dash-avatar" id="avatarInitial">U</div>
+      <div>
+        <div style="font-size:0.88rem;font-weight:600;color:var(--cream)" id="dashUserName">User</div>
+        <div class="dash-greeting">Welcome back</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">↩ Logout</button>
+    </div>
+  </div>
+
+  <div class="dash-hero">
+    <div class="dash-hero-text">
+      <h1>Financial <span>Dashboard</span></h1>
+      <p>Manage your accounts, transactions &amp; reports in one place</p>
+    </div>
+    <div class="today-badge" id="todayBadge">📅 Loading...</div>
+  </div>
+
+  <!-- Summary Row -->
+  <div class="summary-row">
+    <div class="sum-card green">
+      <div class="sum-label">Total Income</div>
+      <div class="sum-value" id="sumIncome">Rs. 0</div>
+      <div class="sum-sub">All time</div>
+    </div>
+    <div class="sum-card red">
+      <div class="sum-label">Total Expenses</div>
+      <div class="sum-value" id="sumExpense">Rs. 0</div>
+      <div class="sum-sub">All time</div>
+    </div>
+    <div class="sum-card blue">
+      <div class="sum-label">Net Balance</div>
+      <div class="sum-value" id="sumBalance">Rs. 0</div>
+      <div class="sum-sub">Income − Expenses</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Transactions</div>
+      <div class="sum-value" id="sumCount">0</div>
+      <div class="sum-sub">Total entries</div>
+    </div>
+  </div>
+
+  <!-- Main Buttons -->
+  <div class="dash-grid">
+    <div class="dash-btn primary" onclick="showPage('addTransaction')">
+      <div class="btn-icon">➕</div>
+      <div class="btn-label">Add Transaction</div>
+      <div class="btn-desc">Record income or expense</div>
+    </div>
+    <div class="dash-btn" onclick="showPage('ledger')">
+      <div class="btn-icon">📒</div>
+      <div class="btn-label">Ledger</div>
+      <div class="btn-desc">View all accounts</div>
+    </div>
+    <div class="dash-btn" onclick="showPage('journal')">
+      <div class="btn-icon">📔</div>
+      <div class="btn-label">Journal</div>
+      <div class="btn-desc">Daily entry records</div>
+    </div>
+    <div class="dash-btn" onclick="showPage('pdfDownload')">
+      <div class="btn-icon">📄</div>
+      <div class="btn-label">PDF Report</div>
+      <div class="btn-desc">Download statements</div>
+    </div>
+    <div class="dash-btn" onclick="showPage('personalAccounting')">
+      <div class="btn-icon">👤</div>
+      <div class="btn-label">Personal Account</div>
+      <div class="btn-desc">Track personal finances</div>
+    </div>
+    <div class="dash-btn" onclick="openCategoryModal()">
+      <div class="btn-icon">🏷️</div>
+      <div class="btn-label">Categories</div>
+      <div class="btn-desc">Manage account heads</div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="recent-section">
+    <div class="section-title">Recent Transactions</div>
+    <div class="txn-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Method</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recentTxnBody">
+          <tr><td colspan="8"><div class="empty-state"><div class="big-icon">📭</div><p>No transactions yet</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ ADD TRANSACTION ═══════════════════ -->
+<div id="addTransaction" class="page">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="showPage('dashboard')">←</button>
+      <div class="inner-title">➕ Add New Transaction</div>
+    </div>
+    <div class="inner-content">
+      <div class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="txnDate"/>
+          </div>
+          <div class="form-group">
+            <label>Transaction Type</label>
+            <select id="txnType">
+              <option value="income">Income (Credit)</option>
+              <option value="expense">Expense (Debit)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Account / Category</label>
+            <select id="txnCategory">
+              <option value="">— Select Category —</option>
+              <option value="Sales Revenue">Sales Revenue</option>
+              <option value="Service Income">Service Income</option>
+              <option value="Interest Income">Interest Income</option>
+              <option value="Other Income">Other Income</option>
+              <option value="Rent Expense">Rent Expense</option>
+              <option value="Salary Expense">Salary Expense</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Office Supplies">Office Supplies</option>
+              <option value="Travel Expense">Travel Expense</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Miscellaneous">Miscellaneous</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (Rs.)</label>
+            <input type="number" id="txnAmount" placeholder="0.00" min="0" step="0.01"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full">
+            <label>Description</label>
+            <input type="text" id="txnDesc" placeholder="Brief description of transaction"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="txnMethod" onchange="handleMethodChange()">
+              <option value="cash">💵 Cash</option>
+              <option value="bank">🏦 Bank</option>
+              <option value="esewa">📱 eSewa</option>
+              <option value="other">🔄 Other</option>
+            </select>
+          </div>
+          <div class="form-group" id="otherMethodGroup" style="display:none;">
+            <label>Specify Method</label>
+            <input type="text" id="txnMethodOther" placeholder="e.g. Khalti, IME Pay..."/>
+          </div>
+        </div>
+
+        <!-- Bank Sub-options -->
+        <div class="sub-options" id="bankSubOptions">
+          <label style="width:100%;margin-bottom:4px;">Select Bank</label>
+          <div class="radio-card">
+            <input type="radio" name="bankChoice" id="bankNMB" value="NMB Bank" checked/>
+            <span>🏛 NMB Bank</span>
+          </div>
+          <div class="radio-card">
+            <input type="radio" name="bankChoice" id="bankPrabhu" value="Prabhu Bank"/>
+            <span>🏛 Prabhu Bank</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full">
+            <label>Remarks</label>
+            <textarea id="txnRemarks" placeholder="Additional notes, reference number, invoice details..."></textarea>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="submit-btn" onclick="saveTransaction()">💾 Save Transaction</button>
+          <button class="cancel-btn" onclick="clearForm()">✕ Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LEDGER ═══════════════════ -->
+<div id="ledger" class="page">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="showPage('dashboard')">←</button>
+      <div class="inner-title">📒 Ledger</div>
+    </div>
+    <div class="inner-content">
+      <!-- Tabs -->
+      <div class="ledger-tabs">
+        <button class="tab-btn active" onclick="setLedgerTab('all', this)">All Accounts</button>
+        <button class="tab-btn" onclick="setLedgerTab('income', this)">Income</button>
+        <button class="tab-btn" onclick="setLedgerTab('expense', this)">Expenses</button>
+        <button class="tab-btn" onclick="setLedgerTab('cash', this)">Cash</button>
+        <button class="tab-btn" onclick="setLedgerTab('bank', this)">Bank</button>
+        <button class="tab-btn" onclick="setLedgerTab('esewa', this)">eSewa</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-row">
+        <div class="form-group">
+          <label>From Date</label>
+          <input type="date" id="ledgerFrom"/>
+        </div>
+        <div class="form-group">
+          <label>To Date</label>
+          <input type="date" id="ledgerTo"/>
+        </div>
+        <div class="form-group search-input">
+          <label>Search</label>
+          <span class="search-icon">🔍</span>
+          <input type="text" id="ledgerSearch" placeholder="Description, category..." oninput="renderLedger()"/>
+        </div>
+        <div class="form-group" style="flex:0;">
+          <label>&nbsp;</label>
+          <button class="submit-btn" style="padding:11px 20px;font-size:0.82rem;" onclick="renderLedger()">Filter</button>
+        </div>
+      </div>
+
+      <!-- Ledger Summary -->
+      <div class="summary-row" style="padding:0 0 20px;">
+        <div class="sum-card green" style="min-width:120px;">
+          <div class="sum-label">Credits</div>
+          <div class="sum-value" id="ledgerCredit">Rs. 0</div>
+        </div>
+        <div class="sum-card red" style="min-width:120px;">
+          <div class="sum-label">Debits</div>
+          <div class="sum-value" id="ledgerDebit">Rs. 0</div>
+        </div>
+        <div class="sum-card" style="min-width:120px;">
+          <div class="sum-label">Balance</div>
+          <div class="sum-value" id="ledgerBal">Rs. 0</div>
+        </div>
+      </div>
+
+      <div class="txn-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Method</th>
+              <th>Debit</th>
+              <th>Credit</th>
+              <th>Balance</th>
+              <th>Remarks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerBody">
+            <tr><td colspan="9"><div class="empty-state"><div class="big-icon">📭</div><p>No records found</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ JOURNAL ═══════════════════ -->
+<div id="journal" class="page">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="showPage('dashboard')">←</button>
+      <div class="inner-title">📔 Journal</div>
+    </div>
+    <div class="inner-content">
+      <div class="filter-row" style="margin-bottom:24px;">
+        <div class="form-group">
+          <label>From Date</label>
+          <input type="date" id="journalFrom"/>
+        </div>
+        <div class="form-group">
+          <label>To Date</label>
+          <input type="date" id="journalTo"/>
+        </div>
+        <div class="form-group" style="flex:0;">
+          <label>&nbsp;</label>
+          <button class="submit-btn" style="padding:11px 20px;font-size:0.82rem;" onclick="renderJournal()">Filter</button>
+        </div>
+      </div>
+      <div id="journalEntries">
+        <div class="empty-state"><div class="big-icon">📔</div><p>No journal entries</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PDF DOWNLOAD ═══════════════════ -->
+<div id="pdfDownload" class="page">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="showPage('dashboard')">←</button>
+      <div class="inner-title">📄 PDF Report Download</div>
+    </div>
+    <div class="inner-content">
+      <!-- Date Range -->
+      <div class="pdf-section">
+        <div class="pdf-section-title">📅 Date Range</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>From Date</label>
+            <input type="date" id="pdfFrom"/>
+          </div>
+          <div class="form-group">
+            <label>To Date</label>
+            <input type="date" id="pdfTo"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="pdf-section">
+        <div class="pdf-section-title">🔍 Filters</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Transaction Type</label>
+            <select id="pdfType">
+              <option value="all">All Transactions</option>
+              <option value="income">Income Only</option>
+              <option value="expense">Expenses Only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="pdfMethod">
+              <option value="all">All Methods</option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank (All)</option>
+              <option value="NMB Bank">NMB Bank</option>
+              <option value="Prabhu Bank">Prabhu Bank</option>
+              <option value="esewa">eSewa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Search by Name / Category</label>
+            <input type="text" id="pdfSearch" placeholder="e.g. Sales, Rent..."/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Details -->
+      <div class="pdf-section">
+        <div class="pdf-section-title">📝 Report Details</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Report Title</label>
+            <input type="text" id="pdfTitle" value="Account Statement"/>
+          </div>
+          <div class="form-group">
+            <label>Prepared By</label>
+            <input type="text" id="pdfPreparedBy" placeholder="Accountant name"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full">
+            <label>Remarks / Notes</label>
+            <textarea id="pdfRemarks" placeholder="Add any remarks, notes, or additional information to appear on the PDF..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Company / Person Name</label>
+            <input type="text" id="pdfCompany" placeholder="Your company or name"/>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="pdfAddress" placeholder="Address or contact"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Include options -->
+      <div class="pdf-section">
+        <div class="pdf-section-title">✅ Include in PDF</div>
+        <div class="checkboxes">
+          <label class="checkbox-item"><input type="checkbox" id="inclSignature" checked/><span>Signature</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="inclStamp" checked/><span>Stamp</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="inclRemarks" checked/><span>Transaction Remarks</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="inclSummary" checked/><span>Summary Section</span></label>
+          <label class="checkbox-item"><input type="checkbox" id="inclJournal"/><span>Journal Entries</span></label>
+        </div>
+
+        <!-- Signature/Stamp upload -->
+        <div class="form-row" style="margin-top:20px;">
+          <div class="form-group">
+            <label>Signature File (sign.jpg)</label>
+            <input type="file" id="signFile" accept="image/*" style="padding:8px;"/>
+          </div>
+          <div class="form-group">
+            <label>Stamp File (stamp.jpg)</label>
+            <input type="file" id="stampFile" accept="image/*" style="padding:8px;"/>
+          </div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--slate);margin-top:-8px;">
+          💡 Place sign.jpg and stamp.jpg in the same folder as this file, or upload above
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="submit-btn" onclick="generatePDF()">📥 Generate &amp; Download PDF</button>
+        <button class="cancel-btn" onclick="previewPDF()">👁 Preview</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PERSONAL ACCOUNTING ═══════════════════ -->
+<div id="personalAccounting" class="page">
+  <div class="inner-page">
+    <div class="inner-header">
+      <button class="back-btn" onclick="showPage('dashboard')">←</button>
+      <div class="inner-title">👤 Personal Accounting</div>
+    </div>
+    <div class="inner-content">
+      <div class="pa-stats" id="paStats"></div>
+
+      <div class="section-title">Personal Transactions</div>
+      <div class="form-card" style="margin-bottom:24px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="paTxnDate"/>
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="paTxnType">
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="paTxnCat">
+              <option value="Salary">Salary</option>
+              <option value="Freelance">Freelance</option>
+              <option value="Investment">Investment</option>
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Savings">Savings</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="paTxnAmount" placeholder="0.00"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full">
+            <label>Note</label>
+            <input type="text" id="paTxnNote" placeholder="Description"/>
+          </div>
+        </div>
+        <button class="submit-btn" onclick="savePersonalTxn()">💾 Save</button>
+      </div>
+
+      <div class="txn-table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Amount</th><th>Note</th><th>Actions</th></tr></thead>
+          <tbody id="paTxnBody">
+            <tr><td colspan="6"><div class="empty-state"><div class="big-icon">👤</div><p>No personal transactions</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ EDIT MODAL ═══════════════════ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Transaction</div>
+    <input type="hidden" id="editTxnId"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="editDate"/>
+      </div>
+      <div class="form-group">
+        <label>Type</label>
+        <select id="editType">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" id="editCategory"/>
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="editAmount"/>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label>Description</label>
+      <input type="text" id="editDesc"/>
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label>Remarks</label>
+      <textarea id="editRemarks"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="submit-btn" onclick="updateTransaction()">💾 Update</button>
+      <button class="cancel-btn" onclick="closeModal('editModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CATEGORY MODAL ═══════════════════ -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal">
+    <div class="modal-title">🏷️ Manage Categories</div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Add New Category</label>
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="newCategory" placeholder="Category name..."/>
+        <button class="submit-btn" style="white-space:nowrap;padding:11px 18px;font-size:0.82rem;" onclick="addCategory()">Add</button>
+      </div>
+    </div>
+    <div id="categoryList" style="max-height:260px;overflow-y:auto;"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="cancel-btn" onclick="closeModal('categoryModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBrjQXwOPVcX3x_D2OYqYxf6gpbKC5GvI0",
+  authDomain: "login-a0036.firebaseapp.com",
+  projectId: "login-a0036",
+  storageBucket: "login-a0036.firebasestorage.app",
+  messagingSenderId: "786305517140",
+  appId: "1:786305517140:web:ca8eb61cad91221c66cfc1",
+  measurementId: "G-X62MX5XHCF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._db = db;
+window._fbModules = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, onSnapshot };
+
+// Live listener for transactions
+const txnCol = collection(db, 'transactions');
+const q = query(txnCol, orderBy('date', 'desc'));
+onSnapshot(q, (snapshot) => {
+  window._transactions = [];
+  snapshot.forEach(d => { window._transactions.push({ id: d.id, ...d.data() }); });
+  refreshAll();
+});
+
+// Personal transactions
+const paCol = collection(db, 'personalTransactions');
+const paQ = query(paCol, orderBy('date', 'desc'));
+onSnapshot(paQ, (snapshot) => {
+  window._personalTxns = [];
+  snapshot.forEach(d => { window._personalTxns.push({ id: d.id, ...d.data() }); });
+  if(document.getElementById('personalAccounting').classList.contains('active')) renderPersonal();
+});
+
+window._fbInit = true;
+</script>
+
+<script>
+// ── GLOBALS ──
+window._transactions = [];
+window._personalTxns = [];
+window._customCategories = JSON.parse(localStorage.getItem('customCategories') || '[]');
+window._currentLedgerTab = 'all';
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0];
+  document.getElementById('txnDate').value = dateStr;
+  document.getElementById('paTxnDate').value = dateStr;
+  document.getElementById('todayBadge').textContent = '📅 ' + today.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const user = JSON.parse(sessionStorage.getItem('loggedInUser') || '{"name":"User","email":""}');
+  document.getElementById('dashUserName').textContent = user.name || 'User';
+  document.getElementById('avatarInitial').textContent = (user.name || 'U')[0].toUpperCase();
+  populateCategoryDropdowns();
+});
+
+function handleLogout() {
+  sessionStorage.removeItem('loggedInUser');
+  showToast('Logged out successfully', 'success');
+  setTimeout(() => { window.location.href = 'index.html'; }, 800);
+}
+
+// ── PAGE NAVIGATION ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id === 'ledger') setTimeout(renderLedger, 100);
+  if(id === 'journal') setTimeout(renderJournal, 100);
+  if(id === 'personalAccounting') setTimeout(renderPersonal, 100);
+  if(id === 'dashboard') refreshAll();
+}
+
+// ── METHOD CHANGE ──
+function handleMethodChange() {
+  const m = document.getElementById('txnMethod').value;
+  document.getElementById('bankSubOptions').classList.toggle('visible', m === 'bank');
+  document.getElementById('otherMethodGroup').style.display = m === 'other' ? 'flex' : 'none';
+}
+
+// ── SAVE TRANSACTION ──
+async function saveTransaction() {
+  const date = document.getElementById('txnDate').value;
+  const type = document.getElementById('txnType').value;
+  const category = document.getElementById('txnCategory').value;
+  const amount = parseFloat(document.getElementById('txnAmount').value);
+  const desc = document.getElementById('txnDesc').value;
+  const method = document.getElementById('txnMethod').value;
+  const remarks = document.getElementById('txnRemarks').value;
+
+  if(!date || !category || isNaN(amount) || amount <= 0 || !desc) {
+    showToast('Please fill in all required fields', 'error'); return;
+  }
+
+  let paymentMethod = method;
+  if(method === 'bank') {
+    paymentMethod = document.querySelector('input[name="bankChoice"]:checked')?.value || 'Bank';
+  } else if(method === 'other') {
+    paymentMethod = document.getElementById('txnMethodOther').value || 'Other';
+  }
+
+  const txn = { date, type, category, amount, description: desc, method: paymentMethod, remarks, createdAt: new Date().toISOString() };
+
+  try {
+    if(window._db) {
+      const { collection, addDoc } = window._fbModules;
+      await addDoc(collection(window._db, 'transactions'), txn);
+      showToast('Transaction saved to Firebase! ✅');
+    } else {
+      window._transactions.unshift({ id: Date.now().toString(), ...txn });
+      refreshAll();
+      showToast('Transaction saved locally ✅');
+    }
+    clearForm();
+    showPage('dashboard');
+  } catch(e) {
+    console.error(e);
+    window._transactions.unshift({ id: Date.now().toString(), ...txn });
+    refreshAll();
+    showToast('Saved locally (Firebase error)', 'error');
+  }
+}
+
+function clearForm() {
+  ['txnAmount','txnDesc','txnRemarks'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('txnDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('txnCategory').value = '';
+  document.getElementById('txnType').value = 'income';
+  document.getElementById('txnMethod').value = 'cash';
+  document.getElementById('bankSubOptions').classList.remove('visible');
+}
+
+// ── REFRESH ALL ──
+function refreshAll() {
+  updateSummaryCards();
+  renderRecentTransactions();
+}
+
+function updateSummaryCards() {
+  const txns = window._transactions;
+  const income = txns.filter(t => t.type === 'income').reduce((s,t) => s + (t.amount||0), 0);
+  const expense = txns.filter(t => t.type === 'expense').reduce((s,t) => s + (t.amount||0), 0);
+  document.getElementById('sumIncome').textContent = 'Rs. ' + fmt(income);
+  document.getElementById('sumExpense').textContent = 'Rs. ' + fmt(expense);
+  document.getElementById('sumBalance').textContent = 'Rs. ' + fmt(income - expense);
+  document.getElementById('sumCount').textContent = txns.length;
+}
+
+function fmt(n) { return (n||0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function renderRecentTransactions() {
+  const tbody = document.getElementById('recentTxnBody');
+  const txns = window._transactions.slice(0, 10);
+  if(!txns.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="big-icon">📭</div><p>No transactions yet</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = txns.map(t => `
+    <tr>
+      <td>${t.date}</td>
+      <td>${t.description || '—'}</td>
+      <td>${t.category || '—'}</td>
+      <td><span class="badge badge-${getMethodClass(t.method)}">${t.method}</span></td>
+      <td><span class="badge badge-${t.type}">${t.type}</span></td>
+      <td class="${t.type === 'income' ? 'amount-credit' : 'amount-debit'}">Rs. ${fmt(t.amount)}</td>
+      <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.remarks||'—'}</td>
+      <td>
+        <div class="action-btns">
+          <button class="icon-btn" title="Edit" onclick="openEditModal('${t.id}')">✏️</button>
+          <button class="icon-btn del" title="Delete" onclick="deleteTransaction('${t.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function getMethodClass(m) {
+  if(!m) return 'cash';
+  m = m.toLowerCase();
+  if(m.includes('bank') || m.includes('nmb') || m.includes('prabhu')) return 'bank';
+  if(m.includes('esewa')) return 'esewa';
+  return 'cash';
+}
+
+// ── LEDGER ──
+let _ledgerTab = 'all';
+function setLedgerTab(tab, el) {
+  _ledgerTab = tab;
+  document.querySelectorAll('.ledger-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderLedger();
+}
+
+function renderLedger() {
+  let txns = [...window._transactions];
+  const from = document.getElementById('ledgerFrom').value;
+  const to = document.getElementById('ledgerTo').value;
+  const search = (document.getElementById('ledgerSearch').value || '').toLowerCase();
+
+  if(from) txns = txns.filter(t => t.date >= from);
+  if(to) txns = txns.filter(t => t.date <= to);
+  if(search) txns = txns.filter(t => (t.description||'').toLowerCase().includes(search) || (t.category||'').toLowerCase().includes(search));
+
+  if(_ledgerTab === 'income') txns = txns.filter(t => t.type === 'income');
+  else if(_ledgerTab === 'expense') txns = txns.filter(t => t.type === 'expense');
+  else if(_ledgerTab === 'cash') txns = txns.filter(t => (t.method||'').toLowerCase() === 'cash');
+  else if(_ledgerTab === 'bank') txns = txns.filter(t => (t.method||'').toLowerCase().includes('bank') || (t.method||'').toLowerCase().includes('nmb') || (t.method||'').toLowerCase().includes('prabhu'));
+  else if(_ledgerTab === 'esewa') txns = txns.filter(t => (t.method||'').toLowerCase().includes('esewa'));
+
+  txns.sort((a,b) => a.date < b.date ? -1 : 1);
+
+  let balance = 0, totalCredit = 0, totalDebit = 0;
+  const rows = txns.map(t => {
+    const isIncome = t.type === 'income';
+    if(isIncome) { balance += t.amount; totalCredit += t.amount; }
+    else { balance -= t.amount; totalDebit += t.amount; }
+    return `<tr>
+      <td>${t.date}</td>
+      <td>${t.description||'—'}</td>
+      <td>${t.category||'—'}</td>
+      <td><span class="badge badge-${getMethodClass(t.method)}">${t.method}</span></td>
+      <td class="amount-debit">${isIncome ? '—' : 'Rs. '+fmt(t.amount)}</td>
+      <td class="amount-credit">${isIncome ? 'Rs. '+fmt(t.amount) : '—'}</td>
+      <td style="font-weight:600;color:${balance>=0?'#2ecc71':'#e74c3c'}">Rs. ${fmt(balance)}</td>
+      <td style="max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.remarks||'—'}</td>
+      <td>
+        <div class="action-btns">
+          <button class="icon-btn" onclick="openEditModal('${t.id}')">✏️</button>
+          <button class="icon-btn del" onclick="deleteTransaction('${t.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  document.getElementById('ledgerCredit').textContent = 'Rs. '+fmt(totalCredit);
+  document.getElementById('ledgerDebit').textContent = 'Rs. '+fmt(totalDebit);
+  document.getElementById('ledgerBal').textContent = 'Rs. '+fmt(totalCredit - totalDebit);
+  document.getElementById('ledgerBody').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="9"><div class="empty-state"><div class="big-icon">📭</div><p>No records found</p></div></td></tr>';
+}
+
+// ── JOURNAL ──
+function renderJournal() {
+  let txns = [...window._transactions];
+  const from = document.getElementById('journalFrom').value;
+  const to = document.getElementById('journalTo').value;
+  if(from) txns = txns.filter(t => t.date >= from);
+  if(to) txns = txns.filter(t => t.date <= to);
+  txns.sort((a,b) => a.date < b.date ? -1 : 1);
+
+  // Group by date
+  const grouped = {};
+  txns.forEach(t => { if(!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
+
+  const entries = Object.entries(grouped).reverse();
+  if(!entries.length) {
+    document.getElementById('journalEntries').innerHTML = '<div class="empty-state"><div class="big-icon">📔</div><p>No journal entries</p></div>';
+    return;
+  }
+
+  document.getElementById('journalEntries').innerHTML = entries.map(([date, txns]) => {
+    const dayTotal = txns.reduce((s,t) => s + (t.type==='income'?t.amount:-t.amount), 0);
+    return `<div class="journal-entry-card">
+      <div class="journal-date">📅 ${new Date(date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} — ${txns.length} entr${txns.length>1?'ies':'y'}</div>
+      ${txns.map(t => `
+        <div class="journal-txn">
+          <div>
+            <span class="${t.type==='income'?'credit-label':'debit-label'}">${t.type==='income'?'Cr.':'Dr.'}</span>
+            <span style="font-size:0.88rem;margin-left:10px;">${t.category} — ${t.description}</span>
+            <span style="font-size:0.75rem;color:var(--slate);margin-left:8px;">(${t.method})</span>
+            ${t.remarks ? `<div style="font-size:0.72rem;color:var(--slate);padding-left:40px;margin-top:2px;">💬 ${t.remarks}</div>` : ''}
+          </div>
+          <div class="${t.type==='income'?'amount-credit':'amount-debit'}" style="white-space:nowrap;">Rs. ${fmt(t.amount)}</div>
+        </div>`).join('')}
+      <div style="text-align:right;font-size:0.8rem;margin-top:10px;color:${dayTotal>=0?'#2ecc71':'#e74c3c'};">
+        Day Net: Rs. ${fmt(Math.abs(dayTotal))} ${dayTotal>=0?'(Surplus)':'(Deficit)'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PERSONAL ACCOUNTING ──
+async function savePersonalTxn() {
+  const date = document.getElementById('paTxnDate').value;
+  const type = document.getElementById('paTxnType').value;
+  const category = document.getElementById('paTxnCat').value;
+  const amount = parseFloat(document.getElementById('paTxnAmount').value);
+  const note = document.getElementById('paTxnNote').value;
+  if(!date || isNaN(amount) || amount<=0) { showToast('Fill required fields','error'); return; }
+  const txn = { date, type, category, amount, note, createdAt: new Date().toISOString() };
+  try {
+    if(window._db) {
+      const { collection, addDoc } = window._fbModules;
+      await addDoc(collection(window._db, 'personalTransactions'), txn);
+    } else { window._personalTxns.unshift({ id: Date.now().toString(), ...txn }); renderPersonal(); }
+    showToast('Saved ✅');
+    document.getElementById('paTxnAmount').value = '';
+    document.getElementById('paTxnNote').value = '';
+  } catch(e) { window._personalTxns.unshift({ id: Date.now().toString(), ...txn }); renderPersonal(); showToast('Saved locally','error'); }
+}
+
+function renderPersonal() {
+  const txns = window._personalTxns;
+  const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('paStats').innerHTML = `
+    <div class="pa-stat"><div class="pa-stat-label">Income</div><div class="pa-stat-value" style="color:#2ecc71">Rs. ${fmt(income)}</div></div>
+    <div class="pa-stat"><div class="pa-stat-label">Expenses</div><div class="pa-stat-value" style="color:#e74c3c">Rs. ${fmt(expense)}</div></div>
+    <div class="pa-stat"><div class="pa-stat-label">Balance</div><div class="pa-stat-value">Rs. ${fmt(income-expense)}</div></div>
+    <div class="pa-stat"><div class="pa-stat-label">Entries</div><div class="pa-stat-value">${txns.length}</div></div>`;
+  const tbody = document.getElementById('paTxnBody');
+  if(!txns.length) { tbody.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="big-icon">👤</div><p>No personal transactions</p></div></td></tr>'; return; }
+  tbody.innerHTML = txns.map(t => `<tr>
+    <td>${t.date}</td><td>${t.category}</td>
+    <td><span class="badge badge-${t.type}">${t.type}</span></td>
+    <td class="${t.type==='income'?'amount-credit':'amount-debit'}">Rs. ${fmt(t.amount)}</td>
+    <td>${t.note||'—'}</td>
+    <td><button class="icon-btn del" onclick="deletePersonalTxn('${t.id}')">🗑️</button></td>
+  </tr>`).join('');
+}
+
+async function deletePersonalTxn(id) {
+  if(!confirm('Delete this personal transaction?')) return;
+  try {
+    if(window._db){ const { doc, deleteDoc } = window._fbModules; await deleteDoc(doc(window._db,'personalTransactions',id)); }
+    else { window._personalTxns = window._personalTxns.filter(t=>t.id!==id); renderPersonal(); }
+    showToast('Deleted ✅');
+  } catch(e) { window._personalTxns = window._personalTxns.filter(t=>t.id!==id); renderPersonal(); showToast('Deleted locally'); }
+}
+
+// ── EDIT / DELETE ──
+function openEditModal(id) {
+  const t = window._transactions.find(x => x.id === id);
+  if(!t) return;
+  document.getElementById('editTxnId').value = id;
+  document.getElementById('editDate').value = t.date;
+  document.getElementById('editType').value = t.type;
+  document.getElementById('editCategory').value = t.category;
+  document.getElementById('editAmount').value = t.amount;
+  document.getElementById('editDesc').value = t.description || '';
+  document.getElementById('editRemarks').value = t.remarks || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function updateTransaction() {
+  const id = document.getElementById('editTxnId').value;
+  const updates = {
+    date: document.getElementById('editDate').value,
+    type: document.getElementById('editType').value,
+    category: document.getElementById('editCategory').value,
+    amount: parseFloat(document.getElementById('editAmount').value),
+    description: document.getElementById('editDesc').value,
+    remarks: document.getElementById('editRemarks').value,
+    updatedAt: new Date().toISOString()
+  };
+  try {
+    if(window._db) { const { doc, updateDoc } = window._fbModules; await updateDoc(doc(window._db,'transactions',id), updates); }
+    else { const idx = window._transactions.findIndex(t=>t.id===id); if(idx>=0) window._transactions[idx]={...window._transactions[idx],...updates}; refreshAll(); }
+    showToast('Updated successfully ✅');
+    closeModal('editModal');
+  } catch(e) { const idx = window._transactions.findIndex(t=>t.id===id); if(idx>=0) window._transactions[idx]={...window._transactions[idx],...updates}; refreshAll(); closeModal('editModal'); showToast('Updated locally'); }
+}
+
+async function deleteTransaction(id) {
+  if(!confirm('Are you sure you want to delete this transaction?')) return;
+  try {
+    if(window._db) { const { doc, deleteDoc } = window._fbModules; await deleteDoc(doc(window._db,'transactions',id)); }
+    else { window._transactions = window._transactions.filter(t=>t.id!==id); refreshAll(); }
+    showToast('Deleted ✅');
+  } catch(e) { window._transactions = window._transactions.filter(t=>t.id!==id); refreshAll(); showToast('Deleted locally'); }
+}
+
+// ── CATEGORIES ──
+function populateCategoryDropdowns() {
+  const all = ['Sales Revenue','Service Income','Interest Income','Other Income','Rent Expense','Salary Expense','Utilities','Office Supplies','Travel Expense','Marketing','Miscellaneous',...(window._customCategories||[])];
+  const sel = document.getElementById('txnCategory');
+  sel.innerHTML = '<option value="">— Select Category —</option>' + all.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function openCategoryModal() {
+  renderCategoryList();
+  document.getElementById('categoryModal').classList.add('open');
+}
+function renderCategoryList() {
+  const list = document.getElementById('categoryList');
+  const cats = window._customCategories || [];
+  list.innerHTML = cats.length ? cats.map((c,i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:7px;background:rgba(255,255,255,0.04);margin-bottom:8px;">
+    <span style="font-size:0.85rem;">${c}</span>
+    <button class="icon-btn del" onclick="removeCategory(${i})">🗑️</button>
+  </div>`).join('') : '<div style="color:var(--slate);font-size:0.82rem;text-align:center;padding:20px;">No custom categories yet</div>';
+}
+function addCategory() {
+  const val = document.getElementById('newCategory').value.trim();
+  if(!val) return;
+  window._customCategories.push(val);
+  localStorage.setItem('customCategories', JSON.stringify(window._customCategories));
+  document.getElementById('newCategory').value = '';
+  renderCategoryList(); populateCategoryDropdowns();
+  showToast('Category added ✅');
+}
+function removeCategory(i) {
+  window._customCategories.splice(i,1);
+  localStorage.setItem('customCategories', JSON.stringify(window._customCategories));
+  renderCategoryList(); populateCategoryDropdowns();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── PDF GENERATION ──
+async function generatePDF(preview = false) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  
+  const from = document.getElementById('pdfFrom').value;
+  const to = document.getElementById('pdfTo').value;
+  const typeFilter = document.getElementById('pdfType').value;
+  const methodFilter = document.getElementById('pdfMethod').value;
+  const search = document.getElementById('pdfSearch').value.toLowerCase();
+  const title = document.getElementById('pdfTitle').value || 'Account Statement';
+  const preparedBy = document.getElementById('pdfPreparedBy').value;
+  const remarks = document.getElementById('pdfRemarks').value;
+  const company = document.getElementById('pdfCompany').value;
+  const address = document.getElementById('pdfAddress').value;
+  const inclSignature = document.getElementById('inclSignature').checked;
+  const inclStamp = document.getElementById('inclStamp').checked;
+  const inclRemarks = document.getElementById('inclRemarks').checked;
+  const inclSummary = document.getElementById('inclSummary').checked;
+
+  let txns = [...window._transactions];
+  if(from) txns = txns.filter(t => t.date >= from);
+  if(to) txns = txns.filter(t => t.date <= to);
+  if(typeFilter !== 'all') txns = txns.filter(t => t.type === typeFilter);
+  if(methodFilter !== 'all') txns = txns.filter(t => {
+    const m = (t.method||'').toLowerCase();
+    const f = methodFilter.toLowerCase();
+    if(f === 'bank') return m.includes('bank') || m.includes('nmb') || m.includes('prabhu');
+    return m.includes(f);
+  });
+  if(search) txns = txns.filter(t => (t.description||'').toLowerCase().includes(search)||(t.category||'').toLowerCase().includes(search));
+  txns.sort((a,b) => a.date < b.date ? -1 : 1);
+
+  const pageW = 210, pageH = 297, margin = 18;
+  let y = margin;
+
+  // ── HEADER ──
+  doc.setFillColor(13, 27, 42);
+  doc.rect(0, 0, pageW, 45, 'F');
+  doc.setTextColor(201, 168, 76);
+  doc.setFontSize(22); doc.setFont('helvetica','bold');
+  doc.text('AccuBooks', margin, 20);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.setTextColor(180,180,180);
+  doc.text('Professional Accounting System', margin, 27);
+  if(company) { doc.setTextColor(255,255,255); doc.setFontSize(10); doc.text(company, margin, 34); }
+  if(address) { doc.setTextColor(180,180,180); doc.setFontSize(8); doc.text(address, margin, 39); }
+
+  // Right side of header
+  doc.setTextColor(201,168,76); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text(title, pageW - margin, 20, {align:'right'});
+  const dateRange = (from||'Start') + ' — ' + (to||'Today');
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,180);
+  doc.text('Period: '+dateRange, pageW - margin, 27, {align:'right'});
+  doc.text('Generated: '+new Date().toLocaleDateString(), pageW - margin, 32, {align:'right'});
+  if(preparedBy) doc.text('Prepared by: '+preparedBy, pageW - margin, 37, {align:'right'});
+
+  y = 54;
+
+  // ── SUMMARY ──
+  if(inclSummary) {
+    const totalIncome = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const totalExpense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const balance = totalIncome - totalExpense;
+    const cashTxns = txns.filter(t=>(t.method||'').toLowerCase()==='cash');
+    const bankTxns = txns.filter(t=>(t.method||'').toLowerCase().includes('bank')||(t.method||'').toLowerCase().includes('nmb')||(t.method||'').toLowerCase().includes('prabhu'));
+    const esewaTxns = txns.filter(t=>(t.method||'').toLowerCase().includes('esewa'));
+
+    doc.setFillColor(245, 240, 232); doc.setDrawColor(201,168,76);
+    doc.roundedRect(margin, y, pageW - 2*margin, 38, 3, 3, 'FD');
+    doc.setTextColor(13,27,42); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text('FINANCIAL SUMMARY', margin+5, y+7);
+
+    const sumW = (pageW - 2*margin - 10) / 4;
+    const sumItems = [
+      { label:'Total Income', value:'Rs. '+fmtPDF(totalIncome), color:[46,204,113] },
+      { label:'Total Expenses', value:'Rs. '+fmtPDF(totalExpense), color:[231,76,60] },
+      { label:'Net Balance', value:'Rs. '+fmtPDF(balance), color:balance>=0?[46,204,113]:[231,76,60] },
+      { label:'Transactions', value:txns.length.toString(), color:[52,152,219] },
+    ];
+    sumItems.forEach((item, i) => {
+      const sx = margin + 5 + i * sumW;
+      doc.setFillColor(...item.color); doc.circle(sx + sumW/2 - 2, y+18, 1.5, 'F');
+      doc.setTextColor(...item.color); doc.setFontSize(10); doc.setFont('helvetica','bold');
+      doc.text(item.value, sx + sumW/2, y+26, {align:'center'});
+      doc.setTextColor(80,80,80); doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text(item.label, sx + sumW/2, y+31, {align:'center'});
+    });
+    y += 46;
+
+    // Method breakdown
+    doc.setFillColor(255,255,255); doc.setDrawColor(220,220,220);
+    doc.roundedRect(margin, y, pageW-2*margin, 18, 2, 2, 'FD');
+    doc.setTextColor(80,80,80); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('BY METHOD:', margin+4, y+6);
+    const methods = [
+      {name:'Cash',txns:cashTxns},{name:'Bank',txns:bankTxns},{name:'eSewa',txns:esewaTxns}
+    ];
+    let mx = margin + 30;
+    methods.forEach(m => {
+      const inc = m.txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const exp = m.txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      doc.setTextColor(13,27,42); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      doc.text(m.name+': ', mx, y+6);
+      doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+      doc.text(`In:Rs.${fmtPDF(inc)} / Out:Rs.${fmtPDF(exp)}`, mx+12, y+6);
+      mx += 58;
+    });
+    y += 24;
+  }
+
+  // ── TRANSACTIONS TABLE ──
+  doc.setTextColor(13,27,42); doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text('TRANSACTION DETAILS', margin, y);
+  y += 4;
+
+  const cols = inclRemarks
+    ? ['Date','Description','Category','Method','Type','Debit','Credit','Remarks']
+    : ['Date','Description','Category','Method','Type','Debit','Credit'];
+
+  const rows = txns.map(t => {
+    const row = [
+      t.date,
+      t.description || '',
+      t.category || '',
+      t.method || '',
+      t.type === 'income' ? 'Credit' : 'Debit',
+      t.type === 'expense' ? 'Rs.'+fmtPDF(t.amount) : '',
+      t.type === 'income' ? 'Rs.'+fmtPDF(t.amount) : '',
+    ];
+    if(inclRemarks) row.push(t.remarks || '');
+    return row;
+  });
+
+  doc.autoTable({
+    startY: y,
+    head: [cols],
+    body: rows,
+    theme: 'grid',
+    headStyles: { fillColor:[13,27,42], textColor:[201,168,76], fontSize:8, fontStyle:'bold', cellPadding:3 },
+    bodyStyles: { fontSize:7.5, cellPadding:3, textColor:[40,40,40] },
+    alternateRowStyles: { fillColor:[248,245,240] },
+    columnStyles: inclRemarks
+      ? { 5:{halign:'right'}, 6:{halign:'right'}, 7:{cellWidth:35, fontSize:6.5} }
+      : { 5:{halign:'right'}, 6:{halign:'right'} },
+    margin: { left:margin, right:margin },
+    didParseCell: (data) => {
+      if(data.section==='body' && data.column.index===4) {
+        data.cell.styles.textColor = data.cell.raw==='Credit' ? [46,164,113] : [200,60,40];
+        data.cell.styles.fontStyle = 'bold';
+      }
+      if(data.section==='body' && data.column.index===5 && data.cell.raw) {
+        data.cell.styles.textColor = [200,60,40]; data.cell.styles.fontStyle='bold';
+      }
+      if(data.section==='body' && data.column.index===6 && data.cell.raw) {
+        data.cell.styles.textColor = [46,164,113]; data.cell.styles.fontStyle='bold';
+      }
+    },
+    foot: [[{content:'TOTAL', colSpan:5, styles:{fontStyle:'bold',fillColor:[13,27,42],textColor:[201,168,76]}},
+            {content:'Rs.'+fmtPDF(txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)), styles:{fontStyle:'bold',fillColor:[13,27,42],textColor:[231,120,100],halign:'right'}},
+            {content:'Rs.'+fmtPDF(txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)), styles:{fontStyle:'bold',fillColor:[13,27,42],textColor:[100,200,130],halign:'right'}},
+            ...(inclRemarks?[{content:'',styles:{fillColor:[13,27,42]}}]:[])
+           ]],
+    footStyles:{fontSize:8}
+  });
+
+  let finalY = doc.lastAutoTable.finalY + 10;
+
+  // ── REMARKS ──
+  if(remarks) {
+    if(finalY > 240) { doc.addPage(); finalY = 20; }
+    doc.setFillColor(245,240,232); doc.setDrawColor(201,168,76);
+    doc.roundedRect(margin, finalY, pageW-2*margin, Math.min(remarks.length*0.5+16, 40), 3,3,'FD');
+    doc.setTextColor(13,27,42); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('REMARKS', margin+4, finalY+7);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    const lines = doc.splitTextToSize(remarks, pageW-2*margin-10);
+    doc.text(lines.slice(0,5), margin+4, finalY+13);
+    finalY += Math.min(remarks.length*0.5+20, 46);
+  }
+
+  // ── FOOTER WITH SIGN & STAMP ──
+  if(finalY > 240) { doc.addPage(); finalY = 20; }
+  finalY = Math.max(finalY, 230);
+
+  // Line
+  doc.setDrawColor(201,168,76); doc.setLineWidth(0.5);
+  doc.line(margin, finalY, pageW-margin, finalY);
+  finalY += 6;
+
+  // Sign area
+  const signAreaX = margin;
+  const stampAreaX = pageW - margin - 50;
+
+  doc.setTextColor(80,80,80); doc.setFontSize(7);
+  doc.text('Authorized Signature', signAreaX + 20, finalY + 28, {align:'center'});
+  doc.text('Official Stamp', stampAreaX + 20, finalY + 28, {align:'center'});
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.3);
+  doc.line(signAreaX, finalY+30, signAreaX+40, finalY+30);
+  doc.line(stampAreaX, finalY+30, stampAreaX+40, finalY+30);
+
+  // Signature image
+  async function loadImg(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if(inclSignature) {
+    const signInput = document.getElementById('signFile');
+    if(signInput.files && signInput.files[0]) {
+      try {
+        const imgData = await loadImg(signInput.files[0]);
+        if(imgData) doc.addImage(imgData, 'JPEG', signAreaX, finalY, 40, 25);
+      } catch(e){}
+    }
+  }
+  if(inclStamp) {
+    const stampInput = document.getElementById('stampFile');
+    if(stampInput.files && stampInput.files[0]) {
+      try {
+        const imgData = await loadImg(stampInput.files[0]);
+        if(imgData) doc.addImage(imgData, 'JPEG', stampAreaX, finalY, 40, 25);
+      } catch(e){}
+    }
+  }
+
+  // Page footer
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFillColor(13,27,42);
+    doc.rect(0,283,pageW,14,'F');
+    doc.setTextColor(150,150,150); doc.setFontSize(7);
+    doc.text('AccuBooks — Confidential Financial Statement', margin, 290);
+    doc.text(`Page ${i} of ${pageCount}`, pageW-margin, 290, {align:'right'});
+    doc.setTextColor(100,100,100);
+    doc.text('Generated: '+new Date().toLocaleString(), pageW/2, 290, {align:'center'});
+  }
+
+  const fileName = `AccuBooks_${title.replace(/\s+/g,'_')}_${from||'all'}_${to||'today'}.pdf`;
+  if(preview) { window.open(doc.output('bloburl')); }
+  else { doc.save(fileName); showToast('PDF Downloaded ✅'); }
+}
+
+function previewPDF() { generatePDF(true); }
+
+function fmtPDF(n) { return (n||0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+// ── TOAST ──
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type==='error'?' error':'');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className='toast', 3000);
+}
+
+// Expose globally
+window.showPage = showPage;
+window.handleMethodChange = handleMethodChange;
+window.saveTransaction = saveTransaction;
+window.clearForm = clearForm;
+window.renderLedger = renderLedger;
+window.setLedgerTab = setLedgerTab;
+window.renderJournal = renderJournal;
+window.openEditModal = openEditModal;
+window.updateTransaction = updateTransaction;
+window.deleteTransaction = deleteTransaction;
+window.openCategoryModal = openCategoryModal;
+window.addCategory = addCategory;
+window.removeCategory = removeCategory;
+window.closeModal = closeModal;
+window.generatePDF = generatePDF;
+window.previewPDF = previewPDF;
+window.savePersonalTxn = savePersonalTxn;
+window.renderPersonal = renderPersonal;
+window.deletePersonalTxn = deletePersonalTxn;
+window.handleLogout = handleLogout;
+window.refreshAll = refreshAll;
+</script>
+</body>
+</html>
