@@ -817,14 +817,16 @@ import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmai
 import {getFirestore,collection,onSnapshot,doc,addDoc,updateDoc,deleteDoc,serverTimestamp,query,orderBy}
   from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ══ FIREBASE CONFIG — ⚠️ REPLACE WITH YOUR CONFIG ══
-const FB={
-  apiKey:"YOUR_API_KEY",
-  authDomain:"YOUR_PROJECT.firebaseapp.com",
-  projectId:"YOUR_PROJECT_ID",
-  storageBucket:"YOUR_PROJECT.appspot.com",
-  messagingSenderId:"YOUR_SENDER_ID",
-  appId:"YOUR_APP_ID"
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB8XQ2LHvQO28oz5QmwThSZXtbDqJyoE6o",
+  authDomain: "sarojpersonalaccounting.firebaseapp.com",
+  databaseURL: "https://sarojpersonalaccounting-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sarojpersonalaccounting",
+  storageBucket: "sarojpersonalaccounting.firebasestorage.app",
+  messagingSenderId: "138666592692",
+  appId: "1:138666592692:web:fd5f7d5d35a9700c138ae1",
+  measurementId: "G-RW7Y1168FW"
 };
 const fba=initializeApp(FB);const auth=getAuth(fba);const db=getFirestore(fba);
 
