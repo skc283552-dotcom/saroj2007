@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Saroj — Dashboard</title>
+
+  <!-- PWA Meta -->
+  <meta name="theme-color" content="#0a0804" id="meta-theme-color" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Saroj" />
+  <meta name="description" content="Saroj Personal Professional Dashboard" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Jost:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── CSS VARIABLES ─── */
+    :root {
+      /* Dark Gold (default) */
+      --bg-primary:    #080604;
+      --bg-secondary:  #110e07;
+      --bg-card:       rgba(255,210,80,0.04);
+      --bg-card-hover: rgba(255,210,80,0.08);
+      --border:        rgba(201,165,42,0.18);
+      --border-hover:  rgba(201,165,42,0.45);
+      --gold:          #c9a52a;
+      --gold-light:    #f0cc60;
+      --gold-dim:      rgba(201,165,42,0.55);
+      --text-primary:  #f0e6c8;
+      --text-secondary:#a8936a;
+      --text-muted:    #5c4e30;
+      --accent:        #e8b84b;
+      --shadow:        0 8px 40px rgba(0,0,0,0.7);
+      --shadow-gold:   0 0 30px rgba(201,165,42,0.12);
+      --radius:        14px;
+      --radius-sm:     8px;
+      --font-display:  'Cormorant Garamond', Georgia, serif;
+      --font-body:     'Jost', sans-serif;
+      --transition:    0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ─── THEMES ─── */
+    [data-theme="midnight"] {
+      --bg-primary:    #04060f;
+      --bg-secondary:  #080c1a;
+      --bg-card:       rgba(80,130,255,0.04);
+      --bg-card-hover: rgba(80,130,255,0.09);
+      --border:        rgba(80,130,255,0.18);
+      --border-hover:  rgba(80,130,255,0.45);
+      --gold:          #5078e8;
+      --gold-light:    #88aaff;
+      --gold-dim:      rgba(80,130,255,0.55);
+      --text-primary:  #d0dcff;
+      --text-secondary:#7090c8;
+      --text-muted:    #354870;
+      --accent:        #78a0f8;
+      --shadow-gold:   0 0 30px rgba(80,130,255,0.12);
+    }
+
+    [data-theme="forest"] {
+      --bg-primary:    #040906;
+      --bg-secondary:  #071208;
+      --bg-card:       rgba(60,180,80,0.04);
+      --bg-card-hover: rgba(60,180,80,0.09);
+      --border:        rgba(60,180,80,0.18);
+      --border-hover:  rgba(60,180,80,0.45);
+      --gold:          #3cb450;
+      --gold-light:    #70e888;
+      --gold-dim:      rgba(60,180,80,0.55);
+      --text-primary:  #d0f0d8;
+      --text-secondary:#70a880;
+      --text-muted:    #2e5838;
+      --accent:        #60d878;
+      --shadow-gold:   0 0 30px rgba(60,180,80,0.12);
+    }
+
+    [data-theme="royal"] {
+      --bg-primary:    #060408;
+      --bg-secondary:  #0e0814;
+      --bg-card:       rgba(160,80,240,0.04);
+      --bg-card-hover: rgba(160,80,240,0.09);
+      --border:        rgba(160,80,240,0.18);
+      --border-hover:  rgba(160,80,240,0.45);
+      --gold:          #a050f0;
+      --gold-light:    #cc88ff;
+      --gold-dim:      rgba(160,80,240,0.55);
+      --text-primary:  #e8d0ff;
+      --text-secondary:#9060c0;
+      --text-muted:    #4a2870;
+      --accent:        #c070f8;
+      --shadow-gold:   0 0 30px rgba(160,80,240,0.12);
+    }
+
+    [data-theme="light"] {
+      --bg-primary:    #f8f5ee;
+      --bg-secondary:  #ede8d8;
+      --bg-card:       rgba(140,100,20,0.05);
+      --bg-card-hover: rgba(140,100,20,0.10);
+      --border:        rgba(140,100,20,0.18);
+      --border-hover:  rgba(140,100,20,0.40);
+      --gold:          #9a6e10;
+      --gold-light:    #c89020;
+      --gold-dim:      rgba(140,100,20,0.55);
+      --text-primary:  #1a1208;
+      --text-secondary:#6a4e20;
+      --text-muted:    #a8925a;
+      --accent:        #b07818;
+      --shadow:        0 8px 40px rgba(0,0,0,0.15);
+      --shadow-gold:   0 0 30px rgba(140,100,20,0.14);
+    }
+
+    /* ─── RESET & BASE ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; scroll-behavior: smooth; }
+
+    body {
+      min-height: 100%;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-weight: 300;
+      overflow-x: hidden;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ─── LAYOUT ─── */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0 0 60px;
+    }
+
+    /* ─── HEADER / NAV ─── */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .nav-brand {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--gold-light);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-brand-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 10px var(--gold);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--transition);
+      font-size: 1.1rem;
+    }
+    .btn-icon:hover {
+      border-color: var(--border-hover);
+      color: var(--gold-light);
+      background: var(--bg-card-hover);
+    }
+
+    /* ─── HERO / GREETING ─── */
+    .hero {
+      padding: 56px 32px 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 500px; height: 200px;
+      background: radial-gradient(ellipse, var(--gold-dim) 0%, transparent 70%);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    .hero-greeting {
+      font-family: var(--font-display);
+      font-size: clamp(2.6rem, 7vw, 5rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-primary);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .hero-greeting span {
+      color: var(--gold-light);
+      font-weight: 600;
+      font-style: normal;
+    }
+
+    .hero-date {
+      margin-top: 14px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+
+    .hero-time {
+      margin-top: 8px;
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 300;
+      color: var(--text-primary);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .hero-time sup {
+      font-size: 0.3em;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      vertical-align: super;
+      font-family: var(--font-body);
+      font-weight: 400;
+    }
+
+    .hero-divider {
+      width: 60px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 24px auto;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    /* ─── SECTION ─── */
+    .section {
+      padding: 0 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 0 4px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+      margin-left: 16px;
+    }
+
+    /* ─── APP GRID ─── */
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+
+    .app-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 16px 20px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition);
+      group: true;
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, var(--gold-dim), transparent 65%);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .app-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-gold);
+    }
+
+    .app-card:hover::before { opacity: 0.07; }
+
+    .app-card:active { transform: translateY(-1px) scale(0.98); }
+
+    .app-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,210,80,0.12), rgba(255,210,80,0.04));
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      transition: all var(--transition);
+      position: relative; z-index: 1;
+    }
+
+    .app-card:hover .app-icon {
+      border-color: var(--gold-dim);
+      background: linear-gradient(135deg, rgba(255,210,80,0.2), rgba(255,210,80,0.06));
+      box-shadow: 0 0 20px rgba(201,165,42,0.15);
+    }
+
+    .app-name {
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      position: relative; z-index: 1;
+      transition: color var(--transition);
+    }
+
+    .app-card:hover .app-name { color: var(--gold-light); }
+
+    /* ─── SETTINGS PANEL ─── */
+    .settings-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+    }
+    .settings-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: min(360px, 92vw);
+      height: 100%;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      z-index: 201;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .settings-overlay.open .settings-panel {
+      transform: translateX(0);
+    }
+
+    .settings-head {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0;
+      background: var(--bg-secondary);
+      z-index: 1;
+    }
+
+    .settings-head h2 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--gold-light);
+      letter-spacing: 0.05em;
+    }
+
+    .settings-body {
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .setting-group label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .theme-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .theme-btn {
+      padding: 12px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      transition: all var(--transition);
+    }
+
+    .theme-btn:hover, .theme-btn.active {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      background: var(--bg-card-hover);
+    }
+
+    .theme-btn.active {
+      box-shadow: inset 0 0 0 1px var(--gold);
+    }
+
+    .theme-swatch {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* name input */
+    .setting-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 300;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .setting-input:focus { border-color: var(--gold); }
+
+    /* install btn */
+    .btn-install {
+      width: 100%;
+      padding: 13px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gold);
+      background: transparent;
+      color: var(--gold-light);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      text-transform: uppercase;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px;
+      transition: all var(--transition);
+    }
+
+    .btn-install:hover {
+      background: var(--gold);
+      color: var(--bg-primary);
+    }
+
+    #install-section { display: none; }
+    #install-section.visible { display: block; }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      text-align: center;
+      padding: 40px 24px 20px;
+      font-size: 0.73rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .app-card { animation: fadeUp 0.6s ease both; }
+    .app-card:nth-child(1) { animation-delay: 0.40s; }
+    .app-card:nth-child(2) { animation-delay: 0.46s; }
+    .app-card:nth-child(3) { animation-delay: 0.52s; }
+    .app-card:nth-child(4) { animation-delay: 0.58s; }
+    .app-card:nth-child(5) { animation-delay: 0.64s; }
+    .app-card:nth-child(6) { animation-delay: 0.70s; }
+    .app-card:nth-child(7) { animation-delay: 0.76s; }
+
+    /* ─── MOBILE ─── */
+    @media (max-width: 600px) {
+      .nav { padding: 16px 18px; }
+      .hero { padding: 36px 18px 28px; }
+      .section { padding: 0 14px; }
+      .apps-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .app-card { padding: 18px 10px 14px; }
+      .app-icon { width: 44px; height: 44px; font-size: 1.25rem; }
+      .app-name { font-size: 0.7rem; }
+    }
+
+    @media (max-width: 380px) {
+      .apps-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    /* status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 16px;
+      animation: fadeUp 0.8s 0.35s ease both;
+    }
+    .status-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 6px var(--gold);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── PAGE ─── -->
+<div class="page" id="app">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a class="nav-brand" href="#">
+      <div class="nav-brand-dot"></div>
+      <span id="brand-name">Saroj</span>
+    </a>
+    <div class="nav-actions">
+      <button class="btn-icon" title="Settings" onclick="openSettings()" aria-label="Open settings">
+        ⚙
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-greeting" id="greeting-text">Good <span id="greeting-word">Morning</span></div>
+    <div class="hero-date" id="hero-date">—</div>
+    <div class="hero-time" id="hero-time">00:00<sup id="hero-ampm">AM</sup></div>
+    <div class="hero-divider"></div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span id="status-label">All systems active</span>
+    </div>
+  </section>
+
+  <!-- APPS -->
+  <div class="section" style="margin-top: 8px;">
+    <div class="section-header">
+      <span class="section-title">Applications</span>
+      <div class="section-line"></div>
+    </div>
+    <div class="apps-grid" id="apps-grid">
+
+      <a class="app-card" href="accounting.html">
+        <div class="app-icon">📊</div>
+        <div class="app-name">Accounting</div>
+      </a>
+
+      <a class="app-card" href="personal.html">
+        <div class="app-icon">💰</div>
+        <div class="app-name">Personal Acct</div>
+      </a>
+
+      <a class="app-card" href="poetry.html">
+        <div class="app-icon">✍️</div>
+        <div class="app-name">Poetry</div>
+      </a>
+
+      <a class="app-card" href="calculator.html">
+        <div class="app-icon">🔢</div>
+        <div class="app-name">Calculator</div>
+      </a>
+
+      <a class="app-card" href="cv.html">
+        <div class="app-icon">📄</div>
+        <div class="app-name">CV</div>
+      </a>
+
+      <a class="app-card" href="note.html">
+        <div class="app-icon">📝</div>
+        <div class="app-name">Notes</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>© <span id="footer-year">2025</span> &nbsp;·&nbsp; <span id="footer-name">Saroj</span> &nbsp;·&nbsp; Professional Dashboard</p>
+  </footer>
+
+</div>
+
+<!-- ─── SETTINGS OVERLAY ─── -->
+<div class="settings-overlay" id="settings-overlay" onclick="handleOverlayClick(event)">
+  <div class="settings-panel" onclick="event.stopPropagation()">
+
+    <div class="settings-head">
+      <h2>Settings</h2>
+      <button class="btn-icon" onclick="closeSettings()" aria-label="Close settings">✕</button>
+    </div>
+
+    <div class="settings-body">
+
+      <!-- Name -->
+      <div class="setting-group">
+        <label>Display Name</label>
+        <input class="setting-input" type="text" id="name-input" placeholder="Your name…" oninput="updateName(this.value)" />
+      </div>
+
+      <!-- Theme -->
+      <div class="setting-group">
+        <label>Theme</label>
+        <div class="theme-grid">
+          <button class="theme-btn active" data-theme="" onclick="setTheme(this, '')">
+            <span class="theme-swatch" style="background:linear-gradient(135deg,#c9a52a,#080604)"></span>
+            Dark Gold
+          </button>
+          <button class="theme-btn" data-theme="midnight" onclick="setTheme(this, 'midnight')">
+            <span class="theme-swatch" style="background:linear-gradient(135deg,#5078e8,#04060f)"></span>
+            Midnight
+          </button>
+          <button class="theme-btn" data-theme="forest" onclick="setTheme(this, 'forest')">
+            <span class="theme-swatch" style="background:linear-gradient(135deg,#3cb450,#040906)"></span>
+            Forest
+          </button>
+          <button class="theme-btn" data-theme="royal" onclick="setTheme(this, 'royal')">
+            <span class="theme-swatch" style="background:linear-gradient(135deg,#a050f0,#060408)"></span>
+            Royal
+          </button>
+          <button class="theme-btn" data-theme="light" onclick="setTheme(this, 'light')">
+            <span class="theme-swatch" style="background:linear-gradient(135deg,#9a6e10,#f8f5ee)"></span>
+            Light Gold
+          </button>
+        </div>
+      </div>
+
+      <!-- Install PWA -->
+      <div class="setting-group" id="install-section">
+        <label>Mobile App</label>
+        <button class="btn-install" id="install-btn" onclick="installApp()">
+          <span>⬇</span> Install App on Device
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── STATE ─── */
+let deferredPrompt = null;
+const STORAGE_KEY = 'saroj_dash_prefs';
+
+const defaults = {
+  name: 'Saroj',
+  theme: ''
+};
+
+function loadPrefs() {
+  try {
+    return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+  } catch { return { ...defaults }; }
+}
+
+function savePrefs(p) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+}
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  const prefs = loadPrefs();
+
+  // Apply name
+  applyName(prefs.name);
+  const ni = document.getElementById('name-input');
+  if (ni) ni.value = prefs.name;
+
+  // Apply theme
+  applyTheme(prefs.theme);
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === prefs.theme);
+  });
+
+  // Start clock
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Footer year
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+});
+
+/* ─── CLOCK & GREETING ─── */
+function updateClock() {
+  const now  = new Date();
+  const h24  = now.getHours();
+  const min  = now.getMinutes();
+  const sec  = now.getSeconds();
+  const h12  = h24 % 12 || 12;
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+
+  document.getElementById('hero-time').childNodes[0].textContent =
+    `${String(h12).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+  document.getElementById('hero-ampm').textContent = ampm;
+
+  // Greeting
+  let word = 'Morning';
+  if      (h24 >= 5  && h24 < 12) word = 'Morning';
+  else if (h24 >= 12 && h24 < 17) word = 'Afternoon';
+  else if (h24 >= 17 && h24 < 21) word = 'Evening';
+  else                             word = 'Night';
+  document.getElementById('greeting-word').textContent = word;
+
+  // Date
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('hero-date').textContent =
+    now.toLocaleDateString('en-US', opts);
+}
+
+/* ─── NAME ─── */
+function updateName(val) {
+  applyName(val || 'Saroj');
+  const prefs = loadPrefs();
+  prefs.name = val || 'Saroj';
+  savePrefs(prefs);
+}
+
+function applyName(name) {
+  const safe = name.trim() || 'Saroj';
+  document.getElementById('brand-name').textContent = safe;
+  document.getElementById('footer-name').textContent = safe;
+  document.title = `${safe} — Dashboard`;
+}
+
+/* ─── THEME ─── */
+function setTheme(btn, theme) {
+  applyTheme(theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const prefs = loadPrefs();
+  prefs.theme = theme;
+  savePrefs(prefs);
+}
+
+function applyTheme(theme) {
+  const el = document.documentElement;
+  if (theme) {
+    el.setAttribute('data-theme', theme);
+  } else {
+    el.removeAttribute('data-theme');
+  }
+  // Update meta theme-color
+  const themeColors = {
+    '': '#0a0804',
+    'midnight': '#04060f',
+    'forest': '#040906',
+    'royal': '#060408',
+    'light': '#f8f5ee'
+  };
+  const mc = document.getElementById('meta-theme-color');
+  if (mc) mc.content = themeColors[theme] || '#0a0804';
+}
+
+/* ─── SETTINGS ─── */
+function openSettings()  { document.getElementById('settings-overlay').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+
+// Keyboard close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSettings();
+});
+
+/* ─── PWA INSTALL ─── */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const sec = document.getElementById('install-section');
+  if (sec) sec.classList.add('visible');
+});
+
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('install-section').classList.remove('visible');
+  }
+  deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const sec = document.getElementById('install-section');
+  if (sec) sec.classList.remove('visible');
+});
+</script>
+</body>
+</html>
