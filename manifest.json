@@ -1,0 +1,37 @@
+{
+  "name": "Saroj — Professional Dashboard",
+  "short_name": "Saroj",
+  "description": "Saroj Personal Professional Dashboard",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0804",
+  "theme_color": "#0a0804",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "logo5.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "logo5.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "logo5.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    { "name": "Accounting",          "url": "./accounting.html" },
+    { "name": "Personal Accounting", "url": "./personal.html"   },
+    { "name": "Notes",               "url": "./note.html"       }
+  ]
+}
