@@ -1,5 +1,5 @@
 /* ─── Saroj Dashboard — Service Worker ─── */
-const CACHE_NAME = 'saroj-dash-v5';
+const CACHE_NAME = 'saroj-dash-v6';
 
 const PRECACHE = [
   './',
