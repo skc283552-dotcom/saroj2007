@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SMS — Shared Money System</title>
+
+<!-- Fonts: Fraunces (ledger-book display serif), Inter (body), IBM Plex Mono (amounts/dates, register feel) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase (compat SDKs) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<!-- Chart.js for dashboard -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<!-- jsPDF + autotable for ledger PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+/* =========================================================
+   THEME TOKENS — all overridden live by the Settings panel
+   ========================================================= */
+:root{
+  --ink:#1D2B2A;            /* primary text */
+  --paper:#F5F6F1;          /* app background — cool paper, not the usual cream */
+  --paper-card:#FFFFFF;
+  --rule:#D8DCD3;           /* ledger rule lines */
+  --primary:#1B4332;        /* deep ledger green */
+  --primary-ink:#FFFFFF;
+  --accent:#B08D57;         /* brass/stamp accent */
+  --danger:#8B3A3A;
+  --radius:10px;
+  --font-display:'Fraunces', serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'IBM Plex Mono', monospace;
+  --font-size:15px;
+}
+[data-theme="dark"]{
+  --ink:#EDEFE9;
+  --paper:#12181A;
+  --paper-card:#1A2224;
+  --rule:#2B3436;
+  --primary:#4C9A72;
+  --primary-ink:#0B1210;
+  --accent:#D4AF7A;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:var(--font-size);
+  min-height:100vh;
+  transition:background .25s ease, color .25s ease;
+}
+h1,h2,h3,.display{font-family:var(--font-display);}
+.mono{font-family:var(--font-mono);}
+a{color:inherit;}
+button{font-family:var(--font-body);cursor:pointer;}
+input,select,textarea{font-family:var(--font-body);font-size:1em;}
+.hidden{display:none !important;}
+
+/* Ledger-paper texture behind main panels */
+.ruled{
+  background-image:repeating-linear-gradient(var(--paper-card), var(--paper-card) 27px, var(--rule) 28px);
+}
+
+/* ---------- Layout shell ---------- */
+#app{display:none;min-height:100vh;grid-template-rows:auto 1fr;}
+#app.show{display:grid;}
+
+header.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 22px;background:var(--primary);color:var(--primary-ink);
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-mark{
+  width:36px;height:36px;border-radius:50%;
+  border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:.5px;
+  color:var(--accent);
+}
+.brand-name{font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:.3px;}
+.brand-sub{font-size:11px;opacity:.75;font-family:var(--font-mono);letter-spacing:.5px;}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.pill{
+  font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,.12);
+  padding:5px 10px;border-radius:20px;
+}
+.icon-btn{
+  background:transparent;border:1px solid rgba(255,255,255,.35);color:var(--primary-ink);
+  border-radius:8px;padding:7px 11px;font-size:13px;display:flex;align-items:center;gap:6px;
+}
+.icon-btn:hover{background:rgba(255,255,255,.12);}
+
+nav.tabs{
+  display:flex;gap:4px;padding:0 22px;background:var(--paper);
+  border-bottom:1px solid var(--rule);overflow-x:auto;
+}
+.tab-btn{
+  background:transparent;border:none;padding:13px 16px;color:var(--ink);opacity:.6;
+  font-weight:600;font-size:13.5px;border-bottom:3px solid transparent;white-space:nowrap;
+}
+.tab-btn.active{opacity:1;border-bottom-color:var(--accent);}
+
+main{padding:22px;max-width:1180px;margin:0 auto;width:100%;}
+.view{display:none;}
+.view.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.card{
+  background:var(--paper-card);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:20px;margin-bottom:18px;
+}
+.card h2{margin:0 0 14px;font-size:19px;}
+.grid{display:grid;gap:14px;}
+.grid-2{grid-template-columns:1fr 1fr;}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media(max-width:820px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+label{display:block;font-size:12.5px;font-weight:600;opacity:.75;margin-bottom:5px;}
+input[type=text],input[type=number],input[type=date],input[type=time],input[type=email],input[type=password],select,textarea{
+  width:100%;padding:10px 11px;border:1px solid var(--rule);border-radius:8px;
+  background:var(--paper);color:var(--ink);
+}
+textarea{resize:vertical;min-height:60px;}
+.field{margin-bottom:14px;}
+.checks{display:flex;flex-wrap:wrap;gap:10px;}
+.check-chip{
+  border:1px solid var(--rule);border-radius:20px;padding:7px 13px;font-size:13px;
+  display:flex;align-items:center;gap:6px;user-select:none;
+}
+.check-chip input{width:auto;}
+.check-chip.checked{background:var(--primary);color:var(--primary-ink);border-color:var(--primary);}
+
+.btn{
+  background:var(--primary);color:var(--primary-ink);border:none;border-radius:8px;
+  padding:11px 18px;font-weight:600;font-size:14px;
+}
+.btn:hover{filter:brightness(1.08);}
+.btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--rule);}
+.btn.danger{background:var(--danger);color:#fff;}
+.btn.small{padding:6px 11px;font-size:12.5px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* Stamp-style KPI cards on dashboard — the signature element */
+.stamp{
+  border:2px dashed var(--accent);border-radius:14px;padding:16px;text-align:center;
+  position:relative;background:var(--paper-card);
+}
+.stamp .amt{font-family:var(--font-mono);font-size:26px;font-weight:600;color:var(--primary);}
+.stamp .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:1px;opacity:.65;margin-top:4px;}
+
+.chart-wrap{background:var(--paper-card);border:1px solid var(--rule);border-radius:var(--radius);padding:16px;}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th,td{padding:10px 8px;border-bottom:1px solid var(--rule);text-align:left;}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;opacity:.65;}
+td.amt{font-family:var(--font-mono);}
+tr.row:hover{background:rgba(0,0,0,.03);}
+[data-theme="dark"] tr.row:hover{background:rgba(255,255,255,.04);}
+.tag{
+  display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;
+  background:var(--rule);margin:1px;
+}
+.thumb{width:34px;height:34px;border-radius:6px;object-fit:cover;border:1px solid var(--rule);}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:14px;}
+.toolbar .field{margin:0;flex:1;min-width:130px;}
+
+/* Login screen */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--paper);
+}
+.login-card{
+  width:340px;background:var(--paper-card);border:1px solid var(--rule);border-radius:14px;
+  padding:32px 28px;text-align:center;
+}
+.login-card .brand-mark{margin:0 auto 14px;width:52px;height:52px;font-size:20px;color:var(--accent);border-color:var(--accent);}
+.login-card h1{margin:0 0 4px;font-size:22px;}
+.login-card p.sub{opacity:.6;font-size:13px;margin:0 0 22px;}
+.err{color:var(--danger);font-size:12.5px;margin-top:8px;min-height:16px;}
+
+/* Modal */
+.modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;
+  align-items:center;justify-content:center;padding:16px;
+}
+.modal-bg.show{display:flex;}
+.modal{
+  background:var(--paper-card);border-radius:14px;padding:24px;max-width:520px;width:100%;
+  max-height:88vh;overflow-y:auto;
+}
+.modal h3{margin-top:0;}
+.close-x{float:right;background:none;border:none;font-size:18px;color:var(--ink);opacity:.6;}
+
+footer.credit{text-align:center;font-size:11.5px;opacity:.45;padding:24px;font-family:var(--font-mono);}
+
+.swatch{width:34px;height:34px;border-radius:8px;border:1px solid var(--rule);padding:0;}
+.people-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--rule);}
+.people-row input{flex:1;}
+.empty{opacity:.55;font-size:13.5px;padding:18px 4px;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- ======================= LOGIN SCREEN ======================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="brand-mark">SMS</div>
+    <h1>Shared Money System</h1>
+    <p class="sub">Sign in to open the ledger</p>
+    <div class="field" style="text-align:left">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" />
+    </div>
+    <div class="field" style="text-align:left">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+    <button class="btn" style="width:100%" onclick="doLogin()">Sign In</button>
+    <div style="margin-top:10px;">
+      <a href="#" style="font-size:12.5px;opacity:.7;" onclick="doResetPassword();return false;">Forgot password?</a>
+    </div>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ======================= MAIN APP ======================= -->
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">SMS</div>
+      <div>
+        <div class="brand-name">Shared Money System</div>
+        <div class="brand-sub">LEDGER · v1.0</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill" id="userPill">—</span>
+      <button class="icon-btn" onclick="openSettings()">⚙ Settings</button>
+      <button class="icon-btn" onclick="doLogout()">Log out</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" data-view="add" onclick="switchTab('add')">Add Transaction</button>
+    <button class="tab-btn" data-view="ledger" onclick="switchTab('ledger')">Ledger</button>
+  </nav>
+
+  <main>
+    <!-- ---------------- DASHBOARD ---------------- -->
+    <section class="view active" id="view-dashboard">
+      <div class="grid grid-3" id="kpiRow" style="margin-bottom:18px;"></div>
+      <div class="grid grid-2">
+        <div class="chart-wrap"><h3 style="margin-top:0">Last 6 months</h3><canvas id="chartMonthly" height="220"></canvas></div>
+        <div class="chart-wrap"><h3 style="margin-top:0">This month — share by person</h3><canvas id="chartPeople" height="220"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ---------------- ADD TRANSACTION ---------------- -->
+    <section class="view" id="view-add">
+      <div class="card" style="max-width:640px;margin:0 auto;">
+        <h2>Add a transaction</h2>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="txDate">
+          </div>
+          <div class="field">
+            <label>Time</label>
+            <input type="time" id="txTime">
+          </div>
+        </div>
+        <div class="field">
+          <label>Bought by</label>
+          <select id="txBuyer"></select>
+        </div>
+        <div class="field">
+          <label>Item / description</label>
+          <input type="text" id="txItem" placeholder="e.g. groceries, XYZ goods">
+        </div>
+        <div class="field">
+          <label>Price (₹)</label>
+          <input type="number" id="txPrice" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>This is for</label>
+          <div class="checks" id="txForChips"></div>
+        </div>
+        <div class="field">
+          <label>Photo of bill (optional)</label>
+          <input type="file" id="txPhoto" accept="image/*">
+          <img id="txPhotoPreview" class="hidden" style="margin-top:8px;max-width:140px;border-radius:8px;border:1px solid var(--rule);">
+        </div>
+        <div class="field">
+          <label>Note (optional)</label>
+          <textarea id="txNote" placeholder="Anything else worth remembering"></textarea>
+        </div>
+        <button class="btn" style="width:100%" onclick="submitTransaction()">Save transaction</button>
+        <div class="err" id="addErr"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- LEDGER ---------------- -->
+    <section class="view" id="view-ledger">
+      <div class="card">
+        <div class="toolbar">
+          <div class="field">
+            <label>Search item</label>
+            <input type="text" id="fltSearch" oninput="renderLedger()" placeholder="e.g. milk">
+          </div>
+          <div class="field">
+            <label>Bought by</label>
+            <select id="fltBuyer" onchange="renderLedger()"><option value="">All</option></select>
+          </div>
+          <div class="field">
+            <label>For</label>
+            <select id="fltFor" onchange="renderLedger()"><option value="">All</option></select>
+          </div>
+          <div class="field">
+            <label>From</label>
+            <input type="date" id="fltFrom" onchange="renderLedger()">
+          </div>
+          <div class="field">
+            <label>To</label>
+            <input type="date" id="fltTo" onchange="renderLedger()">
+          </div>
+          <button class="btn secondary small" onclick="clearFilters()">Clear</button>
+          <button class="btn small" onclick="downloadLedgerPDF()">⬇ Download PDF</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Bought by</th><th>Item</th><th>Price</th><th>For</th><th>Bill</th><th></th></tr>
+            </thead>
+            <tbody id="ledgerBody"></tbody>
+          </table>
+          <div class="empty hidden" id="ledgerEmpty">No transactions match these filters yet.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="credit">SMS · Shared Money System — private ledger</footer>
+</div>
+
+<!-- ======================= SETTINGS MODAL ======================= -->
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <button class="close-x" onclick="closeSettings()">✕</button>
+    <h3>Settings</h3>
+
+    <h4>People</h4>
+    <p style="font-size:12.5px;opacity:.65;margin-top:-6px;">These names appear as "bought by" and "for" throughout the app. Changes apply for everyone.</p>
+    <div id="peopleList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input type="text" id="newPersonName" placeholder="Add a name">
+      <button class="btn small" onclick="addPerson()">Add</button>
+    </div>
+
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--rule);">
+
+    <h4>Appearance</h4>
+    <div class="grid grid-2">
+      <div class="field">
+        <label>Mode</label>
+        <select id="setMode" onchange="applyThemeFromControls()">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Font</label>
+        <select id="setFont" onchange="applyThemeFromControls()">
+          <option value="'Inter', sans-serif">Inter (clean)</option>
+          <option value="'Fraunces', serif">Fraunces (serif)</option>
+          <option value="'IBM Plex Mono', monospace">Plex Mono (typewriter)</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="Arial, sans-serif">Arial</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Text size</label>
+        <select id="setSize" onchange="applyThemeFromControls()">
+          <option value="13px">Small</option>
+          <option value="15px">Medium</option>
+          <option value="17px">Large</option>
+          <option value="19px">Extra large</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Corner style</label>
+        <select id="setRadius" onchange="applyThemeFromControls()">
+          <option value="2px">Sharp</option>
+          <option value="10px">Rounded</option>
+          <option value="20px">Very rounded</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Primary color</label>
+        <input type="color" class="swatch" id="setPrimary" onchange="applyThemeFromControls()">
+      </div>
+      <div class="field">
+        <label>Accent color</label>
+        <input type="color" class="swatch" id="setAccent" onchange="applyThemeFromControls()">
+      </div>
+    </div>
+    <button class="btn secondary small" onclick="resetTheme()">Reset to default look</button>
+  </div>
+</div>
+
+<!-- ======================= TX DETAIL MODAL ======================= -->
+<div class="modal-bg" id="detailModal">
+  <div class="modal" id="detailModalContent"></div>
+</div>
+
+<script>
+/* =========================================================
+   FIREBASE INIT
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyAup_lLjjfz4QCObh7aQoHaveOuTE5Kdz4",
+  authDomain: "sms-c08ed.firebaseapp.com",
+  databaseURL: "https://sms-c08ed-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sms-c08ed",
+  storageBucket: "sms-c08ed.firebasestorage.app",
+  messagingSenderId: "438262214782",
+  appId: "1:438262214782:web:697e2e5ebdf6bd4192282f",
+  measurementId: "G-MRLPQ90ME1"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const storage = firebase.storage();
+
+let currentUser = null;
+let people = {};          // {id: name}
+let transactions = {};    // {id: {...}}
+let chartMonthly, chartPeople;
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if(!email || !pass){ errEl.textContent = 'Enter email and password.'; return; }
+  auth.signInWithEmailAndPassword(email, pass).catch(e => {
+    errEl.textContent = friendlyAuthError(e);
+  });
+}
+function doResetPassword(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const errEl = document.getElementById('loginErr');
+  if(!email){ errEl.textContent = 'Enter your email above first, then tap "Forgot password?".'; return; }
+  auth.sendPasswordResetEmail(email).then(()=>{
+    errEl.style.color = 'var(--primary)';
+    errEl.textContent = 'Password reset email sent.';
+  }).catch(e => { errEl.style.color='var(--danger)'; errEl.textContent = friendlyAuthError(e); });
+}
+function friendlyAuthError(e){
+  const map = {
+    'auth/invalid-email':'That email looks invalid.',
+    'auth/user-not-found':'No account with that email. Ask the admin to add one in Firebase Console.',
+    'auth/wrong-password':'Wrong password.',
+    'auth/invalid-credential':'Email or password is incorrect.',
+    'auth/too-many-requests':'Too many attempts — try again later.'
+  };
+  return map[e.code] || e.message;
+}
+function doLogout(){ auth.signOut(); }
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    currentUser = user;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+    document.getElementById('userPill').textContent = user.email;
+    initData();
+  } else {
+    currentUser = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').classList.remove('show');
+  }
+});
+
+/* =========================================================
+   TABS
+   ========================================================= */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+name));
+  if(name==='add'){ prefillAddForm(); }
+  if(name==='ledger'){ renderLedger(); }
+  if(name==='dashboard'){ renderDashboard(); }
+}
+
+/* =========================================================
+   DATA LOAD (people + transactions), realtime
+   ========================================================= */
+function initData(){
+  db.ref('people').on('value', snap=>{
+    people = snap.val() || {};
+    if(Object.keys(people).length===0){
+      // seed defaults on first run
+      const seed = {};
+      ['Milan','Saroj','Susan'].forEach(n=>{
+        const id = db.ref('people').push().key;
+        seed[id] = n;
+      });
+      db.ref('people').set(seed);
+      return;
+    }
+    populatePeopleUI();
+  });
+  db.ref('transactions').on('value', snap=>{
+    transactions = snap.val() || {};
+    renderDashboard();
+    renderLedger();
+  });
+  loadThemePrefs();
+}
+
+function populatePeopleUI(){
+  // buyer select on add form
+  const buyerSel = document.getElementById('txBuyer');
+  buyerSel.innerHTML = Object.entries(people).map(([id,name])=>`<option value="${id}">${escapeHtml(name)}</option>`).join('');
+  // "for" chips on add form
+  const chips = document.getElementById('txForChips');
+  chips.innerHTML = Object.entries(people).map(([id,name])=>`
+    <label class="check-chip" id="chip-${id}">
+      <input type="checkbox" value="${id}" onchange="toggleChip('${id}')"> ${escapeHtml(name)}
+    </label>`).join('');
+  // filter dropdowns
+  const fb = document.getElementById('fltBuyer'), ff = document.getElementById('fltFor');
+  const opts = Object.entries(people).map(([id,name])=>`<option value="${id}">${escapeHtml(name)}</option>`).join('');
+  fb.innerHTML = '<option value="">All</option>' + opts;
+  ff.innerHTML = '<option value="">All</option>' + opts;
+  // settings people list
+  const pl = document.getElementById('peopleList');
+  pl.innerHTML = Object.entries(people).map(([id,name])=>`
+    <div class="people-row">
+      <input type="text" value="${escapeHtml(name)}" onchange="renamePerson('${id}', this.value)">
+      <button class="btn secondary small" onclick="removePerson('${id}')">Remove</button>
+    </div>`).join('');
+}
+function toggleChip(id){
+  document.getElementById('chip-'+id).classList.toggle('checked');
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* =========================================================
+   PEOPLE MANAGEMENT
+   ========================================================= */
+function addPerson(){
+  const input = document.getElementById('newPersonName');
+  const name = input.value.trim();
+  if(!name) return;
+  const id = db.ref('people').push().key;
+  db.ref('people/'+id).set(name);
+  input.value = '';
+}
+function renamePerson(id, val){
+  val = val.trim();
+  if(!val) return;
+  db.ref('people/'+id).set(val);
+}
+function removePerson(id){
+  if(!confirm('Remove this person? Past transactions will keep showing their old name.')) return;
+  db.ref('people/'+id).remove();
+}
+
+/* =========================================================
+   ADD TRANSACTION
+   ========================================================= */
+function prefillAddForm(){
+  const now = new Date();
+  document.getElementById('txDate').value = now.toISOString().slice(0,10);
+  document.getElementById('txTime').value = now.toTimeString().slice(0,5);
+}
+document.getElementById('txPhoto')?.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  const prev = document.getElementById('txPhotoPreview');
+  if(file){
+    prev.src = URL.createObjectURL(file);
+    prev.classList.remove('hidden');
+  }
+});
+
+async function submitTransaction(){
+  const errEl = document.getElementById('addErr');
+  errEl.textContent = '';
+  const date = document.getElementById('txDate').value;
+  const time = document.getElementById('txTime').value;
+  const buyer = document.getElementById('txBuyer').value;
+  const item = document.getElementById('txItem').value.trim();
+  const price = parseFloat(document.getElementById('txPrice').value);
+  const note = document.getElementById('txNote').value.trim();
+  const forIds = Array.from(document.querySelectorAll('#txForChips input:checked')).map(i=>i.value);
+  const photoFile = document.getElementById('txPhoto').files[0];
+
+  if(!date || !time || !buyer || !item || isNaN(price) || price < 0){
+    errEl.textContent = 'Please fill in date, time, buyer, item and a valid price.'; return;
+  }
+  if(forIds.length===0){
+    errEl.textContent = 'Select who this purchase is for (one or more).'; return;
+  }
+
+  const newRef = db.ref('transactions').push();
+  const record = {
+    date, time, item, price,
+    buyer, forPeople: forIds, note: note || null,
+    addedByUid: currentUser.uid, addedByEmail: currentUser.email,
+    createdAt: Date.now(), timestamp: new Date(date+'T'+time).getTime()
+  };
+
+  try{
+    if(photoFile){
+      const path = 'bills/'+newRef.key+'_'+photoFile.name;
+      const ref = storage.ref(path);
+      await ref.put(photoFile);
+      record.billPhotoURL = await ref.getDownloadURL();
+    }
+    await newRef.set(record);
+    // reset form
+    document.getElementById('txItem').value='';
+    document.getElementById('txPrice').value='';
+    document.getElementById('txNote').value='';
+    document.getElementById('txPhoto').value='';
+    document.getElementById('txPhotoPreview').classList.add('hidden');
+    document.querySelectorAll('#txForChips .check-chip').forEach(c=>c.classList.remove('checked'));
+    document.querySelectorAll('#txForChips input').forEach(i=>i.checked=false);
+    prefillAddForm();
+    switchTab('ledger');
+  }catch(e){
+    errEl.textContent = 'Could not save: ' + e.message;
+  }
+}
+
+/* =========================================================
+   LEDGER
+   ========================================================= */
+function clearFilters(){
+  document.getElementById('fltSearch').value='';
+  document.getElementById('fltBuyer').value='';
+  document.getElementById('fltFor').value='';
+  document.getElementById('fltFrom').value='';
+  document.getElementById('fltTo').value='';
+  renderLedger();
+}
+function getFilteredTx(){
+  const search = document.getElementById('fltSearch').value.toLowerCase();
+  const buyer = document.getElementById('fltBuyer').value;
+  const forP = document.getElementById('fltFor').value;
+  const from = document.getElementById('fltFrom').value;
+  const to = document.getElementById('fltTo').value;
+  return Object.entries(transactions).filter(([id,t])=>{
+    if(search && !t.item.toLowerCase().includes(search)) return false;
+    if(buyer && t.buyer !== buyer) return false;
+    if(forP && !(t.forPeople||[]).includes(forP)) return false;
+    if(from && t.date < from) return false;
+    if(to && t.date > to) return false;
+    return true;
+  }).sort((a,b)=>b[1].timestamp - a[1].timestamp);
+}
+function renderLedger(){
+  if(!document.getElementById('ledgerBody')) return;
+  const rows = getFilteredTx();
+  const body = document.getElementById('ledgerBody');
+  document.getElementById('ledgerEmpty').classList.toggle('hidden', rows.length>0);
+  body.innerHTML = rows.map(([id,t])=>`
+    <tr class="row" onclick="openDetail('${id}')" style="cursor:pointer">
+      <td class="mono">${t.date}</td>
+      <td class="mono">${t.time}</td>
+      <td>${escapeHtml(people[t.buyer]||'—')}</td>
+      <td>${escapeHtml(t.item)}</td>
+      <td class="amt">₹${Number(t.price).toFixed(2)}</td>
+      <td>${(t.forPeople||[]).map(id2=>`<span class="tag">${escapeHtml(people[id2]||'—')}</span>`).join('')}</td>
+      <td>${t.billPhotoURL ? `<img class="thumb" src="${t.billPhotoURL}">` : '—'}</td>
+      <td><button class="btn danger small" onclick="event.stopPropagation();deleteTx('${id}')">Delete</button></td>
+    </tr>`).join('');
+}
+function openDetail(id){
+  const t = transactions[id];
+  if(!t) return;
+  document.getElementById('detailModalContent').innerHTML = `
+    <button class="close-x" onclick="closeDetail()">✕</button>
+    <h3>${escapeHtml(t.item)}</h3>
+    <p class="mono" style="opacity:.7">${t.date} · ${t.time}</p>
+    <p><strong>Price:</strong> <span class="mono">₹${Number(t.price).toFixed(2)}</span></p>
+    <p><strong>Bought by:</strong> ${escapeHtml(people[t.buyer]||'—')}</p>
+    <p><strong>For:</strong> ${(t.forPeople||[]).map(id2=>escapeHtml(people[id2]||'—')).join(', ')}</p>
+    ${t.note ? `<p><strong>Note:</strong> ${escapeHtml(t.note)}</p>` : ''}
+    <p style="font-size:12px;opacity:.55">Added by ${escapeHtml(t.addedByEmail||'—')}</p>
+    ${t.billPhotoURL ? `<img src="${t.billPhotoURL}" style="width:100%;border-radius:8px;margin-top:8px;">` : ''}
+  `;
+  document.getElementById('detailModal').classList.add('show');
+}
+function closeDetail(){ document.getElementById('detailModal').classList.remove('show'); }
+function deleteTx(id){
+  if(!confirm('Delete this transaction? This cannot be undone.')) return;
+  db.ref('transactions/'+id).remove();
+}
+
+/* =========================================================
+   PDF EXPORT — includes date/time/name of the person downloading
+   ========================================================= */
+function downloadLedgerPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const rows = getFilteredTx();
+  const now = new Date();
+
+  doc.setFontSize(16);
+  doc.text('SMS — Ledger Report', 14, 16);
+  doc.setFontSize(9);
+  doc.text(`Downloaded by: ${currentUser.email}`, 14, 23);
+  doc.text(`Downloaded on: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`, 14, 28);
+
+  doc.autoTable({
+    startY: 34,
+    head: [['Date','Time','Bought by','Item','Price (₹)','For']],
+    body: rows.map(([id,t])=>[
+      t.date, t.time, people[t.buyer]||'—', t.item, Number(t.price).toFixed(2),
+      (t.forPeople||[]).map(id2=>people[id2]||'—').join(', ')
+    ]),
+    styles:{ fontSize:8.5 },
+    headStyles:{ fillColor:[27,67,50] }
+  });
+
+  const total = rows.reduce((s,[id,t])=>s+Number(t.price),0);
+  const finalY = doc.lastAutoTable.finalY || 34;
+  doc.setFontSize(10);
+  doc.text(`Total: ₹${total.toFixed(2)}  (${rows.length} transactions)`, 14, finalY + 8);
+
+  doc.save(`SMS-ledger-${now.toISOString().slice(0,10)}.pdf`);
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard(){
+  const kpiRow = document.getElementById('kpiRow');
+  if(!kpiRow) return;
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  const monthTx = Object.values(transactions).filter(t=>t.date && t.date.slice(0,7)===ym);
+  const monthTotal = monthTx.reduce((s,t)=>s+Number(t.price),0);
+
+  const shareByPerson = {};
+  Object.keys(people).forEach(id=>shareByPerson[id]=0);
+  monthTx.forEach(t=>{
+    const list = t.forPeople||[];
+    if(list.length===0) return;
+    const each = Number(t.price)/list.length;
+    list.forEach(id=>{ shareByPerson[id] = (shareByPerson[id]||0) + each; });
+  });
+  const topPerson = Object.entries(shareByPerson).sort((a,b)=>b[1]-a[1])[0];
+
+  kpiRow.innerHTML = `
+    <div class="stamp"><div class="amt">₹${monthTotal.toFixed(2)}</div><div class="lbl">Spent this month</div></div>
+    <div class="stamp"><div class="amt">${monthTx.length}</div><div class="lbl">Transactions this month</div></div>
+    <div class="stamp"><div class="amt">${topPerson ? escapeHtml(people[topPerson[0]]||'—') : '—'}</div><div class="lbl">Highest share this month</div></div>
+  `;
+
+  // last 6 months totals
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push(d.toISOString().slice(0,7));
+  }
+  const monthlyTotals = months.map(m => Object.values(transactions)
+    .filter(t=>t.date && t.date.slice(0,7)===m)
+    .reduce((s,t)=>s+Number(t.price),0));
+
+  const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1B4332';
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#B08D57';
+
+  if(chartMonthly) chartMonthly.destroy();
+  chartMonthly = new Chart(document.getElementById('chartMonthly'), {
+    type:'bar',
+    data:{ labels: months, datasets:[{ label:'Total spent', data: monthlyTotals, backgroundColor: primary }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true } } }
+  });
+
+  const peopleLabels = Object.values(people);
+  const peopleData = Object.keys(people).map(id=>shareByPerson[id]||0);
+  if(chartPeople) chartPeople.destroy();
+  chartPeople = new Chart(document.getElementById('chartPeople'), {
+    type:'doughnut',
+    data:{ labels: peopleLabels, datasets:[{ data: peopleData, backgroundColor:[primary, accent, '#7A9E7E', '#C97B63', '#5B7B9A'] }] },
+    options:{ plugins:{ legend:{ position:'bottom' } } }
+  });
+}
+
+/* =========================================================
+   SETTINGS / THEME — applied live, saved to localStorage
+   ========================================================= */
+const THEME_KEY = 'sms_theme_prefs_v1';
+function openSettings(){
+  document.getElementById('settingsModal').classList.add('show');
+  loadThemeControlsFromRoot();
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
+
+function loadThemePrefs(){
+  const saved = JSON.parse(localStorage.getItem(THEME_KEY) || '{}');
+  if(saved.mode) document.documentElement.setAttribute('data-theme', saved.mode);
+  if(saved.font) document.documentElement.style.setProperty('--font-body', saved.font);
+  if(saved.size) document.documentElement.style.setProperty('--font-size', saved.size);
+  if(saved.radius) document.documentElement.style.setProperty('--radius', saved.radius);
+  if(saved.primary) document.documentElement.style.setProperty('--primary', saved.primary);
+  if(saved.accent) document.documentElement.style.setProperty('--accent', saved.accent);
+}
+function loadThemeControlsFromRoot(){
+  const root = document.documentElement;
+  document.getElementById('setMode').value = root.getAttribute('data-theme') || 'light';
+  document.getElementById('setFont').value = getComputedStyle(root).getPropertyValue('--font-body').trim() || "'Inter', sans-serif";
+  document.getElementById('setSize').value = getComputedStyle(root).getPropertyValue('--font-size').trim() || '15px';
+  document.getElementById('setRadius').value = getComputedStyle(root).getPropertyValue('--radius').trim() || '10px';
+  const p = getComputedStyle(root).getPropertyValue('--primary').trim();
+  const a = getComputedStyle(root).getPropertyValue('--accent').trim();
+  document.getElementById('setPrimary').value = rgbToHex(p) || '#1b4332';
+  document.getElementById('setAccent').value = rgbToHex(a) || '#b08d57';
+}
+function rgbToHex(val){
+  if(!val) return null;
+  if(val.startsWith('#')) return val;
+  const m = val.match(/\d+/g);
+  if(!m) return null;
+  return '#' + m.slice(0,3).map(n=>(+n).toString(16).padStart(2,'0')).join('');
+}
+function applyThemeFromControls(){
+  const mode = document.getElementById('setMode').value;
+  const font = document.getElementById('setFont').value;
+  const size = document.getElementById('setSize').value;
+  const radius = document.getElementById('setRadius').value;
+  const primary = document.getElementById('setPrimary').value;
+  const accent = document.getElementById('setAccent').value;
+  const root = document.documentElement;
+  root.setAttribute('data-theme', mode);
+  root.style.setProperty('--font-body', font);
+  root.style.setProperty('--font-size', size);
+  root.style.setProperty('--radius', radius);
+  root.style.setProperty('--primary', primary);
+  root.style.setProperty('--accent', accent);
+  localStorage.setItem(THEME_KEY, JSON.stringify({mode,font,size,radius,primary,accent}));
+  renderDashboard();
+}
+function resetTheme(){
+  localStorage.removeItem(THEME_KEY);
+  document.documentElement.removeAttribute('data-theme');
+  ['--font-body','--font-size','--radius','--primary','--accent'].forEach(p=>document.documentElement.style.removeProperty(p));
+  loadThemeControlsFromRoot();
+  renderDashboard();
+}
+
+/* Enter key on login */
+document.getElementById('loginPassword')?.addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
